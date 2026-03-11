@@ -7,6 +7,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -87,8 +89,67 @@ class CliApplicationTest {
     }
 
     @Test
+    void explicitFileUsesOwningModuleForCoverageAndJacocoXml() throws Exception {
+        Path moduleRoot = tempDir.resolve("tools/mutate4java");
+        Path sourceRoot = moduleRoot.resolve("src/mutate4java");
+        Files.createDirectories(sourceRoot);
+        Files.writeString(moduleRoot.resolve("pom.xml"), "<project/>");
+        Path source = sourceRoot.resolve("Sample.java");
+        Files.writeString(source, """
+                package mutate4java;
+
+                class Sample {
+                    int alpha() {
+                        return 1;
+                    }
+                }
+                """);
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        ByteArrayOutputStream err = new ByteArrayOutputStream();
+        List<Path> directories = new ArrayList<>();
+        Path jacocoXml = moduleRoot.resolve("target/site/jacoco/jacoco.xml");
+        CoverageRunner coverageRunner = new CoverageRunner((command, directory) -> {
+            directories.add(directory);
+            Files.createDirectories(jacocoXml.getParent());
+            Files.writeString(jacocoXml, """
+                    <report name="mutate4java">
+                      <package name="mutate4java">
+                        <class name="mutate4java/Sample" sourcefilename="Sample.java">
+                          <method name="alpha" desc="()I" line="4">
+                            <counter type="INSTRUCTION" missed="0" covered="1"/>
+                          </method>
+                        </class>
+                      </package>
+                    </report>
+                    """);
+            return 0;
+        });
+
+        int exit = new CliApplication(tempDir, new PrintStream(out), new PrintStream(err), coverageRunner)
+                .execute(new String[]{"tools/mutate4java/src/mutate4java/Sample.java"});
+
+        assertEquals(0, exit);
+        assertEquals(List.of(moduleRoot), directories);
+        assertTrue(out.toString().contains("mutate4java.Sample"));
+        assertFalse(err.toString().contains("Warning: JaCoCo XML not found"));
+    }
+
+    @Test
     void thresholdExceededUsesStrictlyGreaterThanEight() {
         assertFalse(CliApplication.thresholdExceeded(8.0));
         assertTrue(CliApplication.thresholdExceeded(8.1));
+    }
+
+    @Test
+    void moduleRootForFindsNearestAncestorWithPom() throws Exception {
+        Path moduleRoot = tempDir.resolve("tools/mutate4java");
+        Path source = moduleRoot.resolve("src/mutate4java/Sample.java");
+        Files.createDirectories(source.getParent());
+        Files.writeString(moduleRoot.resolve("pom.xml"), "<project/>");
+        Files.writeString(source, "class Sample {}");
+
+        Path module = CliApplication.moduleRootFor(tempDir, source);
+
+        assertEquals(moduleRoot, module);
     }
 }

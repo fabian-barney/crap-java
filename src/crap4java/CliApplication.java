@@ -5,8 +5,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 final class CliApplication {
@@ -29,21 +31,15 @@ final class CliApplication {
             return parse.exitCode;
         }
         CliArguments parsed = parse.arguments;
-
-        Path jacocoXml = projectRoot.resolve("target/site/jacoco/jacoco.xml");
         List<Path> filesToAnalyze = filesForMode(parsed);
         if (filesToAnalyze.isEmpty()) {
             out.println("No Java files to analyze.");
             return 0;
         }
 
-        coverageRunner.generateCoverage(projectRoot);
-
-        if (!Files.exists(jacocoXml)) {
-            err.println("Warning: JaCoCo XML not found at " + jacocoXml + ". Coverage will be N/A.");
-        }
-
-        List<MethodMetrics> metrics = CrapAnalyzer.analyze(projectRoot, filesToAnalyze, jacocoXml);
+        List<MethodMetrics> metrics = analyzeByModule(filesToAnalyze);
+        metrics.sort(Comparator.comparing(MethodMetrics::crapScore,
+                Comparator.nullsLast(Comparator.reverseOrder())));
         out.print(ReportFormatter.format(metrics));
 
         double max = Main.maxCrap(metrics);
@@ -52,6 +48,20 @@ final class CliApplication {
             return 2;
         }
         return 0;
+    }
+
+    private List<MethodMetrics> analyzeByModule(List<Path> filesToAnalyze) throws Exception {
+        List<MethodMetrics> metrics = new ArrayList<>();
+        for (Map.Entry<Path, List<Path>> entry : groupByModuleRoot(filesToAnalyze).entrySet()) {
+            Path moduleRoot = entry.getKey();
+            Path jacocoXml = moduleRoot.resolve("target/site/jacoco/jacoco.xml");
+            coverageRunner.generateCoverage(moduleRoot);
+            if (!Files.exists(jacocoXml)) {
+                err.println("Warning: JaCoCo XML not found at " + jacocoXml + ". Coverage will be N/A.");
+            }
+            metrics.addAll(CrapAnalyzer.analyze(moduleRoot, entry.getValue(), jacocoXml));
+        }
+        return metrics;
     }
 
     static boolean thresholdExceeded(double max) {
@@ -95,6 +105,27 @@ final class CliApplication {
         List<Path> sorted = new ArrayList<>(files);
         sorted.sort(Comparator.naturalOrder());
         return sorted;
+    }
+
+    static Path moduleRootFor(Path workspaceRoot, Path file) {
+        Path normalizedWorkspaceRoot = workspaceRoot.normalize();
+        Path current = Files.isDirectory(file) ? file.normalize() : file.normalize().getParent();
+        while (current != null && current.startsWith(normalizedWorkspaceRoot)) {
+            if (Files.exists(current.resolve("pom.xml"))) {
+                return current;
+            }
+            current = current.getParent();
+        }
+        return normalizedWorkspaceRoot;
+    }
+
+    private Map<Path, List<Path>> groupByModuleRoot(List<Path> filesToAnalyze) {
+        Map<Path, List<Path>> grouped = new LinkedHashMap<>();
+        for (Path file : filesToAnalyze) {
+            Path moduleRoot = moduleRootFor(projectRoot, file);
+            grouped.computeIfAbsent(moduleRoot, ignored -> new ArrayList<>()).add(file);
+        }
+        return grouped;
     }
 
     private static final class ParseOutcome {

@@ -49,7 +49,6 @@ final class JavaMethodParser {
                     List.of(new SourceFileObject(className, source))
             );
             Iterable<? extends CompilationUnitTree> units = task.parse();
-            task.analyze();
             return collectMethods(task, units);
         } catch (IOException ex) {
             throw new UncheckedIOException(ex);

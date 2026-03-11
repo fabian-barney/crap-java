@@ -33,7 +33,12 @@ class CoverageRunnerTest {
 
         assertFalse(Files.exists(jacocoDir));
         assertFalse(Files.exists(exec));
-        assertEquals(List.of("mvn", "-q", "test", "jacoco:report"), executor.commands.get(0));
+        assertEquals(List.of(
+                "mvn", "-q",
+                "org.jacoco:jacoco-maven-plugin:0.8.12:prepare-agent",
+                "test",
+                "org.jacoco:jacoco-maven-plugin:0.8.12:report"
+        ), executor.commands.get(0));
         assertEquals(tempDir, executor.directories.get(0));
     }
 

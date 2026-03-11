@@ -18,7 +18,12 @@ final class CoverageRunner {
         deleteIfExists(projectRoot.resolve("target/site/jacoco"));
         deleteIfExists(projectRoot.resolve("target/jacoco.exec"));
 
-        int exit = executor.run(List.of("mvn", "-q", "test", "jacoco:report"), projectRoot);
+        int exit = executor.run(List.of(
+                "mvn", "-q",
+                "org.jacoco:jacoco-maven-plugin:0.8.12:prepare-agent",
+                "test",
+                "org.jacoco:jacoco-maven-plugin:0.8.12:report"
+        ), projectRoot);
         if (exit != 0) {
             throw new IllegalStateException("Coverage command failed with exit " + exit);
         }

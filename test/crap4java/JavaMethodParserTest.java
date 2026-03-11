@@ -82,6 +82,23 @@ class JavaMethodParserTest {
     }
 
     @Test
+    void parsesMethodsWithoutResolvingSiblingTypes() {
+        String source = """
+                package demo;
+
+                class Sample {
+                    Helper helper() {
+                        return new Helper();
+                    }
+                }
+                """;
+
+        List<MethodDescriptor> methods = JavaMethodParser.parse("demo.Sample", source);
+
+        assertEquals(List.of(new MethodDescriptor("helper", 4, 6, 1)), methods);
+    }
+
+    @Test
     void ignoresKeywordsInsideCommentsAndStrings() {
         String source = """
                 class Sample {
