@@ -150,6 +150,20 @@ Configure GitHub Packages as a plugin repository:
 </pluginRepositories>
 ```
 
+Authenticate Maven with a matching `github` server entry, for example in `~/.m2/settings.xml`:
+
+```xml
+<servers>
+  <server>
+    <id>github</id>
+    <username>${env.GITHUB_ACTOR}</username>
+    <password>${env.GITHUB_TOKEN}</password>
+  </server>
+</servers>
+```
+
+The token used here needs package read access.
+
 Add the plugin:
 
 ```xml

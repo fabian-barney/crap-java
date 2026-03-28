@@ -19,7 +19,8 @@ tasks.withType<JavaCompile>().configureEach {
     options.release.set(17)
 }
 
-val coreJar = layout.projectDirectory.file("../core/target/crap4java-core-0.1.0.jar")
+val projectVersion = version.toString()
+val coreJar = layout.projectDirectory.file("../core/target/crap4java-core-${projectVersion}.jar")
 val githubActor = providers.gradleProperty("gpr.user").orElse(providers.environmentVariable("GITHUB_ACTOR"))
 val githubToken = providers.gradleProperty("gpr.key").orElse(providers.environmentVariable("GITHUB_TOKEN"))
 
