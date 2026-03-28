@@ -13,6 +13,13 @@ public final class Main {
         System.exit(run(args, Path.of(".").toAbsolutePath().normalize(), System.out, System.err));
     }
 
+    public static int runWithExistingCoverage(String[] args,
+                                              Path projectRoot,
+                                              PrintStream out,
+                                              PrintStream err) throws Exception {
+        return run(args, projectRoot, out, err, new CoverageRunner((command, directory) -> 0));
+    }
+
     static int run(String[] args, Path projectRoot, PrintStream out, PrintStream err) throws Exception {
         return run(args, projectRoot, out, err, new CoverageRunner(new ProcessCommandExecutor()));
     }

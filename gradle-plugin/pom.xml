@@ -9,7 +9,8 @@
     <version>0.1.0-SNAPSHOT</version>
   </parent>
 
+  <packaging>pom</packaging>
   <artifactId>crap4java-gradle-plugin</artifactId>
   <name>crap4java Gradle Plugin</name>
-  <description>Placeholder module for the native Gradle integration.</description>
+  <description>Wrapper module for the self-contained Gradle plugin build in gradle-plugin/.</description>
 </project>
