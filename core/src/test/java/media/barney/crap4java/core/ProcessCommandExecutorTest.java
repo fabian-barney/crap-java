@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Path;
+import java.util.Locale;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -21,7 +22,7 @@ class ProcessCommandExecutorTest {
     }
 
     private static List<String> exitCommand(int exitCode) {
-        if (System.getProperty("os.name").toLowerCase().startsWith("windows")) {
+        if (System.getProperty("os.name").toLowerCase(Locale.ROOT).startsWith("windows")) {
             return List.of("cmd", "/c", "exit " + exitCode);
         }
         return List.of("sh", "-c", "exit " + exitCode);

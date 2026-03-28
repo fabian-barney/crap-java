@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -97,7 +98,7 @@ class ChangedFileDetectorTest {
                 .redirectErrorStream(true)
                 .start();
         if (process.waitFor() != 0) {
-            String output = new String(process.getInputStream().readAllBytes());
+            String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
             throw new IllegalStateException(output);
         }
     }
