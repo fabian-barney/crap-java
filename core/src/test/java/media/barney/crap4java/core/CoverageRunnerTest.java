@@ -7,6 +7,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -36,7 +37,7 @@ class CoverageRunnerTest {
         assertFalse(Files.exists(jacocoDir));
         assertFalse(Files.exists(exec));
         assertEquals(List.of(
-                "mvn", "-q",
+                mavenCommand(), "-q",
                 "-pl", "module-a", "-am",
                 "org.jacoco:jacoco-maven-plugin:0.8.13:prepare-agent",
                 "test",
@@ -71,5 +72,12 @@ class CoverageRunnerTest {
             directories.add(directory);
             return exitCode;
         }
+    }
+
+    private static String mavenCommand() {
+        if (System.getProperty("os.name").toLowerCase(Locale.ROOT).startsWith("windows")) {
+            return "mvn.cmd";
+        }
+        return "mvn";
     }
 }

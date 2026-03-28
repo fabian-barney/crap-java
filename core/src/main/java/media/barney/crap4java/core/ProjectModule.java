@@ -93,7 +93,7 @@ record ProjectModule(Path moduleRoot, Path executionRoot, BuildTool buildTool) {
         if (!isWindows() && Files.exists(executionRoot.resolve("mvnw"))) {
             return "./mvnw";
         }
-        return "mvn";
+        return isWindows() ? "mvn.cmd" : "mvn";
     }
 
     private String gradleLauncher() {

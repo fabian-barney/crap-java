@@ -9,7 +9,91 @@
     <version>0.1.0-SNAPSHOT</version>
   </parent>
 
+  <packaging>maven-plugin</packaging>
   <artifactId>crap4java-maven-plugin</artifactId>
   <name>crap4java Maven Plugin</name>
-  <description>Placeholder module for the native Maven integration.</description>
+  <description>Native Maven plugin exposing the crap4java check goal.</description>
+
+  <dependencies>
+    <dependency>
+      <groupId>media.barney</groupId>
+      <artifactId>crap4java-core</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.maven</groupId>
+      <artifactId>maven-plugin-api</artifactId>
+      <version>3.9.9</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.maven</groupId>
+      <artifactId>maven-core</artifactId>
+      <version>3.9.9</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.maven.plugin-tools</groupId>
+      <artifactId>maven-plugin-annotations</artifactId>
+      <version>3.15.1</version>
+      <scope>provided</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-plugin-plugin</artifactId>
+        <version>3.15.1</version>
+        <configuration>
+          <goalPrefix>crap4java</goalPrefix>
+        </configuration>
+        <executions>
+          <execution>
+            <id>default-descriptor</id>
+            <goals>
+              <goal>descriptor</goal>
+              <goal>helpmojo</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-invoker-plugin</artifactId>
+        <version>3.9.1</version>
+        <configuration>
+          <cloneProjectsTo>${project.build.directory}/it</cloneProjectsTo>
+          <projectsDirectory>src/it</projectsDirectory>
+          <pomIncludes>
+            <pomInclude>*/pom.xml</pomInclude>
+          </pomIncludes>
+          <filterProperties>
+            <project.version>${project.version}</project.version>
+          </filterProperties>
+          <streamLogs>true</streamLogs>
+          <goals>
+            <goal>verify</goal>
+          </goals>
+        </configuration>
+        <executions>
+          <execution>
+            <id>invoker-install</id>
+            <phase>pre-integration-test</phase>
+            <goals>
+              <goal>install</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>invoker-run</id>
+            <phase>integration-test</phase>
+            <goals>
+              <goal>run</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
 </project>

@@ -1,0 +1,9 @@
+import java.nio.file.Files;
+
+if (!Files.exists(basedir.toPath().resolve("module-a/target/site/jacoco/jacoco.xml"))) {
+    throw new RuntimeException("Missing JaCoCo XML report for module-a");
+}
+if (!Files.exists(basedir.toPath().resolve("module-b/target/site/jacoco/jacoco.xml"))) {
+    throw new RuntimeException("Missing JaCoCo XML report for module-b");
+}
+return true;

@@ -10,7 +10,7 @@ The current CLI now resolves Maven and Gradle modules natively, including standa
 - `core`: analysis engine, build-tool-neutral CLI orchestration, and Maven/Gradle coverage runner
 - `cli`: executable entrypoint that packages the core as a runnable jar
 - `gradle-plugin`: self-contained Gradle plugin build exposing `media.barney.crap4java`
-- `maven-plugin`: placeholder module for the upcoming Maven integration
+- `maven-plugin`: native Maven plugin exposing the `check` goal
 
 ## Formula
 
@@ -44,6 +44,12 @@ Build and test the Gradle plugin module after packaging the core jar:
 ```bash
 mvn -pl core -am package
 gradle-plugin/gradlew test
+```
+
+Build and test the Maven plugin module, including its invoker integration fixtures:
+
+```bash
+mvn -pl maven-plugin -am verify
 ```
 
 ## Run

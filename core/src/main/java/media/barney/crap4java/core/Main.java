@@ -20,7 +20,7 @@ public final class Main {
         return run(args, projectRoot, out, err, new CoverageRunner((command, directory) -> 0));
     }
 
-    static int run(String[] args, Path projectRoot, PrintStream out, PrintStream err) throws Exception {
+    public static int run(String[] args, Path projectRoot, PrintStream out, PrintStream err) throws Exception {
         return run(args, projectRoot, out, err, new CoverageRunner(new ProcessCommandExecutor()));
     }
 
