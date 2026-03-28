@@ -1,0 +1,93 @@
+package media.barney.crap4java.core;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.EnumSet;
+
+final class ProjectModuleResolver {
+
+    private ProjectModuleResolver() {
+    }
+
+    static ProjectModule resolve(Path workspaceRoot, Path file, BuildToolSelection selection) {
+        Path normalizedWorkspaceRoot = workspaceRoot.normalize();
+        Path candidate = Files.isDirectory(file) ? file.normalize() : file.normalize().getParent();
+        while (candidate != null && candidate.startsWith(normalizedWorkspaceRoot)) {
+            EnumSet<BuildTool> detected = BuildTool.detect(candidate);
+            if (!detected.isEmpty()) {
+                BuildTool buildTool = selectBuildTool(candidate, detected, selection);
+                return new ProjectModule(candidate, executionRoot(normalizedWorkspaceRoot, candidate, buildTool), buildTool);
+            }
+            candidate = candidate.getParent();
+        }
+        throw new IllegalArgumentException("No Maven or Gradle module found for " + file.normalize());
+    }
+
+    private static BuildTool selectBuildTool(Path moduleRoot,
+                                             EnumSet<BuildTool> detected,
+                                             BuildToolSelection selection) {
+        if (selection == BuildToolSelection.AUTO) {
+            if (detected.size() == 1) {
+                return detected.iterator().next();
+            }
+            throw new IllegalArgumentException(
+                    "Ambiguous build tool for module " + moduleRoot
+                            + ". Found both Maven and Gradle markers. Use --build-tool maven or --build-tool gradle."
+            );
+        }
+
+        BuildTool requested = selection.toBuildTool();
+        if (detected.contains(requested)) {
+            return requested;
+        }
+        throw new IllegalArgumentException(
+                "Requested build tool " + selection.name().toLowerCase()
+                        + " does not match the detected module at " + moduleRoot + "."
+        );
+    }
+
+    private static Path executionRoot(Path workspaceRoot, Path moduleRoot, BuildTool buildTool) {
+        return switch (buildTool) {
+            case MAVEN -> topmostAncestor(workspaceRoot, moduleRoot,
+                    directory -> Files.exists(directory.resolve("mvnw"))
+                            || Files.exists(directory.resolve("mvnw.cmd"))
+                            || Files.exists(directory.resolve("pom.xml")));
+            case GRADLE -> {
+                Path settingsOrWrapper = topmostAncestorOrNull(workspaceRoot, moduleRoot,
+                        directory -> Files.exists(directory.resolve("settings.gradle"))
+                                || Files.exists(directory.resolve("settings.gradle.kts"))
+                                || Files.exists(directory.resolve("gradlew"))
+                                || Files.exists(directory.resolve("gradlew.bat")));
+                if (settingsOrWrapper != null) {
+                    yield settingsOrWrapper;
+                }
+                yield topmostAncestor(workspaceRoot, moduleRoot,
+                        directory -> Files.exists(directory.resolve("build.gradle"))
+                                || Files.exists(directory.resolve("build.gradle.kts")));
+            }
+        };
+    }
+
+    private static Path topmostAncestor(Path workspaceRoot, Path start, DirectoryPredicate predicate) {
+        Path match = topmostAncestorOrNull(workspaceRoot, start, predicate);
+        return match != null ? match : start.normalize();
+    }
+
+    private static Path topmostAncestorOrNull(Path workspaceRoot, Path start, DirectoryPredicate predicate) {
+        Path normalizedWorkspaceRoot = workspaceRoot.normalize();
+        Path current = start.normalize();
+        Path match = null;
+        while (current != null && current.startsWith(normalizedWorkspaceRoot)) {
+            if (predicate.test(current)) {
+                match = current;
+            }
+            current = current.getParent();
+        }
+        return match;
+    }
+
+    @FunctionalInterface
+    private interface DirectoryPredicate {
+        boolean test(Path directory);
+    }
+}

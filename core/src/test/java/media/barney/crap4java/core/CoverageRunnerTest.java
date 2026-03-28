@@ -19,25 +19,28 @@ class CoverageRunnerTest {
 
     @Test
     void deletesStaleCoverageAndRunsMavenCoverageCommand() throws Exception {
-        Path jacocoDir = tempDir.resolve("target/site/jacoco");
+        Path moduleRoot = tempDir.resolve("module-a");
+        Files.createDirectories(moduleRoot);
+        Path jacocoDir = moduleRoot.resolve("target/site/jacoco");
         Files.createDirectories(jacocoDir);
         Files.writeString(jacocoDir.resolve("old.xml"), "stale");
-        Path exec = tempDir.resolve("target/jacoco.exec");
+        Path exec = moduleRoot.resolve("target/jacoco.exec");
         Files.createDirectories(exec.getParent());
         Files.writeString(exec, "stale");
 
         RecordingExecutor executor = new RecordingExecutor(0);
         CoverageRunner runner = new CoverageRunner(executor);
 
-        runner.generateCoverage(tempDir);
+        runner.generateCoverage(new ProjectModule(moduleRoot, tempDir, BuildTool.MAVEN));
 
         assertFalse(Files.exists(jacocoDir));
         assertFalse(Files.exists(exec));
         assertEquals(List.of(
                 "mvn", "-q",
-                "org.jacoco:jacoco-maven-plugin:0.8.12:prepare-agent",
+                "-pl", "module-a", "-am",
+                "org.jacoco:jacoco-maven-plugin:0.8.13:prepare-agent",
                 "test",
-                "org.jacoco:jacoco-maven-plugin:0.8.12:report"
+                "org.jacoco:jacoco-maven-plugin:0.8.13:report"
         ), executor.commands.get(0));
         assertEquals(tempDir, executor.directories.get(0));
     }
@@ -48,7 +51,7 @@ class CoverageRunnerTest {
         CoverageRunner runner = new CoverageRunner(executor);
 
         IllegalStateException ex = assertThrows(IllegalStateException.class,
-                () -> runner.generateCoverage(tempDir));
+                () -> runner.generateCoverage(new ProjectModule(tempDir, tempDir, BuildTool.GRADLE)));
 
         assertEquals("Coverage command failed with exit 2", ex.getMessage());
     }

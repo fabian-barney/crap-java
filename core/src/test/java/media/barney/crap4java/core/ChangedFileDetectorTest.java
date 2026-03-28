@@ -54,15 +54,17 @@ class ChangedFileDetectorTest {
     }
 
     @Test
-    void filtersChangedFilesToSrcTreeOnly() throws Exception {
+    void filtersChangedFilesToSourceTreesOnly() throws Exception {
         run(tempDir, "git", "init");
         run(tempDir, "git", "config", "user.email", "test@example.com");
         run(tempDir, "git", "config", "user.name", "test");
 
         Path mainSrc = tempDir.resolve("src/main/java/demo");
-        Path testSrc = tempDir.resolve("test/crap4java");
+        Path moduleTestSrc = tempDir.resolve("module-a/src/test/java/demo");
+        Path nonSourceTree = tempDir.resolve("test/crap4java");
         Files.createDirectories(mainSrc);
-        Files.createDirectories(testSrc);
+        Files.createDirectories(moduleTestSrc);
+        Files.createDirectories(nonSourceTree);
 
         Path tracked = mainSrc.resolve("Tracked.java");
         Files.writeString(tracked, "class Tracked {}\n");
@@ -70,11 +72,16 @@ class ChangedFileDetectorTest {
         run(tempDir, "git", "commit", "-m", "init");
 
         Files.writeString(tracked, "class Tracked { int x = 1; }\n");
-        Files.writeString(testSrc.resolve("ChangedFileDetectorTest.java"), "class ChangedFileDetectorTest {}\n");
+        Path nested = moduleTestSrc.resolve("NestedChanged.java");
+        Files.writeString(nested, "class NestedChanged {}\n");
+        Files.writeString(nonSourceTree.resolve("ChangedFileDetectorTest.java"), "class ChangedFileDetectorTest {}\n");
 
-        List<Path> changed = ChangedFileDetector.changedJavaFilesUnderSrc(tempDir);
+        List<Path> changed = ChangedFileDetector.changedJavaFilesUnderSourceRoots(tempDir);
 
-        assertEquals(List.of(tempDir.resolve("src/main/java/demo/Tracked.java")), changed);
+        assertEquals(List.of(
+                tempDir.resolve("module-a/src/test/java/demo/NestedChanged.java"),
+                tempDir.resolve("src/main/java/demo/Tracked.java")
+        ), changed);
     }
 
     @Test

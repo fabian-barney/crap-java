@@ -3,11 +3,11 @@
 `crap4java` is a shared CRAP metric toolkit for Java projects.
 
 It combines method cyclomatic complexity with JaCoCo method coverage and reports CRAP scores.
-The current implementation still behaves like the original Maven-oriented CLI while the native Gradle and Maven plugin integrations are being built in dedicated modules.
+The current CLI now resolves Maven and Gradle modules natively, including standard multi-module layouts, while the dedicated build tool plugins are being added in separate modules.
 
 ## Modules
 
-- `core`: analysis engine, CLI orchestration, and current Maven-oriented coverage runner
+- `core`: analysis engine, build-tool-neutral CLI orchestration, and Maven/Gradle coverage runner
 - `cli`: executable entrypoint that packages the core as a runnable jar
 - `gradle-plugin`: placeholder module for the upcoming Gradle integration
 - `maven-plugin`: placeholder module for the upcoming Maven integration
@@ -21,14 +21,17 @@ The current implementation still behaves like the original Maven-oriented CLI wh
 
 ## Coverage Pipeline
 
-For each invocation today:
+For each resolved module today:
 
-1. Delete stale coverage artifacts:
-   - `target/site/jacoco/`
-   - `target/jacoco.exec`
-2. Run `mvn -q org.jacoco:jacoco-maven-plugin:0.8.12:prepare-agent test org.jacoco:jacoco-maven-plugin:0.8.12:report`
-3. Read `target/site/jacoco/jacoco.xml`
-4. Analyze selected Java files
+1. Detect Maven or Gradle automatically, unless `--build-tool` is supplied.
+2. Delete stale JaCoCo artifacts for the detected build tool.
+3. Run the module-scoped coverage command:
+   - Maven: `mvn` or `mvnw`, using JaCoCo `0.8.13`
+   - Gradle: `gradle` or `gradlew`, running `test` and `jacocoTestReport`
+4. Read the module report:
+   - Maven: `target/site/jacoco/jacoco.xml`
+   - Gradle: `build/reports/jacoco/test/jacocoTestReport.xml`
+5. Analyze the selected Java files for that module
 
 ## Build and Test
 
@@ -56,8 +59,9 @@ java -jar cli/target/crap4java-cli-0.1.0-SNAPSHOT.jar
 --help                Print usage to stdout
 (no args)             Analyze all Java files under src/
 --changed             Analyze changed Java files under src/
+--build-tool <tool>   Force `auto`, `maven`, or `gradle`
 <file ...>            Analyze only these files
-<directory ...>       Analyze all Java files under each directory's src/ subtree
+<directory ...>       Analyze all Java files under each directory's nested src/ subtrees
 ```
 
 Examples:
@@ -66,6 +70,8 @@ Examples:
 java -jar cli/target/crap4java-cli-0.1.0-SNAPSHOT.jar --help
 java -jar cli/target/crap4java-cli-0.1.0-SNAPSHOT.jar
 java -jar cli/target/crap4java-cli-0.1.0-SNAPSHOT.jar --changed
+java -jar cli/target/crap4java-cli-0.1.0-SNAPSHOT.jar --build-tool gradle
+java -jar cli/target/crap4java-cli-0.1.0-SNAPSHOT.jar --build-tool maven module-a/src/main/java/demo/Sample.java
 java -jar cli/target/crap4java-cli-0.1.0-SNAPSHOT.jar src/main/java/demo/Sample.java
 java -jar cli/target/crap4java-cli-0.1.0-SNAPSHOT.jar module-a module-b
 ```

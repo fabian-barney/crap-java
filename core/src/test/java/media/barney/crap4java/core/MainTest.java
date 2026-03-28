@@ -29,6 +29,7 @@ class MainTest {
 
         assertEquals(0, exit);
         assertTrue(out.toString().contains("Usage:"));
+        assertTrue(out.toString().contains("--build-tool"));
     }
 
     @Test
@@ -62,6 +63,7 @@ class MainTest {
     void explicitFileArgsAreAnalyzed() throws Exception {
         Path sourceRoot = tempDir.resolve("src/main/java/demo");
         Files.createDirectories(sourceRoot);
+        Files.writeString(tempDir.resolve("pom.xml"), "<project/>");
         Path source = sourceRoot.resolve("Sample.java");
         Files.writeString(source, """
                 package demo;
@@ -96,6 +98,7 @@ class MainTest {
         Path moduleRoot = tempDir.resolve("module-a");
         Path sourceRoot = moduleRoot.resolve("src/main/java/demo");
         Files.createDirectories(sourceRoot);
+        Files.writeString(moduleRoot.resolve("build.gradle"), "plugins { id 'java' }");
         Files.writeString(sourceRoot.resolve("Sample.java"), """
                 package demo;
                 class Sample {

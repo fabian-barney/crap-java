@@ -13,18 +13,21 @@ class CliArgumentsParserTest {
     void noArgsMeansAllSrcFiles() {
         CliArguments args = CliArgumentsParser.parse(new String[]{});
         assertEquals(CliMode.ALL_SRC, args.mode());
+        assertEquals(BuildToolSelection.AUTO, args.buildToolSelection());
     }
 
     @Test
     void changedFlagMeansChangedSrcFiles() {
         CliArguments args = CliArgumentsParser.parse(new String[]{"--changed"});
         assertEquals(CliMode.CHANGED_SRC, args.mode());
+        assertEquals(BuildToolSelection.AUTO, args.buildToolSelection());
     }
 
     @Test
     void fileNamesMeanExplicitFiles() {
         CliArguments args = CliArgumentsParser.parse(new String[]{"src/main/java/demo/A.java", "src/main/java/demo/B.java"});
         assertEquals(CliMode.EXPLICIT_FILES, args.mode());
+        assertEquals(BuildToolSelection.AUTO, args.buildToolSelection());
         assertEquals(List.of("src/main/java/demo/A.java", "src/main/java/demo/B.java"), args.fileArgs());
     }
 
@@ -34,6 +37,32 @@ class CliArgumentsParserTest {
 
         assertEquals(CliMode.EXPLICIT_FILES, args.mode());
         assertEquals(List.of("src/main/java/demo/A.java", "src/main/java/demo/B.java"), args.fileArgs());
+    }
+
+    @Test
+    void buildToolFlagIsParsed() {
+        CliArguments args = CliArgumentsParser.parse(new String[]{"--build-tool", "gradle", "--changed"});
+
+        assertEquals(CliMode.CHANGED_SRC, args.mode());
+        assertEquals(BuildToolSelection.GRADLE, args.buildToolSelection());
+    }
+
+    @Test
+    void buildToolRequiresKnownValue() {
+        assertThrows(IllegalArgumentException.class,
+                () -> CliArgumentsParser.parse(new String[]{"--build-tool", "ant"}));
+    }
+
+    @Test
+    void buildToolRequiresValue() {
+        assertThrows(IllegalArgumentException.class,
+                () -> CliArgumentsParser.parse(new String[]{"--build-tool"}));
+    }
+
+    @Test
+    void buildToolCanOnlyBeProvidedOnce() {
+        assertThrows(IllegalArgumentException.class,
+                () -> CliArgumentsParser.parse(new String[]{"--build-tool", "maven", "--build-tool", "gradle"}));
     }
 
     @Test
