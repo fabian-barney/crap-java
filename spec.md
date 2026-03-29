@@ -1,8 +1,8 @@
-# crap4java Specification
+# crap-java Specification
 
 ## 1. Purpose
 
-`crap4java` is a CRAP metric analyzer for Java projects.
+`crap-java` is a CRAP metric analyzer for Java projects.
 
 It shall:
 
@@ -13,7 +13,7 @@ It shall:
 - print a tabular report sorted by worst score first
 - fail when the maximum CRAP score exceeds the configured threshold
 
-`crap4java` is intended as a project-quality gate rather than a mutation tool.
+`crap-java` is intended as a project-quality gate rather than a mutation tool.
 
 ## 2. Scope
 
@@ -36,7 +36,7 @@ This specification does not define:
 ## 3. Terminology
 
 - `project root`
-  The working root from which `crap4java` is invoked.
+  The working root from which `crap-java` is invoked.
 
 - `module root`
   The nearest ancestor directory of an analyzed file that contains `pom.xml`. If none exists below the project root, the project root is the module root.
@@ -53,10 +53,10 @@ This specification does not define:
 
 The tool shall support these forms:
 
-- `crap4java`
-- `crap4java --changed`
-- `crap4java <path...>`
-- `crap4java --help`
+- `crap-java`
+- `crap-java --changed`
+- `crap-java <path...>`
+- `crap-java --help`
 
 ### 4.2 Mode Semantics
 

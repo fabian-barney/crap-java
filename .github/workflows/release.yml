@@ -62,10 +62,10 @@ jobs:
           cat > release-notes.md <<EOF
           ## Artifacts
 
-          - \`media.barney:crap4java-core:${version}\`
-          - \`media.barney:crap4java-cli:${version}\`
-          - \`media.barney:crap4java-maven-plugin:${version}\`
-          - Gradle plugin id \`media.barney.crap4java\` version \`${version}\`
+          - \`media.barney:crap-java-core:${version}\`
+          - \`media.barney:crap-java-cli:${version}\`
+          - \`media.barney:crap-java-maven-plugin:${version}\`
+          - Gradle plugin id \`media.barney.crap-java\` version \`${version}\`
           EOF
           if gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1; then
             gh release edit "${GITHUB_REF_NAME}" --title "${GITHUB_REF_NAME}" --notes-file release-notes.md
