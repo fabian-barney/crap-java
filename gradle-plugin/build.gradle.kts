@@ -9,18 +9,14 @@ plugins {
 }
 
 group = "media.barney"
-version = "0.1.2"
+version = "0.2.0"
 
 repositories {
     mavenCentral()
 }
 
-tasks.withType<JavaCompile>().configureEach {
-    options.release.set(17)
-}
-
 val projectVersion = version.toString()
-val coreJar = layout.projectDirectory.file("../core/target/crap4java-core-${projectVersion}.jar")
+val coreJar = layout.projectDirectory.file("../core/target/crap-java-core-${projectVersion}.jar")
 val githubActor = providers.gradleProperty("gpr.user").orElse(providers.environmentVariable("GITHUB_ACTOR"))
 val githubToken = providers.gradleProperty("gpr.key").orElse(providers.environmentVariable("GITHUB_TOKEN"))
 
@@ -34,8 +30,13 @@ val verifyCoreJar = tasks.register("verifyCoreJar") {
     }
 }
 
+tasks.withType<JavaCompile>().configureEach {
+    dependsOn(verifyCoreJar)
+    options.release.set(17)
+}
+
 dependencies {
-    implementation(files(coreJar))
+    implementation(files(coreJar.asFile))
     testImplementation(platform("org.junit:junit-bom:5.10.2"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testImplementation(gradleTestKit())
@@ -61,7 +62,7 @@ publishing {
     repositories {
         maven {
             name = "GitHubPackages"
-            url = uri("https://maven.pkg.github.com/fabian-barney/crap4java")
+            url = uri("https://maven.pkg.github.com/fabian-barney/crap-java")
             credentials {
                 username = githubActor.orNull
                 password = githubToken.orNull
@@ -70,20 +71,20 @@ publishing {
     }
     publications.withType<MavenPublication>().configureEach {
         pom {
-            name.set("crap4java Gradle Plugin")
-            description.set("Gradle plugin exposing the crap4javaCheck verification task.")
-            url.set("https://github.com/fabian-barney/crap4java")
+            name.set("crap-java Gradle Plugin")
+            description.set("Gradle plugin exposing the crap-java-check verification task.")
+            url.set("https://github.com/fabian-barney/crap-java")
         }
     }
 }
 
 gradlePlugin {
     plugins {
-        create("crap4java") {
-            id = "media.barney.crap4java"
-            implementationClass = "media.barney.crap4java.gradle.Crap4JavaGradlePlugin"
-            displayName = "crap4java Gradle Plugin"
-            description = "Registers the crap4javaCheck verification task for Gradle Java projects."
+        create("crap-java") {
+            id = "media.barney.crap-java"
+            implementationClass = "media.barney.crapjava.gradle.CrapJavaGradlePlugin"
+            displayName = "crap-java Gradle Plugin"
+            description = "Registers the crap-java-check verification task for Gradle Java projects."
         }
     }
 }

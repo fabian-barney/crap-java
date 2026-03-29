@@ -5,12 +5,12 @@
 
   <parent>
     <groupId>media.barney</groupId>
-    <artifactId>crap4java-parent</artifactId>
-    <version>0.1.2</version>
+    <artifactId>crap-java-parent</artifactId>
+    <version>0.2.0</version>
   </parent>
 
   <packaging>pom</packaging>
-  <artifactId>crap4java-gradle-plugin-build</artifactId>
-  <name>crap4java Gradle Plugin</name>
+  <artifactId>crap-java-gradle-plugin-build</artifactId>
+  <name>crap-java Gradle Plugin</name>
   <description>Wrapper module for the self-contained Gradle plugin build in gradle-plugin/.</description>
 </project>

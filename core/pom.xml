@@ -5,12 +5,12 @@
 
   <parent>
     <groupId>media.barney</groupId>
-    <artifactId>crap4java-parent</artifactId>
-    <version>0.1.2</version>
+    <artifactId>crap-java-parent</artifactId>
+    <version>0.2.0</version>
   </parent>
 
-  <artifactId>crap4java-core</artifactId>
-  <name>crap4java Core</name>
+  <artifactId>crap-java-core</artifactId>
+  <name>crap-java Core</name>
   <description>Core CRAP analysis and CLI orchestration logic.</description>
 
   <dependencies>

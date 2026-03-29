@@ -5,18 +5,18 @@
 
   <parent>
     <groupId>media.barney</groupId>
-    <artifactId>crap4java-parent</artifactId>
-    <version>0.1.2</version>
+    <artifactId>crap-java-parent</artifactId>
+    <version>0.2.0</version>
   </parent>
 
-  <artifactId>crap4java-cli</artifactId>
-  <name>crap4java CLI</name>
-  <description>Executable CLI entrypoint for crap4java.</description>
+  <artifactId>crap-java-cli</artifactId>
+  <name>crap-java CLI</name>
+  <description>Executable CLI entrypoint for crap-java.</description>
 
   <dependencies>
     <dependency>
       <groupId>media.barney</groupId>
-      <artifactId>crap4java-core</artifactId>
+      <artifactId>crap-java-core</artifactId>
       <version>${project.version}</version>
     </dependency>
   </dependencies>
@@ -36,7 +36,7 @@
               <createDependencyReducedPom>false</createDependencyReducedPom>
               <transformers>
                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                  <mainClass>media.barney.crap4java.cli.Main</mainClass>
+                  <mainClass>media.barney.crapjava.cli.Main</mainClass>
                 </transformer>
               </transformers>
             </configuration>

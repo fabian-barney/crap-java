@@ -1,6 +1,6 @@
-# crap4java
+# crap-java
 
-`crap4java` is a shared CRAP metric toolkit for Java projects.
+`crap-java` is a shared CRAP metric toolkit for Java projects.
 
 It combines method cyclomatic complexity with JaCoCo method coverage and reports CRAP scores.
 The toolkit resolves Maven and Gradle modules natively, including standard multi-module layouts, and publishes a standalone CLI plus dedicated Gradle and Maven plugins.
@@ -9,7 +9,7 @@ The toolkit resolves Maven and Gradle modules natively, including standard multi
 
 - `core`: analysis engine, build-tool-neutral CLI orchestration, and Maven/Gradle coverage runner
 - `cli`: executable entrypoint that packages the core as a runnable jar
-- `gradle-plugin`: self-contained Gradle plugin build exposing `media.barney.crap4java`
+- `gradle-plugin`: self-contained Gradle plugin build exposing `media.barney.crap-java`
 - `maven-plugin`: native Maven plugin exposing the `check` goal
 
 ## Formula
@@ -64,7 +64,7 @@ mvn -B -pl cli -am -DskipTests package
 From the project root you want to analyze:
 
 ```bash
-java -jar cli/target/crap4java-cli-0.1.2.jar
+java -jar cli/target/crap-java-cli-0.2.0.jar
 ```
 
 ## CLI
@@ -81,23 +81,23 @@ java -jar cli/target/crap4java-cli-0.1.2.jar
 Examples:
 
 ```bash
-java -jar cli/target/crap4java-cli-0.1.2.jar --help
-java -jar cli/target/crap4java-cli-0.1.2.jar
-java -jar cli/target/crap4java-cli-0.1.2.jar --changed
-java -jar cli/target/crap4java-cli-0.1.2.jar --build-tool gradle
-java -jar cli/target/crap4java-cli-0.1.2.jar --build-tool maven module-a/src/main/java/demo/Sample.java
-java -jar cli/target/crap4java-cli-0.1.2.jar src/main/java/demo/Sample.java
-java -jar cli/target/crap4java-cli-0.1.2.jar module-a module-b
+java -jar cli/target/crap-java-cli-0.2.0.jar --help
+java -jar cli/target/crap-java-cli-0.2.0.jar
+java -jar cli/target/crap-java-cli-0.2.0.jar --changed
+java -jar cli/target/crap-java-cli-0.2.0.jar --build-tool gradle
+java -jar cli/target/crap-java-cli-0.2.0.jar --build-tool maven module-a/src/main/java/demo/Sample.java
+java -jar cli/target/crap-java-cli-0.2.0.jar src/main/java/demo/Sample.java
+java -jar cli/target/crap-java-cli-0.2.0.jar module-a module-b
 ```
 
 ## GitHub Packages
 
-Release `0.1.2` publishes these coordinates to GitHub Packages:
+Release `0.2.0` publishes these coordinates to GitHub Packages:
 
-- `media.barney:crap4java-core:0.1.2`
-- `media.barney:crap4java-cli:0.1.2`
-- `media.barney:crap4java-maven-plugin:0.1.2`
-- Gradle plugin id `media.barney.crap4java` version `0.1.2`
+- `media.barney:crap-java-core:0.2.0`
+- `media.barney:crap-java-cli:0.2.0`
+- `media.barney:crap-java-maven-plugin:0.2.0`
+- Gradle plugin id `media.barney.crap-java` version `0.2.0`
 
 ### Gradle
 
@@ -107,7 +107,7 @@ Configure the plugin repository in `settings.gradle(.kts)`:
 pluginManagement {
     repositories {
         maven {
-            url = uri("https://maven.pkg.github.com/fabian-barney/crap4java")
+            url = uri("https://maven.pkg.github.com/fabian-barney/crap-java")
             credentials {
                 username = providers.gradleProperty("gpr.user")
                     .orElse(providers.environmentVariable("GITHUB_ACTOR"))
@@ -127,14 +127,14 @@ Apply the plugin in `build.gradle(.kts)`:
 
 ```kotlin
 plugins {
-    id("media.barney.crap4java") version "0.1.2"
+    id("media.barney.crap-java") version "0.2.0"
 }
 ```
 
 Run:
 
 ```bash
-./gradlew crap4javaCheck
+./gradlew crap-java-check
 ```
 
 ### Maven
@@ -145,7 +145,7 @@ Configure GitHub Packages as a plugin repository:
 <pluginRepositories>
   <pluginRepository>
     <id>github</id>
-    <url>https://maven.pkg.github.com/fabian-barney/crap4java</url>
+    <url>https://maven.pkg.github.com/fabian-barney/crap-java</url>
   </pluginRepository>
 </pluginRepositories>
 ```
@@ -171,8 +171,8 @@ Add the plugin:
   <plugins>
     <plugin>
       <groupId>media.barney</groupId>
-      <artifactId>crap4java-maven-plugin</artifactId>
-      <version>0.1.2</version>
+      <artifactId>crap-java-maven-plugin</artifactId>
+      <version>0.2.0</version>
       <executions>
         <execution>
           <goals>
@@ -193,7 +193,7 @@ mvn verify
 
 ## Release
 
-Tag `v0.1.2` from `main` after the pull request checks are green. The tag-triggered release workflow publishes the Maven artifacts, publishes the Gradle plugin publications, and creates the GitHub release.
+Tag `v0.2.0` from `main` after the pull request checks are green. The tag-triggered release workflow publishes the Maven artifacts, publishes the Gradle plugin publications, and creates the GitHub release.
 
 ## Exit Codes
 

@@ -5,19 +5,19 @@
 
   <parent>
     <groupId>media.barney</groupId>
-    <artifactId>crap4java-parent</artifactId>
-    <version>0.1.2</version>
+    <artifactId>crap-java-parent</artifactId>
+    <version>0.2.0</version>
   </parent>
 
   <packaging>maven-plugin</packaging>
-  <artifactId>crap4java-maven-plugin</artifactId>
-  <name>crap4java Maven Plugin</name>
-  <description>Native Maven plugin exposing the crap4java check goal.</description>
+  <artifactId>crap-java-maven-plugin</artifactId>
+  <name>crap-java Maven Plugin</name>
+  <description>Native Maven plugin exposing the crap-java check goal.</description>
 
   <dependencies>
     <dependency>
       <groupId>media.barney</groupId>
-      <artifactId>crap4java-core</artifactId>
+      <artifactId>crap-java-core</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
@@ -47,7 +47,7 @@
         <artifactId>maven-plugin-plugin</artifactId>
         <version>3.15.1</version>
         <configuration>
-          <goalPrefix>crap4java</goalPrefix>
+          <goalPrefix>crap-java</goalPrefix>
         </configuration>
         <executions>
           <execution>

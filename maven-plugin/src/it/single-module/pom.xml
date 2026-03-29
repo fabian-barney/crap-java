@@ -29,7 +29,7 @@
       </plugin>
       <plugin>
         <groupId>media.barney</groupId>
-        <artifactId>crap4java-maven-plugin</artifactId>
+        <artifactId>crap-java-maven-plugin</artifactId>
         <version>@project.version@</version>
         <executions>
           <execution>

@@ -1,1 +1,1 @@
-rootProject.name = "crap4java-gradle-plugin"
+rootProject.name = "crap-java-gradle-plugin"
