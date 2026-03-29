@@ -90,7 +90,9 @@ class JacocoCoverageParserTest {
         assertFalse(factory.getFeature("http://apache.org/xml/features/disallow-doctype-decl"));
         assertFalse(factory.getFeature("http://xml.org/sax/features/external-general-entities"));
         assertFalse(factory.getFeature("http://xml.org/sax/features/external-parameter-entities"));
-        assertTrue(factory.getFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd"));
+        assertFalse(factory.getFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd"));
+        assertEquals("", factory.getAttribute(javax.xml.XMLConstants.ACCESS_EXTERNAL_DTD));
+        assertEquals("", factory.getAttribute(javax.xml.XMLConstants.ACCESS_EXTERNAL_SCHEMA));
         assertFalse(factory.isXIncludeAware());
         assertFalse(factory.isExpandEntityReferences());
     }
