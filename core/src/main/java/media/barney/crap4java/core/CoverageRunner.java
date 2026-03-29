@@ -1,9 +1,11 @@
 package media.barney.crap4java.core;
 
 import java.io.IOException;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
-import java.util.Comparator;
+import java.nio.file.attribute.BasicFileAttributes;
 
 final class CoverageRunner {
 
@@ -14,8 +16,9 @@ final class CoverageRunner {
     }
 
     void generateCoverage(ProjectModule module) throws Exception {
+        Path moduleRootRealPath = module.moduleRoot().toRealPath();
         for (Path staleCoveragePath : module.staleCoveragePaths()) {
-            deleteIfExists(staleCoveragePath);
+            deleteIfExists(module.moduleRoot(), moduleRootRealPath, staleCoveragePath);
         }
 
         int exit = executor.run(module.coverageCommand(), module.executionRoot());
@@ -24,23 +27,41 @@ final class CoverageRunner {
         }
     }
 
-    private void deleteIfExists(Path path) throws IOException {
-        if (!Files.exists(path)) {
+    private void deleteIfExists(Path moduleRoot, Path moduleRootRealPath, Path path) throws IOException {
+        Path normalizedPath = path.normalize();
+        if (!normalizedPath.startsWith(moduleRoot.normalize())) {
+            throw new IllegalStateException("Refusing to delete stale coverage outside module root: " + normalizedPath);
+        }
+        if (!Files.exists(normalizedPath, LinkOption.NOFOLLOW_LINKS)) {
             return;
         }
-        if (Files.isDirectory(path)) {
-            try (var walk = Files.walk(path)) {
-                walk.sorted(Comparator.reverseOrder())
-                        .forEach(p -> {
-                            try {
-                                Files.deleteIfExists(p);
-                            } catch (IOException ex) {
-                                throw new IllegalStateException("Failed deleting stale coverage: " + p, ex);
-                            }
-                        });
+        deleteRecursively(moduleRootRealPath, normalizedPath);
+    }
+
+    private void deleteRecursively(Path moduleRootRealPath, Path path) throws IOException {
+        BasicFileAttributes attributes = Files.readAttributes(path, BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
+        if (isLinkLike(attributes)) {
+            Files.deleteIfExists(path);
+            return;
+        }
+
+        Path realPath = path.toRealPath();
+        if (!realPath.startsWith(moduleRootRealPath)) {
+            throw new IllegalStateException("Refusing to delete stale coverage outside module root: " + path);
+        }
+
+        if (attributes.isDirectory()) {
+            try (DirectoryStream<Path> entries = Files.newDirectoryStream(path)) {
+                for (Path entry : entries) {
+                    deleteRecursively(moduleRootRealPath, entry);
+                }
             }
-            return;
         }
+
         Files.deleteIfExists(path);
+    }
+
+    private boolean isLinkLike(BasicFileAttributes attributes) {
+        return attributes.isSymbolicLink() || attributes.isOther();
     }
 }
