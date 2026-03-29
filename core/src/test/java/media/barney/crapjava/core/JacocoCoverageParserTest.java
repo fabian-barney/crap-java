@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -37,8 +38,8 @@ class JacocoCoverageParserTest {
 
         Map<String, CoverageData> result = JacocoCoverageParser.parse(xml);
 
-        assertEquals(90.0, result.get("demo.Sample#alpha:10").coveragePercent(), 0.001);
-        assertEquals(0.0, result.get("demo.Sample#beta:20").coveragePercent(), 0.001);
+        assertEquals(90.0, Objects.requireNonNull(result.get("demo.Sample#alpha:10")).coveragePercent(), 0.001);
+        assertEquals(0.0, Objects.requireNonNull(result.get("demo.Sample#beta:20")).coveragePercent(), 0.001);
     }
 
     @Test
@@ -59,7 +60,7 @@ class JacocoCoverageParserTest {
 
         Map<String, CoverageData> result = JacocoCoverageParser.parse(xml);
 
-        assertEquals(90.0, result.get("demo.Sample#alpha:10").coveragePercent(), 0.001);
+        assertEquals(90.0, Objects.requireNonNull(result.get("demo.Sample#alpha:10")).coveragePercent(), 0.001);
     }
 
     @Test
@@ -79,7 +80,7 @@ class JacocoCoverageParserTest {
 
         Map<String, CoverageData> result = JacocoCoverageParser.parse(xml);
 
-        assertEquals(90.0, result.get("demo.Sample#alpha:0").coveragePercent(), 0.001);
+        assertEquals(90.0, Objects.requireNonNull(result.get("demo.Sample#alpha:0")).coveragePercent(), 0.001);
     }
 
     @Test

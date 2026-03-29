@@ -1,11 +1,13 @@
 package media.barney.crapjava.core;
 
+import org.jspecify.annotations.Nullable;
+
 final class CrapScore {
 
     private CrapScore() {
     }
 
-    static Double calculate(int complexity, Double coveragePercent) {
+    static @Nullable Double calculate(int complexity, @Nullable Double coveragePercent) {
         if (coveragePercent == null) {
             return null;
         }

@@ -10,6 +10,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.jspecify.annotations.Nullable;
 
 final class CliApplication {
 
@@ -36,7 +37,7 @@ final class CliApplication {
         if (parse.exitCode >= 0) {
             return parse.exitCode;
         }
-        CliArguments parsed = parse.arguments;
+        CliArguments parsed = parse.arguments();
         try {
             List<Path> filesToAnalyze = filesForMode(parsed);
             if (filesToAnalyze.isEmpty()) {
@@ -135,10 +136,10 @@ final class CliApplication {
     }
 
     private static final class ParseOutcome {
-        private final CliArguments arguments;
+        private final @Nullable CliArguments arguments;
         private final int exitCode;
 
-        private ParseOutcome(CliArguments arguments, int exitCode) {
+        private ParseOutcome(@Nullable CliArguments arguments, int exitCode) {
             this.arguments = arguments;
             this.exitCode = exitCode;
         }
@@ -149,6 +150,13 @@ final class CliApplication {
 
         private static ParseOutcome exit(int code) {
             return new ParseOutcome(null, code);
+        }
+
+        private CliArguments arguments() {
+            if (arguments == null) {
+                throw new IllegalStateException("No parsed arguments are available");
+            }
+            return arguments;
         }
     }
 }

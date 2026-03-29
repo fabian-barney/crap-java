@@ -127,49 +127,49 @@ final class JavaMethodParser {
         @Override
         public Void visitIf(IfTree node, Void unused) {
             complexity++;
-            return super.visitIf(node, unused);
+            return super.visitIf(node, null);
         }
 
         @Override
         public Void visitForLoop(ForLoopTree node, Void unused) {
             complexity++;
-            return super.visitForLoop(node, unused);
+            return super.visitForLoop(node, null);
         }
 
         @Override
         public Void visitEnhancedForLoop(EnhancedForLoopTree node, Void unused) {
             complexity++;
-            return super.visitEnhancedForLoop(node, unused);
+            return super.visitEnhancedForLoop(node, null);
         }
 
         @Override
         public Void visitWhileLoop(WhileLoopTree node, Void unused) {
             complexity++;
-            return super.visitWhileLoop(node, unused);
+            return super.visitWhileLoop(node, null);
         }
 
         @Override
         public Void visitDoWhileLoop(DoWhileLoopTree node, Void unused) {
             complexity++;
-            return super.visitDoWhileLoop(node, unused);
+            return super.visitDoWhileLoop(node, null);
         }
 
         @Override
         public Void visitCatch(CatchTree node, Void unused) {
             complexity++;
-            return super.visitCatch(node, unused);
+            return super.visitCatch(node, null);
         }
 
         @Override
         public Void visitConditionalExpression(ConditionalExpressionTree node, Void unused) {
             complexity++;
-            return super.visitConditionalExpression(node, unused);
+            return super.visitConditionalExpression(node, null);
         }
 
         @Override
         public Void visitCase(CaseTree node, Void unused) {
             complexity++;
-            return super.visitCase(node, unused);
+            return super.visitCase(node, null);
         }
 
         @Override
@@ -177,7 +177,7 @@ final class JavaMethodParser {
             if (node.getKind() == Tree.Kind.CONDITIONAL_AND || node.getKind() == Tree.Kind.CONDITIONAL_OR) {
                 complexity++;
             }
-            return super.visitBinary(node, unused);
+            return super.visitBinary(node, null);
         }
     }
 

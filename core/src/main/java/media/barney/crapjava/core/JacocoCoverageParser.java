@@ -13,13 +13,14 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.io.StringReader;
+import org.jspecify.annotations.Nullable;
 
 final class JacocoCoverageParser {
 
     private JacocoCoverageParser() {
     }
 
-    static Map<String, CoverageData> parse(Path jacocoXmlPath) {
+    static Map<String, CoverageData> parse(@Nullable Path jacocoXmlPath) {
         if (jacocoXmlPath == null || !Files.exists(jacocoXmlPath)) {
             return Map.of();
         }
@@ -76,7 +77,7 @@ final class JacocoCoverageParser {
         }
     }
 
-    private static CoverageData readInstructionCoverage(Element method) {
+    private static @Nullable CoverageData readInstructionCoverage(Element method) {
         for (Node node = method.getFirstChild(); node != null; node = node.getNextSibling()) {
             if (!(node instanceof Element counter) || !"counter".equals(counter.getTagName())) {
                 continue;

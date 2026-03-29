@@ -1,9 +1,11 @@
 package media.barney.crapjava.core;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 
 final class ChangedFileDetector {
 
@@ -17,13 +19,13 @@ final class ChangedFileDetector {
 
         int exit = process.waitFor();
         if (exit != 0) {
-            String output = new String(process.getInputStream().readAllBytes());
+            String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
             throw new IllegalStateException("git status failed: " + output);
         }
 
-        String output = new String(process.getInputStream().readAllBytes());
+        String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
         List<Path> files = new ArrayList<>();
-        for (String line : output.split("\\R")) {
+        for (String line : output.lines().toList()) {
             Path file = parseStatusLine(projectRoot, line);
             if (file != null) {
                 files.add(file);
@@ -39,7 +41,7 @@ final class ChangedFileDetector {
                 .toList();
     }
 
-    private static Path parseStatusLine(Path root, String line) {
+    private static @Nullable Path parseStatusLine(Path root, String line) {
         if (!isCandidateLine(line)) {
             return null;
         }
@@ -51,7 +53,7 @@ final class ChangedFileDetector {
         return root.resolve(finalPath).normalize();
     }
 
-    static boolean isCandidateLine(String line) {
+    static boolean isCandidateLine(@Nullable String line) {
         if (line == null) {
             return false;
         }

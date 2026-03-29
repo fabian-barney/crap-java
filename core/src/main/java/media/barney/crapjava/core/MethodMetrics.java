@@ -1,11 +1,13 @@
 package media.barney.crapjava.core;
 
+import org.jspecify.annotations.Nullable;
+
 record MethodMetrics(
         String methodName,
         String className,
         int complexity,
-        Double coveragePercent,
-        Double crapScore
+        @Nullable Double coveragePercent,
+        @Nullable Double crapScore
 ) {
 }
 

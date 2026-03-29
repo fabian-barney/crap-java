@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+import org.jspecify.annotations.Nullable;
 
 final class ReportFormatter {
 
@@ -37,14 +38,14 @@ final class ReportFormatter {
         return builder.toString();
     }
 
-    private static String formatCoverage(Double coverage) {
+    private static String formatCoverage(@Nullable Double coverage) {
         if (coverage == null) {
             return "  N/A ";
         }
         return String.format(Locale.ROOT, "%5.1f%%", coverage);
     }
 
-    private static String formatCrap(Double score) {
+    private static String formatCrap(@Nullable Double score) {
         if (score == null) {
             return "     N/A";
         }

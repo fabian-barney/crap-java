@@ -5,6 +5,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -31,8 +32,8 @@ class CliApplicationTest {
                 .execute(new String[]{"--changed", "src/main/java/demo/Sample.java"});
 
         assertEquals(1, exit);
-        assertTrue(out.toString().contains("Usage:"));
-        assertTrue(err.toString().contains("--changed cannot be combined with file arguments"));
+        assertTrue(utf8(out).contains("Usage:"));
+        assertTrue(utf8(err).contains("--changed cannot be combined with file arguments"));
     }
 
     @Test
@@ -43,7 +44,7 @@ class CliApplicationTest {
                 .execute(new String[0]);
 
         assertEquals(0, exit);
-        assertTrue(out.toString().contains("No Java files to analyze."));
+        assertTrue(utf8(out).contains("No Java files to analyze."));
     }
 
     @Test
@@ -85,8 +86,8 @@ class CliApplicationTest {
                 .execute(new String[]{"src/main/java/demo/Sample.java"});
 
         assertEquals(0, exit);
-        assertTrue(out.toString().contains("Sample"));
-        assertFalse(err.toString().contains("Warning: JaCoCo XML not found"));
+        assertTrue(utf8(out).contains("Sample"));
+        assertFalse(utf8(err).contains("Warning: JaCoCo XML not found"));
     }
 
     @Test
@@ -131,8 +132,8 @@ class CliApplicationTest {
 
         assertEquals(0, exit);
         assertEquals(List.of(moduleRoot), directories);
-        assertTrue(out.toString().contains("mutate4java.Sample"));
-        assertFalse(err.toString().contains("Warning: JaCoCo XML not found"));
+        assertTrue(utf8(out).contains("mutate4java.Sample"));
+        assertFalse(utf8(err).contains("Warning: JaCoCo XML not found"));
     }
 
     @Test
@@ -181,8 +182,8 @@ class CliApplicationTest {
         assertEquals(0, exit);
         assertEquals(List.of(tempDir), directories);
         assertEquals(List.of(List.of("gradle", "--no-daemon", "-q", ":apps:demo:test", ":apps:demo:jacocoTestReport")), commands);
-        assertTrue(out.toString().contains("demo.Sample"));
-        assertFalse(err.toString().contains("Warning: JaCoCo XML not found"));
+        assertTrue(utf8(out).contains("demo.Sample"));
+        assertFalse(utf8(err).contains("Warning: JaCoCo XML not found"));
     }
 
     @Test
@@ -220,7 +221,11 @@ class CliApplicationTest {
                 .execute(new String[]{"demo/src/main/java/demo/Sample.java"});
 
         assertEquals(1, exit);
-        assertEquals("", out.toString());
-        assertTrue(err.toString().contains("Ambiguous build tool for module"));
+        assertEquals("", utf8(out));
+        assertTrue(utf8(err).contains("Ambiguous build tool for module"));
+    }
+
+    private static String utf8(ByteArrayOutputStream output) {
+        return output.toString(StandardCharsets.UTF_8);
     }
 }

@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -59,8 +60,8 @@ class CrapAnalyzerTest {
         assertEquals("alpha", metric.methodName());
         assertEquals("demo.Sample", metric.className());
         assertEquals(2, metric.complexity());
-        assertEquals(75.0, metric.coveragePercent(), 0.001);
-        assertEquals(2.0625, metric.crapScore(), 0.00001);
+        assertEquals(75.0, Objects.requireNonNull(metric.coveragePercent()), 0.001);
+        assertEquals(2.0625, Objects.requireNonNull(metric.crapScore()), 0.00001);
     }
 
     @Test
@@ -85,7 +86,7 @@ class CrapAnalyzerTest {
 
         Double coverage = CrapAnalyzer.lookupCoverage(coverageMap, "demo.Sample", "alpha", 10);
 
-        assertEquals(75.0, coverage, 0.001);
+        assertEquals(75.0, Objects.requireNonNull(coverage), 0.001);
     }
 
     @Test
@@ -97,7 +98,7 @@ class CrapAnalyzerTest {
 
         Double coverage = CrapAnalyzer.lookupCoverage(coverageMap, "demo.Sample", "alpha", 13);
 
-        assertEquals(100.0, coverage, 0.001);
+        assertEquals(100.0, Objects.requireNonNull(coverage), 0.001);
     }
 
     @Test
@@ -106,7 +107,7 @@ class CrapAnalyzerTest {
         coverageMap.put("demo.Sample#alpha:10", new CoverageData(1, 3));
         coverageMap.put("demo.Sample#alpha:14", new CoverageData(0, 8));
 
-        CoverageData nearest = CrapAnalyzer.nearestCoverage(coverageMap, "demo.Sample", "alpha", 12);
+        CoverageData nearest = Objects.requireNonNull(CrapAnalyzer.nearestCoverage(coverageMap, "demo.Sample", "alpha", 12));
 
         assertEquals(75.0, nearest.coveragePercent(), 0.001);
     }

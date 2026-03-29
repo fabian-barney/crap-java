@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.jspecify.annotations.Nullable;
 
 final class CrapAnalyzer {
 
@@ -49,10 +50,10 @@ final class CrapAnalyzer {
         return matcher.group(1) + "." + simpleName;
     }
 
-    static Double lookupCoverage(Map<String, CoverageData> coverageMap,
-                                 String className,
-                                 String methodName,
-                                 int line) {
+    static @Nullable Double lookupCoverage(Map<String, CoverageData> coverageMap,
+                                           String className,
+                                           String methodName,
+                                           int line) {
         Double exactCoverage = exactCoverage(coverageMap, className, methodName, line);
         if (exactCoverage != null) {
             return exactCoverage;
@@ -65,10 +66,10 @@ final class CrapAnalyzer {
         return nearest.coveragePercent();
     }
 
-    static Double exactCoverage(Map<String, CoverageData> coverageMap,
-                                String className,
-                                String methodName,
-                                int line) {
+    static @Nullable Double exactCoverage(Map<String, CoverageData> coverageMap,
+                                          String className,
+                                          String methodName,
+                                          int line) {
         String exactKey = className + "#" + methodName + ":" + line;
         CoverageData exact = coverageMap.get(exactKey);
         if (exact == null) {
@@ -77,10 +78,10 @@ final class CrapAnalyzer {
         return exact.coveragePercent();
     }
 
-    static CoverageData nearestCoverage(Map<String, CoverageData> coverageMap,
-                                        String className,
-                                        String methodName,
-                                        int line) {
+    static @Nullable CoverageData nearestCoverage(Map<String, CoverageData> coverageMap,
+                                                  String className,
+                                                  String methodName,
+                                                  int line) {
         String prefix = className + "#" + methodName + ":";
         CoverageData nearest = null;
         int nearestDistance = Integer.MAX_VALUE;

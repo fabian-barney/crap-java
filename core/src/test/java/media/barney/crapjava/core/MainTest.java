@@ -5,6 +5,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -28,8 +29,8 @@ class MainTest {
         int exit = Main.run(new String[]{"--help"}, tempDir, new PrintStream(out), new PrintStream(err), NOOP_COVERAGE);
 
         assertEquals(0, exit);
-        assertTrue(out.toString().contains("Usage:"));
-        assertTrue(out.toString().contains("--build-tool"));
+        assertTrue(utf8(out).contains("Usage:"));
+        assertTrue(utf8(out).contains("--build-tool"));
     }
 
     @Test
@@ -89,8 +90,8 @@ class MainTest {
         );
 
         assertEquals(0, exit);
-        assertTrue(out.toString().contains("Sample"));
-        assertTrue(out.toString().contains("alpha"));
+        assertTrue(utf8(out).contains("Sample"));
+        assertTrue(utf8(out).contains("alpha"));
     }
 
     @Test
@@ -117,8 +118,8 @@ class MainTest {
         int exit = Main.run(new String[]{"module-a"}, tempDir, new PrintStream(out), new PrintStream(err), NOOP_COVERAGE);
 
         assertEquals(0, exit);
-        assertTrue(out.toString().contains("Sample"));
-        assertTrue(out.toString().contains("alpha"));
+        assertTrue(utf8(out).contains("Sample"));
+        assertTrue(utf8(out).contains("alpha"));
     }
 
     @Test
@@ -163,8 +164,8 @@ class MainTest {
 
         assertEquals(0, exit);
         assertTrue(Files.exists(jacocoXml));
-        assertTrue(out.toString().contains("100.0%"));
-        assertEquals("", err.toString());
+        assertTrue(utf8(out).contains("100.0%"));
+        assertEquals("", utf8(err));
     }
 
     @Test
@@ -176,5 +177,9 @@ class MainTest {
         );
 
         assertEquals(7.0, Main.maxCrap(metrics));
+    }
+
+    private static String utf8(ByteArrayOutputStream output) {
+        return output.toString(StandardCharsets.UTF_8);
     }
 }

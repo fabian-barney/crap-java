@@ -3,6 +3,8 @@ package media.barney.crapjava.core;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.EnumSet;
+import java.util.Locale;
+import org.jspecify.annotations.Nullable;
 
 final class ProjectModuleResolver {
 
@@ -41,7 +43,7 @@ final class ProjectModuleResolver {
             return requested;
         }
         throw new IllegalArgumentException(
-                "Requested build tool " + selection.name().toLowerCase()
+                "Requested build tool " + selection.name().toLowerCase(Locale.ROOT)
                         + " does not match the detected module at " + moduleRoot + "."
         );
     }
@@ -73,7 +75,7 @@ final class ProjectModuleResolver {
         return match != null ? match : start.normalize();
     }
 
-    private static Path topmostAncestorOrNull(Path workspaceRoot, Path start, DirectoryPredicate predicate) {
+    private static @Nullable Path topmostAncestorOrNull(Path workspaceRoot, Path start, DirectoryPredicate predicate) {
         Path normalizedWorkspaceRoot = workspaceRoot.normalize();
         Path current = start.normalize();
         Path match = null;

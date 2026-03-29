@@ -5,8 +5,9 @@ import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Path;
 import java.time.Duration;
-import java.util.Locale;
 import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -31,9 +32,10 @@ class ProcessCommandExecutorTest {
         IllegalStateException error = assertThrows(IllegalStateException.class,
                 () -> executor.run(sleepCommand(), tempDir));
 
-        assertTrue(error.getMessage().contains("Command timed out"));
-        assertTrue(error.getMessage().contains(Duration.ofMillis(100).toString()));
-        assertTrue(error.getMessage().contains(String.join(" ", sleepCommand())));
+        String message = Objects.requireNonNull(error.getMessage());
+        assertTrue(message.contains("Command timed out"));
+        assertTrue(message.contains(Duration.ofMillis(100).toString()));
+        assertTrue(message.contains(String.join(" ", sleepCommand())));
     }
 
     private static List<String> exitCommand(int exitCode) {

@@ -8,6 +8,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -50,7 +51,7 @@ class ChangedFileDetectorTest {
         IllegalStateException error = assertThrows(IllegalStateException.class,
                 () -> ChangedFileDetector.changedJavaFiles(tempDir));
 
-        assertTrue(error.getMessage().contains("not a git repository"));
+        assertTrue(Objects.requireNonNull(error.getMessage()).contains("not a git repository"));
     }
 
     @Test

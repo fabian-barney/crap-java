@@ -9,23 +9,26 @@ import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
+import org.jspecify.annotations.Nullable;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Objects;
 
 @Mojo(name = "check", defaultPhase = LifecyclePhase.VERIFY, aggregator = true, threadSafe = true)
 public class CrapJavaCheckMojo extends AbstractMojo {
 
     @Parameter(defaultValue = "${session}", readonly = true, required = true)
-    private MavenSession session;
+    private @Nullable MavenSession session;
 
     @Parameter(defaultValue = "${project}", readonly = true, required = true)
-    private MavenProject project;
+    private @Nullable MavenProject project;
 
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         Path executionRoot = executionRoot();
+        MavenProject project = project();
         if (!project.getBasedir().toPath().normalize().equals(executionRoot)) {
             getLog().debug("Skipping crap-java check for non-root project " + project.getArtifactId());
             return;
@@ -58,15 +61,23 @@ public class CrapJavaCheckMojo extends AbstractMojo {
     }
 
     private List<MavenProject> reactorProjects() {
-        List<MavenProject> projects = session.getProjects();
-        return projects == null || projects.isEmpty() ? List.of(project) : projects;
+        List<MavenProject> projects = session().getProjects();
+        return projects == null || projects.isEmpty() ? List.of(project()) : projects;
     }
 
     private Path executionRoot() {
-        java.io.File multiModuleRoot = session.getRequest().getMultiModuleProjectDirectory();
+        java.io.File multiModuleRoot = session().getRequest().getMultiModuleProjectDirectory();
         if (multiModuleRoot != null) {
             return multiModuleRoot.toPath().normalize();
         }
-        return project.getBasedir().toPath().normalize();
+        return project().getBasedir().toPath().normalize();
+    }
+
+    private MavenSession session() {
+        return Objects.requireNonNull(session, "Maven session must be injected");
+    }
+
+    private MavenProject project() {
+        return Objects.requireNonNull(project, "Maven project must be injected");
     }
 }

@@ -4,6 +4,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 record ProjectModule(Path moduleRoot, Path executionRoot, BuildTool buildTool) {
 
@@ -107,6 +108,6 @@ record ProjectModule(Path moduleRoot, Path executionRoot, BuildTool buildTool) {
     }
 
     private static boolean isWindows() {
-        return System.getProperty("os.name").toLowerCase().startsWith("windows");
+        return System.getProperty("os.name").toLowerCase(Locale.ROOT).startsWith("windows");
     }
 }
