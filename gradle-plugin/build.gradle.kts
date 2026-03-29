@@ -15,11 +15,6 @@ repositories {
     mavenCentral()
 }
 
-tasks.withType<JavaCompile>().configureEach {
-    dependsOn(verifyCoreJar)
-    options.release.set(17)
-}
-
 val projectVersion = version.toString()
 val coreJar = layout.projectDirectory.file("../core/target/crap-java-core-${projectVersion}.jar")
 val githubActor = providers.gradleProperty("gpr.user").orElse(providers.environmentVariable("GITHUB_ACTOR"))
@@ -33,6 +28,11 @@ val verifyCoreJar = tasks.register("verifyCoreJar") {
             )
         }
     }
+}
+
+tasks.withType<JavaCompile>().configureEach {
+    dependsOn(verifyCoreJar)
+    options.release.set(17)
 }
 
 dependencies {
