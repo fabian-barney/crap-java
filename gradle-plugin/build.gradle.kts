@@ -89,6 +89,13 @@ publishing {
             name.set("crap-java Gradle Plugin")
             description.set("Gradle plugin exposing the crap-java-check verification task.")
             url.set("https://github.com/fabian-barney/crap-java")
+            licenses {
+                license {
+                    name.set("Apache License 2.0")
+                    url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
+                    distribution.set("repo")
+                }
+            }
         }
     }
 }
