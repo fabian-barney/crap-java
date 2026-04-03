@@ -53,6 +53,26 @@ class ProjectModuleResolverTest {
     }
 
     @Test
+    void resolvesGradleWrapperToAbsolutePathForRelativeWorkspaceRoots() throws Exception {
+        Files.writeString(tempDir.resolve("settings.gradle"), "rootProject.name = 'demo'");
+        Files.writeString(tempDir.resolve("gradlew"), "#!/bin/sh");
+        Files.writeString(tempDir.resolve("gradlew.bat"), "@echo off");
+        Path moduleRoot = tempDir.resolve("apps/demo");
+        Path source = moduleRoot.resolve("src/main/java/demo/Sample.java");
+        Files.createDirectories(source.getParent());
+        Files.writeString(moduleRoot.resolve("build.gradle.kts"), "plugins { java }");
+        Files.writeString(source, "class Sample {}");
+
+        Path currentDirectory = Path.of("").toAbsolutePath().normalize();
+        Path relativeWorkspaceRoot = currentDirectory.relativize(tempDir);
+        Path relativeSource = currentDirectory.relativize(source);
+
+        ProjectModule module = ProjectModuleResolver.resolve(relativeWorkspaceRoot, relativeSource, BuildToolSelection.AUTO);
+
+        assertEquals(gradleWrapperCommand(tempDir), module.coverageCommand().get(0));
+    }
+
+    @Test
     void ambiguousModuleRequiresExplicitBuildTool() throws Exception {
         Path moduleRoot = tempDir.resolve("demo");
         Path source = moduleRoot.resolve("src/main/java/demo/Sample.java");

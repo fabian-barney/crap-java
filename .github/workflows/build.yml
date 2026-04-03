@@ -88,11 +88,30 @@ jobs:
       - name: Build CLI
         run: mvn -B -pl cli -am package
 
+      - name: Resolve CLI jar path
+        shell: bash
+        run: |
+          shopt -s nullglob
+          jars=(cli/target/crap-java-cli-*.jar)
+          filtered=()
+          for jar in "${jars[@]}"; do
+            case "$jar" in
+              *-sources.jar|*-javadoc.jar|*-shaded.jar|*original*.jar) ;;
+              *) filtered+=("$jar") ;;
+            esac
+          done
+          if [ "${#filtered[@]}" -ne 1 ]; then
+            echo "Expected exactly one built CLI jar, found ${#filtered[@]}" >&2
+            printf 'Candidates:\n%s\n' "${filtered[@]}" >&2
+            exit 1
+          fi
+          echo "CLI_JAR=${filtered[0]}" >> "$GITHUB_ENV"
+
       - name: Run Maven crap-java gate
-        run: java -jar cli/target/crap-java-cli-0.2.0.jar --build-tool maven core/src/main/java cli/src/main/java maven-plugin/src/main/java
+        run: java -jar "$CLI_JAR" --build-tool maven core/src/main/java cli/src/main/java maven-plugin/src/main/java
 
       - name: Set up Gradle wrapper permissions
         run: chmod +x gradle-plugin/gradlew
 
       - name: Run Gradle crap-java gate
-        run: java -jar cli/target/crap-java-cli-0.2.0.jar --build-tool gradle gradle-plugin/src/main/java
+        run: java -jar "$CLI_JAR" --build-tool gradle gradle-plugin/src/main/java

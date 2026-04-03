@@ -98,7 +98,7 @@ record ProjectModule(Path moduleRoot, Path executionRoot, BuildTool buildTool) {
 
     private String launcher(String windowsWrapper, String unixWrapper, String fallback) {
         Path wrapper = wrapperPath(windowsWrapper, unixWrapper);
-        return wrapper != null ? wrapper.toString() : fallback;
+        return wrapper != null ? wrapper.toAbsolutePath().normalize().toString() : fallback;
     }
 
     private @Nullable Path wrapperPath(String windowsWrapper, String unixWrapper) {
