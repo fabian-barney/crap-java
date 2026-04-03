@@ -50,24 +50,39 @@ final class ProjectModuleResolver {
 
     private static Path executionRoot(Path workspaceRoot, Path moduleRoot, BuildTool buildTool) {
         return switch (buildTool) {
-            case MAVEN -> topmostAncestor(workspaceRoot, moduleRoot,
-                    directory -> Files.exists(directory.resolve("mvnw"))
-                            || Files.exists(directory.resolve("mvnw.cmd"))
-                            || Files.exists(directory.resolve("pom.xml")));
-            case GRADLE -> {
-                Path settingsOrWrapper = topmostAncestorOrNull(workspaceRoot, moduleRoot,
-                        directory -> Files.exists(directory.resolve("settings.gradle"))
-                                || Files.exists(directory.resolve("settings.gradle.kts"))
-                                || Files.exists(directory.resolve("gradlew"))
-                                || Files.exists(directory.resolve("gradlew.bat")));
-                if (settingsOrWrapper != null) {
-                    yield settingsOrWrapper;
-                }
-                yield topmostAncestor(workspaceRoot, moduleRoot,
-                        directory -> Files.exists(directory.resolve("build.gradle"))
-                                || Files.exists(directory.resolve("build.gradle.kts")));
-            }
+            case MAVEN -> mavenExecutionRoot(workspaceRoot, moduleRoot);
+            case GRADLE -> gradleExecutionRoot(workspaceRoot, moduleRoot);
         };
+    }
+
+    private static Path mavenExecutionRoot(Path workspaceRoot, Path moduleRoot) {
+        return topmostAncestor(workspaceRoot, moduleRoot, ProjectModuleResolver::hasMavenMarker);
+    }
+
+    private static Path gradleExecutionRoot(Path workspaceRoot, Path moduleRoot) {
+        Path settingsOrWrapper = topmostAncestorOrNull(workspaceRoot, moduleRoot, ProjectModuleResolver::hasGradleSettingsOrWrapper);
+        if (settingsOrWrapper != null) {
+            return settingsOrWrapper;
+        }
+        return topmostAncestor(workspaceRoot, moduleRoot, ProjectModuleResolver::hasGradleBuildFile);
+    }
+
+    private static boolean hasMavenMarker(Path directory) {
+        return Files.exists(directory.resolve("mvnw"))
+                || Files.exists(directory.resolve("mvnw.cmd"))
+                || Files.exists(directory.resolve("pom.xml"));
+    }
+
+    private static boolean hasGradleSettingsOrWrapper(Path directory) {
+        return Files.exists(directory.resolve("settings.gradle"))
+                || Files.exists(directory.resolve("settings.gradle.kts"))
+                || Files.exists(directory.resolve("gradlew"))
+                || Files.exists(directory.resolve("gradlew.bat"));
+    }
+
+    private static boolean hasGradleBuildFile(Path directory) {
+        return Files.exists(directory.resolve("build.gradle"))
+                || Files.exists(directory.resolve("build.gradle.kts"));
     }
 
     private static Path topmostAncestor(Path workspaceRoot, Path start, DirectoryPredicate predicate) {

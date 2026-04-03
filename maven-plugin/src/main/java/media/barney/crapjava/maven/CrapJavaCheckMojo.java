@@ -11,6 +11,7 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 import org.jspecify.annotations.Nullable;
 
+import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -19,34 +20,56 @@ import java.util.Objects;
 @Mojo(name = "check", defaultPhase = LifecyclePhase.VERIFY, aggregator = true, threadSafe = true)
 public class CrapJavaCheckMojo extends AbstractMojo {
 
+    private final CrapJavaRunner runner;
+
     @Parameter(defaultValue = "${session}", readonly = true, required = true)
     private @Nullable MavenSession session;
 
     @Parameter(defaultValue = "${project}", readonly = true, required = true)
     private @Nullable MavenProject project;
 
+    public CrapJavaCheckMojo() {
+        this((useExistingCoverage, args, projectRoot, out, err) -> useExistingCoverage
+                ? Main.runWithExistingCoverage(args, projectRoot, out, err)
+                : Main.run(args, projectRoot, out, err));
+    }
+
+    CrapJavaCheckMojo(CrapJavaRunner runner) {
+        this.runner = Objects.requireNonNull(runner, "runner");
+    }
+
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         Path executionRoot = executionRoot();
         MavenProject project = project();
-        if (!project.getBasedir().toPath().normalize().equals(executionRoot)) {
+        if (!isExecutionRootProject(project, executionRoot)) {
             getLog().debug("Skipping crap-java check for non-root project " + project.getArtifactId());
             return;
         }
+        runCheck(executionRoot);
+    }
+
+    private boolean isExecutionRootProject(MavenProject project, Path executionRoot) {
+        return project.getBasedir().toPath().normalize().equals(executionRoot);
+    }
+
+    private void runCheck(Path executionRoot) throws MojoExecutionException, MojoFailureException {
         try {
-            int exit = hasExistingCoverageReports()
-                    ? Main.runWithExistingCoverage(new String[0], executionRoot, System.out, System.err)
-                    : Main.run(new String[0], executionRoot, System.out, System.err);
-            if (exit == 2) {
-                throw new MojoFailureException("crap-java threshold exceeded");
-            }
-            if (exit != 0) {
-                throw new MojoExecutionException("crap-java check failed with exit " + exit);
-            }
+            int exit = runner.run(hasExistingCoverageReports(), new String[0], executionRoot, System.out, System.err);
+            handleExitCode(exit);
         } catch (MojoFailureException | MojoExecutionException ex) {
             throw ex;
         } catch (Exception ex) {
             throw new MojoExecutionException("Failed to execute crap-java", ex);
+        }
+    }
+
+    private void handleExitCode(int exit) throws MojoExecutionException, MojoFailureException {
+        if (exit == 2) {
+            throw new MojoFailureException("crap-java threshold exceeded");
+        }
+        if (exit != 0) {
+            throw new MojoExecutionException("crap-java check failed with exit " + exit);
         }
     }
 
@@ -79,5 +102,10 @@ public class CrapJavaCheckMojo extends AbstractMojo {
 
     private MavenProject project() {
         return Objects.requireNonNull(project, "Maven project must be injected");
+    }
+
+    @FunctionalInterface
+    interface CrapJavaRunner {
+        int run(boolean useExistingCoverage, String[] args, Path projectRoot, PrintStream out, PrintStream err) throws Exception;
     }
 }

@@ -5,6 +5,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import org.jspecify.annotations.Nullable;
 
 record ProjectModule(Path moduleRoot, Path executionRoot, BuildTool buildTool) {
 
@@ -88,23 +89,25 @@ record ProjectModule(Path moduleRoot, Path executionRoot, BuildTool buildTool) {
     }
 
     private String mavenLauncher() {
-        if (isWindows() && Files.exists(executionRoot.resolve("mvnw.cmd"))) {
-            return "mvnw.cmd";
-        }
-        if (!isWindows() && Files.exists(executionRoot.resolve("mvnw"))) {
-            return "./mvnw";
-        }
-        return isWindows() ? "mvn.cmd" : "mvn";
+        return launcher("mvnw.cmd", "mvnw", isWindows() ? "mvn.cmd" : "mvn");
     }
 
     private String gradleLauncher() {
-        if (isWindows() && Files.exists(executionRoot.resolve("gradlew.bat"))) {
-            return "gradlew.bat";
-        }
-        if (!isWindows() && Files.exists(executionRoot.resolve("gradlew"))) {
-            return "./gradlew";
-        }
-        return "gradle";
+        return launcher("gradlew.bat", "gradlew", "gradle");
+    }
+
+    private String launcher(String windowsWrapper, String unixWrapper, String fallback) {
+        Path wrapper = wrapperPath(windowsWrapper, unixWrapper);
+        return wrapper != null ? wrapper.toString() : fallback;
+    }
+
+    private @Nullable Path wrapperPath(String windowsWrapper, String unixWrapper) {
+        return isWindows() ? existingPath(windowsWrapper) : existingPath(unixWrapper);
+    }
+
+    private @Nullable Path existingPath(String fileName) {
+        Path wrapper = executionRoot.resolve(fileName);
+        return Files.exists(wrapper) ? wrapper : null;
     }
 
     private static boolean isWindows() {

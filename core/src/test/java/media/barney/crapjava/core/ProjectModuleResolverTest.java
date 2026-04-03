@@ -47,7 +47,7 @@ class ProjectModuleResolverTest {
         assertEquals(moduleRoot, module.moduleRoot());
         assertEquals(tempDir, module.executionRoot());
         assertEquals(BuildTool.GRADLE, module.buildTool());
-        assertEquals(List.of(gradleWrapperCommand(), "--no-daemon", "-q", ":apps:demo:test", ":apps:demo:jacocoTestReport"),
+        assertEquals(List.of(gradleWrapperCommand(tempDir), "--no-daemon", "-q", ":apps:demo:test", ":apps:demo:jacocoTestReport"),
                 module.coverageCommand());
         assertEquals(moduleRoot.resolve("build/reports/jacoco/test/jacocoTestReport.xml"), module.jacocoXmlPath());
     }
@@ -100,10 +100,10 @@ class ProjectModuleResolverTest {
         assertEquals("Requested build tool gradle does not match the detected module at " + moduleRoot + ".", error.getMessage());
     }
 
-    private static String gradleWrapperCommand() {
+    private static String gradleWrapperCommand(Path executionRoot) {
         if (System.getProperty("os.name").toLowerCase(Locale.ROOT).startsWith("windows")) {
-            return "gradlew.bat";
+            return executionRoot.resolve("gradlew.bat").toString();
         }
-        return "./gradlew";
+        return executionRoot.resolve("gradlew").toString();
     }
 }

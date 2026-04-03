@@ -2,9 +2,11 @@ import org.gradle.api.tasks.testing.Test
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.jvm.tasks.Jar
 import org.gradle.api.publish.maven.MavenPublication
+import org.gradle.testing.jacoco.tasks.JacocoReport
 
 plugins {
     `java-gradle-plugin`
+    jacoco
     `maven-publish`
 }
 
@@ -13,6 +15,10 @@ version = "0.2.0"
 
 repositories {
     mavenCentral()
+}
+
+jacoco {
+    toolVersion = "0.8.13"
 }
 
 val projectVersion = version.toString()
@@ -46,6 +52,15 @@ dependencies {
 tasks.withType<Test>().configureEach {
     dependsOn(verifyCoreJar)
     useJUnitPlatform()
+}
+
+tasks.named<JacocoReport>("jacocoTestReport") {
+    dependsOn(tasks.named<Test>("test"))
+    reports {
+        xml.required.set(true)
+        csv.required.set(false)
+        html.required.set(false)
+    }
 }
 
 tasks.named("pluginUnderTestMetadata") {
