@@ -11,6 +11,13 @@
   <name>crap-java Parent</name>
   <description>Shared CRAP metric tooling for Java projects.</description>
   <url>https://github.com/fabian-barney/crap-java</url>
+  <licenses>
+    <license>
+      <name>Apache License 2.0</name>
+      <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
 
   <modules>
     <module>core</module>
