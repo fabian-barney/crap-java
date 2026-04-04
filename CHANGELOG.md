@@ -16,6 +16,6 @@
 
 ### Publishing
 
-- Switched public distribution from GitHub Packages to Maven Central and the Gradle Plugin Portal.
+- Switched public distribution to Maven Central and the Gradle Plugin Portal.
 - Added release signing, Central Portal publishing, Plugin Portal publishing, and publishing preflight automation.
 - GitHub releases are now generated from the matching `CHANGELOG.md` entry for the tagged version.
