@@ -79,15 +79,32 @@ final class JavaMethodParser {
 
     private static final class MethodScanner extends TreePathScanner<Void, Void> {
         private final CompilationUnitTree unit;
+        private final String packageName;
         private final SourcePositions positions;
         private final List<MethodDescriptor> methods;
+        private final List<String> enclosingClassNames = new ArrayList<>();
 
         private MethodScanner(CompilationUnitTree unit,
                               SourcePositions positions,
                               List<MethodDescriptor> methods) {
             this.unit = unit;
+            this.packageName = unit.getPackageName() == null ? "" : unit.getPackageName().toString();
             this.positions = positions;
             this.methods = methods;
+        }
+
+        @Override
+        public Void visitClass(ClassTree node, Void unused) {
+            String simpleName = node.getSimpleName().toString();
+            if (simpleName.isEmpty()) {
+                return null;
+            }
+            enclosingClassNames.add(simpleName);
+            try {
+                return super.visitClass(node, null);
+            } finally {
+                enclosingClassNames.remove(enclosingClassNames.size() - 1);
+            }
         }
 
         @Override
@@ -101,12 +118,20 @@ final class JavaMethodParser {
             int startLine = lineNumber(start);
             int endLine = lineNumber(Math.decrementExact((int) bodyEndExclusive));
             int complexity = ComplexityCounter.count(node);
-            methods.add(new MethodDescriptor(node.getName().toString(), startLine, endLine, complexity));
+            methods.add(new MethodDescriptor(currentClassName(), node.getName().toString(), startLine, endLine, complexity));
             return null;
         }
 
         private int lineNumber(long position) {
             return (int) unit.getLineMap().getLineNumber(position);
+        }
+
+        private String currentClassName() {
+            String simpleName = String.join("$", enclosingClassNames);
+            if (packageName.isEmpty()) {
+                return simpleName;
+            }
+            return packageName + "." + simpleName;
         }
     }
 

@@ -52,9 +52,10 @@ final class CliArgumentsParser {
             state.buildToolSeen = true;
             return index + 1;
         }
-        if (!arg.startsWith("--")) {
-            state.values.add(arg);
+        if (arg.startsWith("--")) {
+            throw new IllegalArgumentException("Unknown option: " + arg);
         }
+        state.values.add(arg);
         return index;
     }
 

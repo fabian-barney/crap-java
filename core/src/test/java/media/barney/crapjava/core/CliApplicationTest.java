@@ -37,6 +37,19 @@ class CliApplicationTest {
     }
 
     @Test
+    void unknownFlagsReturnUsageAndExitOne() throws Exception {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        ByteArrayOutputStream err = new ByteArrayOutputStream();
+
+        int exit = new CliApplication(tempDir, new PrintStream(out), new PrintStream(err), NOOP_COVERAGE, CoverageMode.GENERATE)
+                .execute(new String[]{"--bogus"});
+
+        assertEquals(1, exit);
+        assertTrue(utf8(out).contains("Usage:"));
+        assertTrue(utf8(err).contains("Unknown option: --bogus"));
+    }
+
+    @Test
     void returnsZeroWhenNoFilesAreFound() throws Exception {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
 
@@ -45,6 +58,29 @@ class CliApplicationTest {
 
         assertEquals(0, exit);
         assertTrue(utf8(out).contains("No Java files to analyze."));
+    }
+
+    @Test
+    void changedModeReturnsNoFilesWhenOnlyDeletedJavaFilesRemain() throws Exception {
+        run(tempDir, "git", "init");
+        run(tempDir, "git", "config", "user.email", "test@example.com");
+        run(tempDir, "git", "config", "user.name", "test");
+        Path src = tempDir.resolve("src/main/java/demo");
+        Files.createDirectories(src);
+        Path tracked = src.resolve("Tracked.java");
+        Files.writeString(tracked, "class Tracked {}\n");
+        run(tempDir, "git", "add", ".");
+        run(tempDir, "git", "commit", "-m", "init");
+        Files.delete(tracked);
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        ByteArrayOutputStream err = new ByteArrayOutputStream();
+
+        int exit = new CliApplication(tempDir, new PrintStream(out), new PrintStream(err), NOOP_COVERAGE, CoverageMode.GENERATE)
+                .execute(new String[]{"--changed"});
+
+        assertEquals(0, exit);
+        assertTrue(utf8(out).contains("No Java files to analyze."));
+        assertEquals("", utf8(err));
     }
 
     @Test
@@ -225,7 +261,30 @@ class CliApplicationTest {
         assertTrue(utf8(err).contains("Ambiguous build tool for module"));
     }
 
+    @Test
+    void missingExplicitFileReturnsExitOneWithoutRunningAnalysis() throws Exception {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        ByteArrayOutputStream err = new ByteArrayOutputStream();
+
+        int exit = new CliApplication(tempDir, new PrintStream(out), new PrintStream(err), NOOP_COVERAGE, CoverageMode.GENERATE)
+                .execute(new String[]{"src/main/java/demo/Missing.java"});
+
+        assertEquals(1, exit);
+        assertEquals("", utf8(out));
+        assertTrue(utf8(err).contains("Path does not exist: src/main/java/demo/Missing.java"));
+    }
+
     private static String utf8(ByteArrayOutputStream output) {
         return output.toString(StandardCharsets.UTF_8);
+    }
+
+    private static void run(Path dir, String... command) throws Exception {
+        Process process = new ProcessBuilder(command)
+                .directory(dir.toFile())
+                .redirectErrorStream(true)
+                .start();
+        if (process.waitFor() != 0) {
+            throw new IllegalStateException(process.inputReader(StandardCharsets.UTF_8).readLine());
+        }
     }
 }

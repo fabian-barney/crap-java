@@ -14,8 +14,10 @@ import org.jspecify.annotations.Nullable;
 import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Mojo(name = "check", defaultPhase = LifecyclePhase.VERIFY, aggregator = true, threadSafe = true)
 public class CrapJavaCheckMojo extends AbstractMojo {
@@ -42,26 +44,40 @@ public class CrapJavaCheckMojo extends AbstractMojo {
     public void execute() throws MojoExecutionException, MojoFailureException {
         Path executionRoot = executionRoot();
         MavenProject project = project();
-        if (!isExecutionRootProject(project, executionRoot)) {
-            getLog().debug("Skipping crap-java check for non-root project " + project.getArtifactId());
+        if (!isFinalReactorProject(project)) {
+            getLog().debug("Skipping crap-java check before final reactor project " + project.getArtifactId());
             return;
         }
+        ensureCoverageReportsExist();
         runCheck(executionRoot);
     }
 
-    private boolean isExecutionRootProject(MavenProject project, Path executionRoot) {
-        return project.getBasedir().toPath().normalize().equals(executionRoot);
+    private boolean isFinalReactorProject(MavenProject project) {
+        List<MavenProject> projects = reactorProjects();
+        MavenProject finalProject = projects.get(projects.size() - 1);
+        return project.getBasedir().toPath().normalize().equals(finalProject.getBasedir().toPath().normalize());
     }
 
     private void runCheck(Path executionRoot) throws MojoExecutionException, MojoFailureException {
         try {
-            int exit = runner.run(hasExistingCoverageReports(), new String[0], executionRoot, System.out, System.err);
+            int exit = runner.run(true, new String[0], executionRoot, System.out, System.err);
             handleExitCode(exit);
         } catch (MojoFailureException | MojoExecutionException ex) {
             throw ex;
         } catch (Exception ex) {
             throw new MojoExecutionException("Failed to execute crap-java", ex);
         }
+    }
+
+    private void ensureCoverageReportsExist() throws MojoFailureException {
+        List<Path> missingReports = missingCoverageReports();
+        if (missingReports.isEmpty()) {
+            return;
+        }
+        throw new MojoFailureException(
+                "Missing JaCoCo XML reports. Configure jacoco-maven-plugin to generate target/site/jacoco/jacoco.xml before crap-java:check: "
+                        + missingReports.stream().map(Path::toString).collect(Collectors.joining(", "))
+        );
     }
 
     private void handleExitCode(int exit) throws MojoExecutionException, MojoFailureException {
@@ -73,14 +89,16 @@ public class CrapJavaCheckMojo extends AbstractMojo {
         }
     }
 
-    private boolean hasExistingCoverageReports() {
+    private List<Path> missingCoverageReports() {
+        List<Path> missingReports = new ArrayList<>();
         for (MavenProject reactorProject : reactorProjects()) {
             Path basedir = reactorProject.getBasedir().toPath();
-            if (Files.exists(basedir.resolve("src")) && !Files.exists(basedir.resolve("target/site/jacoco/jacoco.xml"))) {
-                return false;
+            if (Files.exists(basedir.resolve("src/main/java"))
+                    && !Files.exists(basedir.resolve("target/site/jacoco/jacoco.xml"))) {
+                missingReports.add(basedir.resolve("target/site/jacoco/jacoco.xml"));
             }
         }
-        return true;
+        return missingReports;
     }
 
     private List<MavenProject> reactorProjects() {

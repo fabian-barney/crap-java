@@ -27,12 +27,12 @@ final class CrapAnalyzer {
                 continue;
             }
             String source = Files.readString(file);
-            String className = classNameFromSource(file, source);
-            List<MethodDescriptor> methods = JavaMethodParser.parse(className, source);
+            String primaryClassName = classNameFromSource(file, source);
+            List<MethodDescriptor> methods = JavaMethodParser.parse(primaryClassName, source);
             for (MethodDescriptor method : methods) {
-                Double coverage = lookupCoverage(coverageMap, className, method.name(), method.startLine());
+                Double coverage = lookupCoverage(coverageMap, method.className(), method.name(), method.startLine());
                 Double crap = CrapScore.calculate(method.complexity(), coverage);
-                metrics.add(new MethodMetrics(method.name(), className, method.complexity(), coverage, crap));
+                metrics.add(new MethodMetrics(method.name(), method.className(), method.complexity(), coverage, crap));
             }
         }
 

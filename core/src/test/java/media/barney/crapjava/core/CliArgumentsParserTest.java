@@ -32,11 +32,9 @@ class CliArgumentsParserTest {
     }
 
     @Test
-    void unknownFlagsAreIgnoredWhenCollectingExplicitFiles() {
-        CliArguments args = CliArgumentsParser.parse(new String[]{"src/main/java/demo/A.java", "--bogus", "src/main/java/demo/B.java"});
-
-        assertEquals(CliMode.EXPLICIT_FILES, args.mode());
-        assertEquals(List.of("src/main/java/demo/A.java", "src/main/java/demo/B.java"), args.fileArgs());
+    void unknownFlagsFailFast() {
+        assertThrows(IllegalArgumentException.class,
+                () -> CliArgumentsParser.parse(new String[]{"src/main/java/demo/A.java", "--bogus"}));
     }
 
     @Test

@@ -10,6 +10,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -75,6 +76,67 @@ class CrapAnalyzerTest {
         );
 
         assertEquals("Sample", className);
+    }
+
+    @Test
+    void attributesCoverageToNestedAndSecondaryTypes() throws IOException {
+        Path sourceRoot = tempDir.resolve("src/main/java/demo");
+        Files.createDirectories(sourceRoot);
+        Path source = sourceRoot.resolve("Outer.java");
+        Files.writeString(source, """
+                package demo;
+
+                class Outer {
+                    int outer() {
+                        return 1;
+                    }
+
+                    static class Inner {
+                        int inner() {
+                            return 2;
+                        }
+                    }
+                }
+
+                class Secondary {
+                    int beta() {
+                        return 3;
+                    }
+                }
+                """);
+
+        Path jacoco = tempDir.resolve("jacoco.xml");
+        Files.writeString(jacoco, """
+                <report>
+                  <package name="demo">
+                    <class name="demo/Outer" sourcefilename="Outer.java">
+                      <method name="outer" desc="()I" line="4">
+                        <counter type="INSTRUCTION" missed="0" covered="1"/>
+                      </method>
+                    </class>
+                    <class name="demo/Outer$Inner" sourcefilename="Outer.java">
+                      <method name="inner" desc="()I" line="9">
+                        <counter type="INSTRUCTION" missed="0" covered="1"/>
+                      </method>
+                    </class>
+                    <class name="demo/Secondary" sourcefilename="Outer.java">
+                      <method name="beta" desc="()I" line="15">
+                        <counter type="INSTRUCTION" missed="0" covered="1"/>
+                      </method>
+                    </class>
+                  </package>
+                </report>
+                """);
+
+        Map<String, MethodMetrics> metricsByMethod = CrapAnalyzer.analyze(tempDir, List.of(source), jacoco).stream()
+                .collect(java.util.stream.Collectors.toMap(MethodMetrics::methodName, Function.identity()));
+
+        assertEquals("demo.Outer", Objects.requireNonNull(metricsByMethod.get("outer")).className());
+        assertEquals(100.0, Objects.requireNonNull(Objects.requireNonNull(metricsByMethod.get("outer")).coveragePercent()), 0.001);
+        assertEquals("demo.Outer$Inner", Objects.requireNonNull(metricsByMethod.get("inner")).className());
+        assertEquals(100.0, Objects.requireNonNull(Objects.requireNonNull(metricsByMethod.get("inner")).coveragePercent()), 0.001);
+        assertEquals("demo.Secondary", Objects.requireNonNull(metricsByMethod.get("beta")).className());
+        assertEquals(100.0, Objects.requireNonNull(Objects.requireNonNull(metricsByMethod.get("beta")).coveragePercent()), 0.001);
     }
 
     @Test
