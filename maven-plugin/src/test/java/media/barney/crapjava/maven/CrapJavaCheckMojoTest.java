@@ -14,6 +14,7 @@ import org.jspecify.annotations.Nullable;
 import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -28,15 +29,17 @@ class CrapJavaCheckMojoTest {
     Path tempDir;
 
     @Test
-    void skipsNonRootProject() throws Exception {
+    void skipsNonFinalReactorProject() throws Exception {
         Path root = tempDir.resolve("root");
-        Path module = root.resolve("module-a");
-        Files.createDirectories(module);
+        Path moduleA = root.resolve("module-a");
+        Path moduleB = root.resolve("module-b");
+        Files.createDirectories(moduleA);
+        Files.createDirectories(moduleB);
 
         RecordingRunner runner = new RecordingRunner();
         CrapJavaCheckMojo mojo = mojo(runner);
-        setField(mojo, "session", session(List.of(project(root, "root"), project(module, "module-a")), root));
-        setField(mojo, "project", project(module, "module-a"));
+        setField(mojo, "session", session(List.of(project(root, "root"), project(moduleA, "module-a"), project(moduleB, "module-b")), root));
+        setField(mojo, "project", project(moduleA, "module-a"));
 
         mojo.execute();
 
@@ -46,9 +49,7 @@ class CrapJavaCheckMojoTest {
     @Test
     void usesExistingCoverageWhenAllReportsExist() throws Exception {
         Path root = tempDir.resolve("root");
-        Files.createDirectories(root.resolve("src/main/java/demo"));
-        Files.createDirectories(root.resolve("target/site/jacoco"));
-        Files.writeString(root.resolve("target/site/jacoco/jacoco.xml"), "<report/>");
+        writeCoverageReport(root);
 
         RecordingRunner runner = new RecordingRunner();
         CrapJavaCheckMojo mojo = mojo(runner);
@@ -63,7 +64,27 @@ class CrapJavaCheckMojoTest {
     }
 
     @Test
-    void generatesCoverageWhenAnyReportIsMissing() throws Exception {
+    void finalReactorProjectRunsAgainstExecutionRootWithExistingCoverage() throws Exception {
+        Path root = tempDir.resolve("root");
+        Path moduleA = root.resolve("module-a");
+        Path moduleB = root.resolve("module-b");
+        writeCoverageReport(moduleA);
+        writeCoverageReport(moduleB);
+
+        RecordingRunner runner = new RecordingRunner();
+        CrapJavaCheckMojo mojo = mojo(runner);
+        setField(mojo, "session", session(List.of(project(root, "root"), project(moduleA, "module-a"), project(moduleB, "module-b")), root));
+        setField(mojo, "project", project(moduleB, "module-b"));
+
+        mojo.execute();
+
+        assertTrue(runner.invoked);
+        assertTrue(runner.useExistingCoverage);
+        assertEquals(root, runner.projectRoot);
+    }
+
+    @Test
+    void missingCoverageReportsFailClearly() throws Exception {
         Path root = tempDir.resolve("root");
         Files.createDirectories(root.resolve("src/main/java/demo"));
 
@@ -72,16 +93,20 @@ class CrapJavaCheckMojoTest {
         setField(mojo, "session", session(List.of(project(root, "root")), root));
         setField(mojo, "project", project(root, "root"));
 
-        mojo.execute();
+        MojoFailureException ex = assertThrows(MojoFailureException.class, mojo::execute);
 
-        assertTrue(runner.invoked);
-        assertFalse(runner.useExistingCoverage);
+        assertEquals(
+                "Missing JaCoCo XML reports. Configure jacoco-maven-plugin to generate target/site/jacoco/jacoco.xml before crap-java:check: "
+                        + root.resolve("target/site/jacoco/jacoco.xml"),
+                ex.getMessage()
+        );
+        assertFalse(runner.invoked);
     }
 
     @Test
     void fallsBackToProjectBasedirWhenSessionHasNoMultiModuleRoot() throws Exception {
         Path root = tempDir.resolve("root");
-        Files.createDirectories(root.resolve("src/main/java/demo"));
+        writeCoverageReport(root);
 
         RecordingRunner runner = new RecordingRunner();
         CrapJavaCheckMojo mojo = mojo(runner);
@@ -96,7 +121,7 @@ class CrapJavaCheckMojoTest {
     @Test
     void exitCodeTwoFailsTheBuild() throws Exception {
         Path root = tempDir.resolve("root");
-        Files.createDirectories(root.resolve("src/main/java/demo"));
+        writeCoverageReport(root);
 
         RecordingRunner runner = new RecordingRunner();
         runner.exitCode = 2;
@@ -112,7 +137,7 @@ class CrapJavaCheckMojoTest {
     @Test
     void nonZeroExitCodeRaisesExecutionError() throws Exception {
         Path root = tempDir.resolve("root");
-        Files.createDirectories(root.resolve("src/main/java/demo"));
+        writeCoverageReport(root);
 
         RecordingRunner runner = new RecordingRunner();
         runner.exitCode = 1;
@@ -128,7 +153,7 @@ class CrapJavaCheckMojoTest {
     @Test
     void unexpectedExceptionsAreWrapped() throws Exception {
         Path root = tempDir.resolve("root");
-        Files.createDirectories(root.resolve("src/main/java/demo"));
+        writeCoverageReport(root);
 
         RecordingRunner runner = new RecordingRunner();
         runner.failure = new IllegalStateException("boom");
@@ -142,12 +167,19 @@ class CrapJavaCheckMojoTest {
         assertInstanceOf(IllegalStateException.class, ex.getCause());
     }
 
+    private static void writeCoverageReport(Path projectRoot) throws Exception {
+        Files.createDirectories(projectRoot.resolve("src/main/java/demo"));
+        Files.createDirectories(projectRoot.resolve("target/site/jacoco"));
+        Files.writeString(projectRoot.resolve("target/site/jacoco/jacoco.xml"), "<report/>");
+    }
+
     private static MavenSession session(List<MavenProject> projects, @Nullable Path multiModuleRoot) {
         DefaultMavenExecutionRequest request = new DefaultMavenExecutionRequest();
         request.setMultiModuleProjectDirectory(multiModuleRoot == null ? null : multiModuleRoot.toFile());
 
-        MavenSession session = new MavenSession(null, request, new DefaultMavenExecutionResult(), projects);
-        session.setProjects(projects);
+        List<MavenProject> reactorProjects = new ArrayList<>(projects);
+        MavenSession session = new MavenSession(null, request, new DefaultMavenExecutionResult(), reactorProjects);
+        session.setProjects(reactorProjects);
         return session;
     }
 

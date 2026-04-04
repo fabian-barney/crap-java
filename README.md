@@ -170,6 +170,25 @@ Add the plugin:
 <build>
   <plugins>
     <plugin>
+      <groupId>org.jacoco</groupId>
+      <artifactId>jacoco-maven-plugin</artifactId>
+      <version>0.8.13</version>
+      <executions>
+        <execution>
+          <goals>
+            <goal>prepare-agent</goal>
+          </goals>
+        </execution>
+        <execution>
+          <id>report</id>
+          <phase>verify</phase>
+          <goals>
+            <goal>report</goal>
+          </goals>
+        </execution>
+      </executions>
+    </plugin>
+    <plugin>
       <groupId>media.barney</groupId>
       <artifactId>crap-java-maven-plugin</artifactId>
       <version>0.2.0</version>
@@ -184,6 +203,8 @@ Add the plugin:
   </plugins>
 </build>
 ```
+
+The Maven plugin consumes the JaCoCo XML files produced by your build. It does not spawn a nested Maven run to generate coverage.
 
 Run:
 

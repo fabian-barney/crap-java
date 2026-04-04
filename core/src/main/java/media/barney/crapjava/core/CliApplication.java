@@ -111,10 +111,15 @@ final class CliApplication {
         Set<Path> files = new LinkedHashSet<>();
         for (String arg : args) {
             Path path = projectRoot.resolve(arg).normalize();
+            if (!Files.exists(path)) {
+                throw new IllegalArgumentException("Path does not exist: " + arg);
+            }
             if (Files.isDirectory(path)) {
                 files.addAll(SourceFileFinder.findAllJavaFilesUnderSourceRoots(path));
-            } else {
+            } else if (Files.isRegularFile(path)) {
                 files.add(path);
+            } else {
+                throw new IllegalArgumentException("Path is not a regular file or directory: " + arg);
             }
         }
         List<Path> sorted = new ArrayList<>(files);

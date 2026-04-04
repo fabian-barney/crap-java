@@ -13,20 +13,28 @@ final class ChangedFileDetector {
     }
 
     static List<Path> changedJavaFiles(Path projectRoot) throws IOException, InterruptedException {
-        Process process = new ProcessBuilder("git", "-C", projectRoot.toString(), "status", "--porcelain", "--untracked-files=all")
+        Process process = new ProcessBuilder("git", "-C", projectRoot.toString(), "status", "--porcelain=v1", "-z", "--untracked-files=all")
                 .redirectErrorStream(true)
                 .start();
 
+        byte[] outputBytes = process.getInputStream().readAllBytes();
         int exit = process.waitFor();
+        String output = new String(outputBytes, StandardCharsets.UTF_8);
         if (exit != 0) {
-            String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
             throw new IllegalStateException("git status failed: " + output);
         }
 
-        String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
         List<Path> files = new ArrayList<>();
-        for (String line : output.lines().toList()) {
-            Path file = parseStatusLine(projectRoot, line);
+        List<String> entries = nullDelimitedEntries(output);
+        for (int index = 0; index < entries.size(); index++) {
+            StatusEntry entry = parseStatusEntry(entries.get(index));
+            if (entry == null) {
+                continue;
+            }
+            if (entry.hasOriginalPathToken()) {
+                index++;
+            }
+            Path file = entry.toPath(projectRoot);
             if (file != null) {
                 files.add(file);
             }
@@ -41,37 +49,51 @@ final class ChangedFileDetector {
                 .toList();
     }
 
-    private static @Nullable Path parseStatusLine(Path root, String line) {
-        if (!isCandidateLine(line)) {
-            return null;
+    private static List<String> nullDelimitedEntries(String output) {
+        List<String> entries = new ArrayList<>();
+        int start = 0;
+        while (start < output.length()) {
+            int separator = output.indexOf('\0', start);
+            if (separator < 0) {
+                break;
+            }
+            entries.add(output.substring(start, separator));
+            start = separator + 1;
         }
-        String pathPart = line.substring(3).trim();
-        String finalPath = renameTarget(pathPart);
-        if (!isJavaPath(finalPath)) {
-            return null;
-        }
-        return root.resolve(finalPath).normalize();
+        return entries;
     }
 
-    static boolean isCandidateLine(@Nullable String line) {
-        if (line == null) {
-            return false;
+    private static @Nullable StatusEntry parseStatusEntry(String entry) {
+        if (entry.length() < 4 || entry.charAt(2) != ' ') {
+            return null;
         }
-        if (line.isBlank()) {
-            return false;
-        }
-        return line.length() >= 4;
+        String status = entry.substring(0, 2);
+        String path = entry.substring(3);
+        return new StatusEntry(status, path, hasOriginalPathToken(status));
     }
 
-    static String renameTarget(String pathPart) {
-        int index = pathPart.indexOf(" -> ");
-        if (index < 0) {
-            return pathPart;
-        }
-        return pathPart.substring(index + 4);
+    private static boolean hasOriginalPathToken(String status) {
+        return status.indexOf('R') >= 0 || status.indexOf('C') >= 0;
     }
 
     private static boolean isJavaPath(String path) {
         return path.endsWith(".java");
+    }
+
+    private record StatusEntry(String status, String path, boolean hasOriginalPathToken) {
+
+        private @Nullable Path toPath(Path root) {
+            if (!isCandidate() || !isJavaPath(path)) {
+                return null;
+            }
+            return root.resolve(path).normalize();
+        }
+
+        private boolean isCandidate() {
+            if ("!!".equals(status) || status.indexOf('D') >= 0) {
+                return false;
+            }
+            return "??".equals(status) || status.charAt(0) != ' ' || status.charAt(1) != ' ';
+        }
     }
 }

@@ -90,18 +90,45 @@ class ChangedFileDetectorTest {
     }
 
     @Test
-    void candidateLineRequiresAtLeastFourCharacters() {
-        assertEquals(false, ChangedFileDetector.isCandidateLine(null));
-        assertEquals(false, ChangedFileDetector.isCandidateLine(""));
-        assertEquals(false, ChangedFileDetector.isCandidateLine("abc"));
-        assertEquals(true, ChangedFileDetector.isCandidateLine("abcd"));
+    void ignoresDeletedJavaFiles() throws Exception {
+        run(tempDir, "git", "init");
+        run(tempDir, "git", "config", "user.email", "test@example.com");
+        run(tempDir, "git", "config", "user.name", "test");
+
+        Path src = tempDir.resolve("src/main/java/demo");
+        Files.createDirectories(src);
+        Path tracked = src.resolve("Tracked.java");
+        Files.writeString(tracked, "class Tracked {}\n");
+
+        run(tempDir, "git", "add", ".");
+        run(tempDir, "git", "commit", "-m", "init");
+
+        Files.delete(tracked);
+
+        List<Path> changed = ChangedFileDetector.changedJavaFilesUnderSourceRoots(tempDir);
+
+        assertEquals(List.of(), changed);
     }
 
     @Test
-    void renameTargetUsesReplacementSideEvenAtStartOfString() {
-        assertEquals("src/New.java", ChangedFileDetector.renameTarget("src/Old.java -> src/New.java"));
-        assertEquals("New.java", ChangedFileDetector.renameTarget(" -> New.java"));
-        assertEquals("Plain.java", ChangedFileDetector.renameTarget("Plain.java"));
+    void findsModifiedJavaFilesWhenGitQuotesTheirPaths() throws Exception {
+        run(tempDir, "git", "init");
+        run(tempDir, "git", "config", "user.email", "test@example.com");
+        run(tempDir, "git", "config", "user.name", "test");
+
+        Path src = tempDir.resolve("src/main/java/demo");
+        Files.createDirectories(src);
+        Path tracked = src.resolve("With Space.java");
+        Files.writeString(tracked, "class WithSpace {}\n");
+
+        run(tempDir, "git", "add", ".");
+        run(tempDir, "git", "commit", "-m", "init");
+
+        Files.writeString(tracked, "class WithSpace { int x = 1; }\n");
+
+        List<Path> changed = ChangedFileDetector.changedJavaFilesUnderSourceRoots(tempDir);
+
+        assertEquals(List.of(tracked), changed);
     }
 
     private static void run(Path dir, String... command) throws IOException, InterruptedException {

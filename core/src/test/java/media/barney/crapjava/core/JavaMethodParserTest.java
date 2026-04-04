@@ -34,8 +34,8 @@ class JavaMethodParserTest {
         List<MethodDescriptor> methods = JavaMethodParser.parse("demo.Sample", source);
 
         assertEquals(List.of(
-                new MethodDescriptor("alpha", 3, 8, 3),
-                new MethodDescriptor("beta", 10, 16, 4)
+                new MethodDescriptor("demo.Sample", "alpha", 3, 8, 3),
+                new MethodDescriptor("demo.Sample", "beta", 10, 16, 4)
         ), methods);
     }
 
@@ -56,7 +56,7 @@ class JavaMethodParserTest {
 
         List<MethodDescriptor> methods = JavaMethodParser.parse("Sample", source);
 
-        assertEquals(List.of(new MethodDescriptor("present", 7, 9, 1)), methods);
+        assertEquals(List.of(new MethodDescriptor("Sample", "present", 7, 9, 1)), methods);
     }
 
     @Test
@@ -78,7 +78,7 @@ class JavaMethodParserTest {
 
         List<MethodDescriptor> methods = JavaMethodParser.parse("Sample", source);
 
-        assertEquals(List.of(new MethodDescriptor("outer", 2, 11, 1)), methods);
+        assertEquals(List.of(new MethodDescriptor("Sample", "outer", 2, 11, 1)), methods);
     }
 
     @Test
@@ -95,7 +95,7 @@ class JavaMethodParserTest {
 
         List<MethodDescriptor> methods = JavaMethodParser.parse("demo.Sample", source);
 
-        assertEquals(List.of(new MethodDescriptor("helper", 4, 6, 1)), methods);
+        assertEquals(List.of(new MethodDescriptor("demo.Sample", "helper", 4, 6, 1)), methods);
     }
 
     @Test
@@ -113,7 +113,7 @@ class JavaMethodParserTest {
 
         List<MethodDescriptor> methods = JavaMethodParser.parse("Sample", source);
 
-        assertEquals(List.of(new MethodDescriptor("stable", 2, 7, 1)), methods);
+        assertEquals(List.of(new MethodDescriptor("Sample", "stable", 2, 7, 1)), methods);
     }
 
     @Test
@@ -144,7 +144,7 @@ class JavaMethodParserTest {
 
         List<MethodDescriptor> methods = JavaMethodParser.parse("Sample", source);
 
-        assertEquals(List.of(new MethodDescriptor("score", 2, 20, 10)), methods);
+        assertEquals(List.of(new MethodDescriptor("Sample", "score", 2, 20, 10)), methods);
     }
 
     @Test
@@ -197,8 +197,41 @@ class JavaMethodParserTest {
         List<MethodDescriptor> methods = JavaMethodParser.parse("Sample", source);
 
         assertEquals(List.of(
-                new MethodDescriptor("nested", 2, 29, 13),
-                new MethodDescriptor("switched", 31, 41, 4)
+                new MethodDescriptor("Sample", "nested", 2, 29, 13),
+                new MethodDescriptor("Sample", "switched", 31, 41, 4)
+        ), methods);
+    }
+
+    @Test
+    void includesOwningClassNameForNestedAndSecondaryTypes() {
+        String source = """
+                package demo;
+
+                class Outer {
+                    int outer() {
+                        return 1;
+                    }
+
+                    static class Inner {
+                        int inner() {
+                            return 2;
+                        }
+                    }
+                }
+
+                class Secondary {
+                    int beta() {
+                        return 3;
+                    }
+                }
+                """;
+
+        List<MethodDescriptor> methods = JavaMethodParser.parse("demo.Outer", source);
+
+        assertEquals(List.of(
+                new MethodDescriptor("demo.Outer", "outer", 4, 6, 1),
+                new MethodDescriptor("demo.Outer$Inner", "inner", 9, 11, 1),
+                new MethodDescriptor("demo.Secondary", "beta", 16, 18, 1)
         ), methods);
     }
 
@@ -214,7 +247,7 @@ class JavaMethodParserTest {
 
         List<MethodDescriptor> methods = JavaMethodParser.parse("demo.Sample.java", source);
 
-        assertEquals(List.of(new MethodDescriptor("value", 2, 4, 1)), methods);
+        assertEquals(List.of(new MethodDescriptor("Sample", "value", 2, 4, 1)), methods);
     }
 
     @Test
