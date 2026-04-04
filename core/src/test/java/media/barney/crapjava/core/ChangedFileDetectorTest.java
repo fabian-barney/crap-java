@@ -131,6 +131,27 @@ class ChangedFileDetectorTest {
         assertEquals(List.of(tracked), changed);
     }
 
+    @Test
+    void reportsRenamedJavaFilesUsingTheDestinationPath() throws Exception {
+        run(tempDir, "git", "init");
+        run(tempDir, "git", "config", "user.email", "test@example.com");
+        run(tempDir, "git", "config", "user.name", "test");
+
+        Path src = tempDir.resolve("src/main/java/demo");
+        Files.createDirectories(src);
+        Path original = src.resolve("OldName.java");
+        Path renamed = src.resolve("NewName.java");
+        Files.writeString(original, "class OldName {}\n");
+
+        run(tempDir, "git", "add", ".");
+        run(tempDir, "git", "commit", "-m", "init");
+        run(tempDir, "git", "mv", "src/main/java/demo/OldName.java", "src/main/java/demo/NewName.java");
+
+        List<Path> changed = ChangedFileDetector.changedJavaFilesUnderSourceRoots(tempDir);
+
+        assertEquals(List.of(renamed), changed);
+    }
+
     private static void run(Path dir, String... command) throws IOException, InterruptedException {
         Process process = new ProcessBuilder(command)
                 .directory(dir.toFile())

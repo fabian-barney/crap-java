@@ -93,7 +93,8 @@ public class CrapJavaCheckMojo extends AbstractMojo {
         List<Path> missingReports = new ArrayList<>();
         for (MavenProject reactorProject : reactorProjects()) {
             Path basedir = reactorProject.getBasedir().toPath();
-            if (Files.exists(basedir.resolve("src")) && !Files.exists(basedir.resolve("target/site/jacoco/jacoco.xml"))) {
+            if (Files.exists(basedir.resolve("src/main/java"))
+                    && !Files.exists(basedir.resolve("target/site/jacoco/jacoco.xml"))) {
                 missingReports.add(basedir.resolve("target/site/jacoco/jacoco.xml"));
             }
         }

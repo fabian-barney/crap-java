@@ -104,6 +104,26 @@ class CrapJavaCheckMojoTest {
     }
 
     @Test
+    void ignoresModulesWithoutProductionJavaSourcesWhenCheckingCoverageReports() throws Exception {
+        Path root = tempDir.resolve("root");
+        Path moduleA = root.resolve("module-a");
+        Path moduleB = root.resolve("module-b");
+        Files.createDirectories(moduleA.resolve("src/test/java/demo"));
+        writeCoverageReport(moduleB);
+
+        RecordingRunner runner = new RecordingRunner();
+        CrapJavaCheckMojo mojo = mojo(runner);
+        setField(mojo, "session", session(List.of(project(root, "root"), project(moduleA, "module-a"), project(moduleB, "module-b")), root));
+        setField(mojo, "project", project(moduleB, "module-b"));
+
+        mojo.execute();
+
+        assertTrue(runner.invoked);
+        assertTrue(runner.useExistingCoverage);
+        assertEquals(root, runner.projectRoot);
+    }
+
+    @Test
     void fallsBackToProjectBasedirWhenSessionHasNoMultiModuleRoot() throws Exception {
         Path root = tempDir.resolve("root");
         writeCoverageReport(root);
