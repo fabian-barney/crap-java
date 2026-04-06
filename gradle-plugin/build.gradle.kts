@@ -134,7 +134,7 @@ gradlePlugin {
     plugins {
         create("crap-java") {
             id = "media.barney.crap-java"
-            implementationClass = "media.barney.crapjava.gradle.CrapJavaGradlePlugin"
+            implementationClass = "media.barney.crap.gradle.CrapJavaGradlePlugin"
             displayName = "crap-java Gradle Plugin"
             description = "Registers the crap-java-check verification task for Gradle Java projects."
             tags.set(listOf("java", "jacoco", "quality", "metrics", "verification"))
@@ -146,3 +146,4 @@ gradlePlugin {
         }
     }
 }
+
