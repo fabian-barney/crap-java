@@ -46,7 +46,7 @@
               <createDependencyReducedPom>false</createDependencyReducedPom>
               <transformers>
                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                  <mainClass>media.barney.crapjava.cli.Main</mainClass>
+                  <mainClass>media.barney.crap.cli.Main</mainClass>
                 </transformer>
               </transformers>
             </configuration>
@@ -56,3 +56,4 @@
     </plugins>
   </build>
 </project>
+
