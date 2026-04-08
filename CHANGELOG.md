@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.1 - 2026-04-08
+
+### Changed
+
+- Resolved Gradle plugin module and JaCoCo report mappings during configuration so `crap-java-check` no longer performs execution-time build-marker discovery.
+- Added root-plus-subproject Gradle coverage tests and an explicit configuration-cache reuse test before advertising support in the published plugin metadata.
+
 ## 0.4.0 - 2026-04-06
 
 ### Changed

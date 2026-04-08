@@ -64,7 +64,7 @@ mvn -B -pl cli -am -DskipTests package
 From the project root you want to analyze:
 
 ```bash
-java -jar cli/target/crap-java-cli-0.4.0.jar
+java -jar cli/target/crap-java-cli-0.4.1.jar
 ```
 
 ## CLI
@@ -81,13 +81,13 @@ java -jar cli/target/crap-java-cli-0.4.0.jar
 Examples:
 
 ```bash
-java -jar cli/target/crap-java-cli-0.4.0.jar --help
-java -jar cli/target/crap-java-cli-0.4.0.jar
-java -jar cli/target/crap-java-cli-0.4.0.jar --changed
-java -jar cli/target/crap-java-cli-0.4.0.jar --build-tool gradle
-java -jar cli/target/crap-java-cli-0.4.0.jar --build-tool maven module-a/src/main/java/demo/Sample.java
-java -jar cli/target/crap-java-cli-0.4.0.jar src/main/java/demo/Sample.java
-java -jar cli/target/crap-java-cli-0.4.0.jar module-a module-b
+java -jar cli/target/crap-java-cli-0.4.1.jar --help
+java -jar cli/target/crap-java-cli-0.4.1.jar
+java -jar cli/target/crap-java-cli-0.4.1.jar --changed
+java -jar cli/target/crap-java-cli-0.4.1.jar --build-tool gradle
+java -jar cli/target/crap-java-cli-0.4.1.jar --build-tool maven module-a/src/main/java/demo/Sample.java
+java -jar cli/target/crap-java-cli-0.4.1.jar src/main/java/demo/Sample.java
+java -jar cli/target/crap-java-cli-0.4.1.jar module-a module-b
 ```
 
 ## Distribution

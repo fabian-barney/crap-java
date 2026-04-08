@@ -6,7 +6,7 @@
   <parent>
     <groupId>media.barney</groupId>
     <artifactId>crap-java-parent</artifactId>
-    <version>0.4.0</version>
+    <version>0.4.1</version>
   </parent>
 
   <artifactId>crap-java-cli</artifactId>
