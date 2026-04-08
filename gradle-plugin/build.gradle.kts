@@ -140,7 +140,7 @@ gradlePlugin {
             tags.set(listOf("java", "jacoco", "quality", "metrics", "verification"))
             compatibility {
                 features {
-                    configurationCache = false
+                    configurationCache = true
                 }
             }
         }

@@ -8,6 +8,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -35,6 +36,7 @@ class CrapJavaGradlePluginTest {
                 .map(Task::getName)
                 .collect(Collectors.toSet());
         assertEquals(Set.of("test", "jacocoTestReport"), dependencyNames);
+        assertEquals(Map.of(".", "build/reports/jacoco/test/jacocoTestReport.xml"), checkTask.getModuleCoverageReports().get());
         assertNotNull(project.getTasks().findByName("jacocoTestReport"));
     }
 
@@ -72,6 +74,7 @@ class CrapJavaGradlePluginTest {
         task.getAnalysisRoot().fileValue(projectRoot.toFile());
         task.getAnalysisSources().from(source);
         task.getCoverageReports().from(jacocoXml);
+        task.getModuleCoverageReports().put(".", "build/reports/jacoco/test/jacocoTestReport.xml");
 
         task.runCheck();
 

@@ -9,8 +9,11 @@ import org.gradle.testing.jacoco.tasks.JacocoReport;
 
 import java.util.Collection;
 import java.util.List;
+import java.nio.file.Path;
 
 public class CrapJavaGradlePlugin implements Plugin<Project> {
+
+    private static final String JACOCO_XML_RELATIVE_PATH = "build/reports/jacoco/test/jacocoTestReport.xml";
 
     @Override
     public void apply(Project project) {
@@ -21,19 +24,11 @@ public class CrapJavaGradlePlugin implements Plugin<Project> {
                     task.setGroup(LifecycleBasePlugin.VERIFICATION_GROUP);
                     task.setDescription("Runs the crap-java CRAP metric gate.");
                     task.getAnalysisRoot().set(project.getLayout().getProjectDirectory());
-                    task.getAnalysisMetadata().from(
-                            project.getLayout().getProjectDirectory().file("settings.gradle"),
-                            project.getLayout().getProjectDirectory().file("settings.gradle.kts"),
-                            project.getLayout().getProjectDirectory().file("build.gradle"),
-                            project.getLayout().getProjectDirectory().file("build.gradle.kts"),
-                            project.getLayout().getProjectDirectory().file("gradlew"),
-                            project.getLayout().getProjectDirectory().file("gradlew.bat")
-                    );
                 }
         );
 
         for (Project candidate : projectsToConfigure(project)) {
-            candidate.getPluginManager().withPlugin("java", ignored -> configureJavaProject(candidate, checkTask));
+            candidate.getPluginManager().withPlugin("java", ignored -> configureJavaProject(project, candidate, checkTask));
         }
     }
 
@@ -44,13 +39,16 @@ public class CrapJavaGradlePlugin implements Plugin<Project> {
         return List.of(project);
     }
 
-    private void configureJavaProject(Project candidate, TaskProvider<CrapJavaCheckTask> checkTask) {
+    private void configureJavaProject(Project analysisProject,
+                                      Project candidate,
+                                      TaskProvider<CrapJavaCheckTask> checkTask) {
         candidate.getPluginManager().apply("jacoco");
 
         TaskProvider<Test> testTask = candidate.getTasks().named("test", Test.class);
         TaskProvider<JacocoReport> jacocoReportTask = candidate.getTasks().named("jacocoTestReport", JacocoReport.class, report ->
                 report.getReports().getXml().getRequired().set(true)
         );
+        String modulePath = relativeModulePath(analysisProject, candidate);
 
         checkTask.configure(task -> {
             task.dependsOn(testTask);
@@ -59,11 +57,24 @@ public class CrapJavaGradlePlugin implements Plugin<Project> {
                     tree.include("src/main/java/**/*.java")
             ));
             task.getCoverageReports().from(candidate.getLayout().getBuildDirectory().file("reports/jacoco/test/jacocoTestReport.xml"));
-            task.getAnalysisMetadata().from(
-                    candidate.getLayout().getProjectDirectory().file("build.gradle"),
-                    candidate.getLayout().getProjectDirectory().file("build.gradle.kts")
-            );
+            task.getModuleCoverageReports().put(modulePath, coverageReportPath(modulePath));
         });
+    }
+
+    private static String relativeModulePath(Project analysisProject, Project candidate) {
+        Path analysisRoot = analysisProject.getProjectDir().toPath().toAbsolutePath().normalize();
+        Path candidateRoot = candidate.getProjectDir().toPath().toAbsolutePath().normalize();
+        if (analysisRoot.equals(candidateRoot)) {
+            return ".";
+        }
+        return analysisRoot.relativize(candidateRoot).toString().replace('\\', '/');
+    }
+
+    private static String coverageReportPath(String modulePath) {
+        if (".".equals(modulePath)) {
+            return JACOCO_XML_RELATIVE_PATH;
+        }
+        return modulePath + "/" + JACOCO_XML_RELATIVE_PATH;
     }
 }
 

@@ -23,7 +23,20 @@ class CrapJavaGradlePluginFunctionalTest {
 
     @Test
     void singleModuleProjectRunsCrapJavaCheck() throws Exception {
-        writeFile("settings.gradle.kts", "rootProject.name = \"demo\"");
+        writeSingleModuleProject();
+
+        BuildResult result = runBuild("crap-java-check");
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":crap-java-check").getOutcome());
+        assertEquals(TaskOutcome.SUCCESS, result.task(":jacocoTestReport").getOutcome());
+    }
+
+    @Test
+    void rootTaskAggregatesSubprojectCoverageForMultiModuleBuilds() throws Exception {
+        writeFile("settings.gradle.kts", """
+                rootProject.name = "workspace"
+                include("app", "lib")
+                """);
         writeFile("build.gradle.kts", """
                 plugins {
                     java
@@ -42,50 +55,6 @@ class CrapJavaGradlePluginFunctionalTest {
                 tasks.test {
                     useJUnitPlatform()
                 }
-                """);
-        writeFile("src/main/java/demo/Sample.java", """
-                package demo;
-
-                public class Sample {
-                    public int alpha(boolean value) {
-                        if (value) {
-                            return 1;
-                        }
-                        return 0;
-                    }
-                }
-                """);
-        writeFile("src/test/java/demo/SampleTest.java", """
-                package demo;
-
-                import org.junit.jupiter.api.Test;
-
-                import static org.junit.jupiter.api.Assertions.assertEquals;
-
-                class SampleTest {
-                    @Test
-                    void alphaReturnsOneForTrue() {
-                        assertEquals(1, new Sample().alpha(true));
-                    }
-                }
-                """);
-
-        BuildResult result = runBuild("crap-java-check");
-
-        assertEquals(TaskOutcome.SUCCESS, result.task(":crap-java-check").getOutcome());
-        assertEquals(TaskOutcome.SUCCESS, result.task(":jacocoTestReport").getOutcome());
-    }
-
-    @Test
-    void rootTaskAggregatesSubprojectCoverageForMultiModuleBuilds() throws Exception {
-        writeFile("settings.gradle.kts", """
-                rootProject.name = "workspace"
-                include("app", "lib")
-                """);
-        writeFile("build.gradle.kts", """
-                plugins {
-                    id("media.barney.crap-java")
-                }
 
                 subprojects {
                     apply(plugin = "java")
@@ -101,6 +70,29 @@ class CrapJavaGradlePluginFunctionalTest {
 
                     tasks.withType<org.gradle.api.tasks.testing.Test>().configureEach {
                         useJUnitPlatform()
+                    }
+                }
+                """);
+        writeFile("src/main/java/demo/root/RootSample.java", """
+                package demo.root;
+
+                public class RootSample {
+                    public int zero() {
+                        return 0;
+                    }
+                }
+                """);
+        writeFile("src/test/java/demo/root/RootSampleTest.java", """
+                package demo.root;
+
+                import org.junit.jupiter.api.Test;
+
+                import static org.junit.jupiter.api.Assertions.assertEquals;
+
+                class RootSampleTest {
+                    @Test
+                    void zeroReturnsZero() {
+                        assertEquals(0, new RootSample().zero());
                     }
                 }
                 """);
@@ -154,8 +146,21 @@ class CrapJavaGradlePluginFunctionalTest {
         BuildResult result = runBuild("crap-java-check");
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":crap-java-check").getOutcome());
+        assertTrue(Files.exists(tempDir.resolve("build/reports/jacoco/test/jacocoTestReport.xml")));
         assertTrue(Files.exists(tempDir.resolve("app/build/reports/jacoco/test/jacocoTestReport.xml")));
         assertTrue(Files.exists(tempDir.resolve("lib/build/reports/jacoco/test/jacocoTestReport.xml")));
+    }
+
+    @Test
+    void singleModuleProjectReusesConfigurationCache() throws Exception {
+        writeSingleModuleProject();
+
+        BuildResult first = runBuild("--configuration-cache", "crap-java-check");
+        BuildResult second = runBuild("--configuration-cache", "crap-java-check");
+
+        assertTrue(first.getOutput().contains("Configuration cache entry stored."));
+        assertTrue(second.getOutput().contains("Configuration cache entry reused."));
+        assertEquals(TaskOutcome.SUCCESS, second.task(":crap-java-check").getOutcome());
     }
 
     private BuildResult runBuild(String... arguments) {
@@ -168,6 +173,55 @@ class CrapJavaGradlePluginFunctionalTest {
                 .withArguments(gradleArguments)
                 .withPluginClasspath()
                 .build();
+    }
+
+    private void writeSingleModuleProject() throws IOException {
+        writeFile("settings.gradle.kts", "rootProject.name = \"demo\"");
+        writeFile("build.gradle.kts", """
+                plugins {
+                    java
+                    id("media.barney.crap-java")
+                }
+
+                repositories {
+                    mavenCentral()
+                }
+
+                dependencies {
+                    testImplementation("org.junit.jupiter:junit-jupiter:5.10.2")
+                    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+                }
+
+                tasks.test {
+                    useJUnitPlatform()
+                }
+                """);
+        writeFile("src/main/java/demo/Sample.java", """
+                package demo;
+
+                public class Sample {
+                    public int alpha(boolean value) {
+                        if (value) {
+                            return 1;
+                        }
+                        return 0;
+                    }
+                }
+                """);
+        writeFile("src/test/java/demo/SampleTest.java", """
+                package demo;
+
+                import org.junit.jupiter.api.Test;
+
+                import static org.junit.jupiter.api.Assertions.assertEquals;
+
+                class SampleTest {
+                    @Test
+                    void alphaReturnsOneForTrue() {
+                        assertEquals(1, new Sample().alpha(true));
+                    }
+                }
+                """);
     }
 
     private void writeFile(String relativePath, String content) throws IOException {

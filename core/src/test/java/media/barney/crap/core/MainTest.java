@@ -169,6 +169,48 @@ class MainTest {
     }
 
     @Test
+    void runWithExistingCoverageAnalyzesPreResolvedModules() throws Exception {
+        Path moduleRoot = tempDir.resolve("app");
+        Path source = moduleRoot.resolve("src/main/java/demo/Sample.java");
+        Files.createDirectories(source.getParent());
+        Files.writeString(source, """
+                package demo;
+
+                class Sample {
+                    int alpha() {
+                        return 1;
+                    }
+                }
+                """);
+        Path jacocoXml = moduleRoot.resolve("build/reports/jacoco/test/jacocoTestReport.xml");
+        Files.createDirectories(jacocoXml.getParent());
+        Files.writeString(jacocoXml, """
+                <report name="demo">
+                  <package name="demo">
+                    <class name="demo/Sample" sourcefilename="Sample.java">
+                      <method name="alpha" desc="()I" line="4">
+                        <counter type="INSTRUCTION" missed="0" covered="1"/>
+                      </method>
+                    </class>
+                  </package>
+                </report>
+                """);
+
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        ByteArrayOutputStream err = new ByteArrayOutputStream();
+
+        int exit = Main.runWithExistingCoverage(
+                List.of(new Main.ResolvedCoverageModule(moduleRoot, jacocoXml, List.of(source))),
+                new PrintStream(out),
+                new PrintStream(err)
+        );
+
+        assertEquals(0, exit);
+        assertTrue(utf8(out).contains("100.0%"));
+        assertEquals("", utf8(err));
+    }
+
+    @Test
     void maxCrapReturnsLargestNonNullScore() {
         List<MethodMetrics> metrics = List.of(
                 new MethodMetrics("alpha", "demo.Sample", 1, null, null),
