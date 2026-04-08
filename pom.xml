@@ -45,6 +45,7 @@
   <properties>
     <maven.compiler.release>17</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <cognitive-java.version>0.3.0</cognitive-java.version>
     <junit.version>5.10.2</junit.version>
     <jspecify.version>1.0.0</jspecify.version>
     <errorprone.version>2.48.0</errorprone.version>
@@ -83,6 +84,21 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>media.barney</groupId>
+        <artifactId>cognitive-java-maven-plugin</artifactId>
+        <version>${cognitive-java.version}</version>
+        <inherited>false</inherited>
+        <executions>
+          <execution>
+            <id>cognitive-java-check</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>check</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
     <pluginManagement>

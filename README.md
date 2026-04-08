@@ -53,6 +53,21 @@ Build and test the Maven plugin module, including its invoker integration fixtur
 mvn -B -pl maven-plugin -am verify
 ```
 
+## Shared Cognitive Gate
+
+Repository CI also runs the shared published `cognitive-java` Maven plugin as a
+separate `cognitive-java Gate` job. The plugin resolves from Maven Central, and
+the current version is controlled by the `cognitive-java.version` property in
+`pom.xml`.
+
+From the repository root, run the same gate locally with:
+
+```bash
+mvn -B cognitive-java:check
+```
+
+`mvn -B verify` now also includes the cognitive gate at the reactor root.
+
 ## Run
 
 Build the CLI jar:
