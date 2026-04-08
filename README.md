@@ -119,7 +119,7 @@ Run:
 
 ### Maven Central Gradle Plugin
 
-If you want to resolve the Gradle plugin from Maven Central instead of the Plugin Portal, add Maven Central to plugin resolution in `settings.gradle(.kts)`:
+If you want to prefer resolving the Gradle plugin from Maven Central, add Maven Central ahead of the Plugin Portal in `settings.gradle(.kts)`:
 
 ```kotlin
 pluginManagement {
