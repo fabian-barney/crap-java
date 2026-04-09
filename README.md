@@ -78,9 +78,9 @@ In CI:
 
 - `crap-java Gate` owns `core`, `cli`, `maven-plugin`, and `gradle-plugin/src/main/java`
 - `cognitive-java Gate` owns the same full-repo source scope
-- `gradle-plugin` validates Gradle plugin build and test behavior only
+- `Gradle Plugin` validates Gradle plugin build and test behavior only
 
-The standalone `gradle-plugin` job is not the owner of metric failures for
+The standalone `Gradle Plugin` job is not the owner of metric failures for
 `gradle-plugin/src/main/java`; those failures still belong to the metric gate
 jobs.
 
