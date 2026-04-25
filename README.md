@@ -105,6 +105,9 @@ java -jar cli/target/crap-java-cli-0.4.1.jar
 (no args)             Analyze all Java files under any nested src/main/java tree
 --changed             Analyze changed Java files under any nested src/main/java tree
 --build-tool <tool>   Force `auto`, `maven`, or `gradle`
+--format <format>     Write `toon`, `json`, `text`, or `junit` output (`toon` by default)
+--output <path>       Write the selected output format to a file instead of stdout
+--junit-report <path> Also write a JUnit XML report for CI test-report UIs
 <file ...>            Analyze only these files
 <directory ...>       Analyze all Java files under each directory's nested src/main/java trees
 ```
@@ -116,10 +119,24 @@ java -jar cli/target/crap-java-cli-0.4.1.jar --help
 java -jar cli/target/crap-java-cli-0.4.1.jar
 java -jar cli/target/crap-java-cli-0.4.1.jar --changed
 java -jar cli/target/crap-java-cli-0.4.1.jar --build-tool gradle
+java -jar cli/target/crap-java-cli-0.4.1.jar --format json
+java -jar cli/target/crap-java-cli-0.4.1.jar --format text
+java -jar cli/target/crap-java-cli-0.4.1.jar --format junit --output target/crap-java/TEST-crap-java.xml
+java -jar cli/target/crap-java-cli-0.4.1.jar --junit-report target/crap-java/TEST-crap-java.xml
 java -jar cli/target/crap-java-cli-0.4.1.jar --build-tool maven module-a/src/main/java/demo/Sample.java
 java -jar cli/target/crap-java-cli-0.4.1.jar src/main/java/demo/Sample.java
 java -jar cli/target/crap-java-cli-0.4.1.jar module-a module-b
 ```
+
+The CLI writes only the requested report format to stdout, making the default
+TOON output suitable for agent workflows. Warnings and threshold errors are
+written to stderr. Machine-readable reports include `coverageKind:
+instruction`; later releases may add more coverage kinds.
+
+The JUnit XML format exposes each analyzed method as a testcase. Methods with
+CRAP scores over `8.0` fail, methods with unavailable coverage are skipped, and
+the testcase properties include the score, threshold, complexity, coverage
+percent, coverage kind, source path, and line range.
 
 ## Distribution
 
@@ -147,6 +164,9 @@ Run:
 ```bash
 ./gradlew crap-java-check
 ```
+
+The Gradle task writes a JUnit XML report by default to
+`build/reports/crap-java/TEST-crap-java.xml`.
 
 ### Maven Central Gradle Plugin
 
@@ -222,6 +242,17 @@ Run:
 ```bash
 mvn verify
 ```
+
+The Maven plugin writes a JUnit XML report by default to
+`target/crap-java/TEST-crap-java.xml`. Override the path with:
+
+```bash
+mvn verify -DcrapJava.junitReportPath=target/custom-crap-java.xml
+```
+
+In GitLab CI, upload the generated XML with `artifacts:reports:junit`. In
+GitHub Actions, upload the file as an artifact or feed it into a JUnit
+test-report action.
 
 ## Exit Codes
 

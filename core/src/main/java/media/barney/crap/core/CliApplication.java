@@ -41,14 +41,16 @@ final class CliApplication {
         try {
             List<Path> filesToAnalyze = filesForMode(parsed);
             if (filesToAnalyze.isEmpty()) {
-                out.println("No Java files to analyze.");
+                CrapReport report = CrapReport.from(List.of(), ReportPublisher.THRESHOLD);
+                ReportPublisher.publish(report, reportOptions(parsed), out);
                 return 0;
             }
 
             List<MethodMetrics> metrics = analyzeByModule(filesToAnalyze, parsed.buildToolSelection());
             metrics.sort(Comparator.comparing(MethodMetrics::crapScore,
                     Comparator.nullsLast(Comparator.reverseOrder())));
-            out.print(ReportFormatter.format(metrics));
+            CrapReport report = CrapReport.from(metrics, ReportPublisher.THRESHOLD);
+            ReportPublisher.publish(report, reportOptions(parsed), out);
 
             double max = Main.maxCrap(metrics);
             if (thresholdExceeded(max)) {
@@ -74,13 +76,13 @@ final class CliApplication {
             if (!Files.exists(jacocoXml)) {
                 err.println("Warning: JaCoCo XML not found at " + jacocoXml + ". Coverage will be N/A.");
             }
-            metrics.addAll(CrapAnalyzer.analyze(module.moduleRoot(), entry.getValue(), jacocoXml));
+            metrics.addAll(CrapAnalyzer.analyze(projectRoot, entry.getValue(), jacocoXml));
         }
         return metrics;
     }
 
     static boolean thresholdExceeded(double max) {
-        return Double.compare(max, 8.0) > 0;
+        return Double.compare(max, ReportPublisher.THRESHOLD) > 0;
     }
 
     private ParseOutcome parseArguments(String[] args) {
@@ -105,6 +107,21 @@ final class CliApplication {
             case EXPLICIT_FILES -> explicitFiles(parsed.fileArgs());
             case HELP -> List.of();
         };
+    }
+
+    private ReportOptions reportOptions(CliArguments parsed) {
+        return new ReportOptions(
+                parsed.reportFormat(),
+                outputPath(parsed.outputPath()),
+                outputPath(parsed.junitReportPath())
+        );
+    }
+
+    private @Nullable Path outputPath(@Nullable String path) {
+        if (path == null) {
+            return null;
+        }
+        return projectRoot.resolve(path).normalize();
     }
 
     private List<Path> explicitFiles(List<String> args) throws Exception {

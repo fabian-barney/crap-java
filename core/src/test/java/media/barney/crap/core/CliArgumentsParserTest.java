@@ -14,6 +14,7 @@ class CliArgumentsParserTest {
         CliArguments args = CliArgumentsParser.parse(new String[]{});
         assertEquals(CliMode.ALL_SRC, args.mode());
         assertEquals(BuildToolSelection.AUTO, args.buildToolSelection());
+        assertEquals(ReportFormat.TOON, args.reportFormat());
     }
 
     @Test
@@ -28,6 +29,7 @@ class CliArgumentsParserTest {
         CliArguments args = CliArgumentsParser.parse(new String[]{"src/main/java/demo/A.java", "src/main/java/demo/B.java"});
         assertEquals(CliMode.EXPLICIT_FILES, args.mode());
         assertEquals(BuildToolSelection.AUTO, args.buildToolSelection());
+        assertEquals(ReportFormat.TOON, args.reportFormat());
         assertEquals(List.of("src/main/java/demo/A.java", "src/main/java/demo/B.java"), args.fileArgs());
     }
 
@@ -43,6 +45,63 @@ class CliArgumentsParserTest {
 
         assertEquals(CliMode.CHANGED_SRC, args.mode());
         assertEquals(BuildToolSelection.GRADLE, args.buildToolSelection());
+    }
+
+    @Test
+    void reportOptionsAreParsed() {
+        CliArguments args = CliArgumentsParser.parse(new String[]{
+                "--format", "json",
+                "--output", "target/crap-java/report.json",
+                "--junit-report", "target/crap-java/TEST-crap-java.xml",
+                "src/main/java/demo/A.java"
+        });
+
+        assertEquals(ReportFormat.JSON, args.reportFormat());
+        assertEquals("target/crap-java/report.json", args.outputPath());
+        assertEquals("target/crap-java/TEST-crap-java.xml", args.junitReportPath());
+        assertEquals(List.of("src/main/java/demo/A.java"), args.fileArgs());
+    }
+
+    @Test
+    void reportFormatRequiresKnownValue() {
+        assertThrows(IllegalArgumentException.class,
+                () -> CliArgumentsParser.parse(new String[]{"--format", "yaml"}));
+    }
+
+    @Test
+    void reportFormatRequiresValue() {
+        assertThrows(IllegalArgumentException.class,
+                () -> CliArgumentsParser.parse(new String[]{"--format"}));
+    }
+
+    @Test
+    void reportFormatCanOnlyBeProvidedOnce() {
+        assertThrows(IllegalArgumentException.class,
+                () -> CliArgumentsParser.parse(new String[]{"--format", "json", "--format", "toon"}));
+    }
+
+    @Test
+    void outputRequiresValue() {
+        assertThrows(IllegalArgumentException.class,
+                () -> CliArgumentsParser.parse(new String[]{"--output"}));
+    }
+
+    @Test
+    void outputCanOnlyBeProvidedOnce() {
+        assertThrows(IllegalArgumentException.class,
+                () -> CliArgumentsParser.parse(new String[]{"--output", "one.json", "--output", "two.json"}));
+    }
+
+    @Test
+    void junitReportRequiresValue() {
+        assertThrows(IllegalArgumentException.class,
+                () -> CliArgumentsParser.parse(new String[]{"--junit-report"}));
+    }
+
+    @Test
+    void junitReportCanOnlyBeProvidedOnce() {
+        assertThrows(IllegalArgumentException.class,
+                () -> CliArgumentsParser.parse(new String[]{"--junit-report", "one.xml", "--junit-report", "two.xml"}));
     }
 
     @Test

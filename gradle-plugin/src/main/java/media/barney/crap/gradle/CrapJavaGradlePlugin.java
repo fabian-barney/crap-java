@@ -24,6 +24,8 @@ public class CrapJavaGradlePlugin implements Plugin<Project> {
                     task.setGroup(LifecycleBasePlugin.VERIFICATION_GROUP);
                     task.setDescription("Runs the crap-java CRAP metric gate.");
                     task.getAnalysisRoot().set(project.getLayout().getProjectDirectory());
+                    task.getJunitReport().convention(project.getLayout().getBuildDirectory()
+                            .file("reports/crap-java/TEST-crap-java.xml"));
                 }
         );
 

@@ -25,7 +25,21 @@ public final class Main {
     public static int runWithExistingCoverage(List<ResolvedCoverageModule> modules,
                                               PrintStream out,
                                               PrintStream err) throws Exception {
-        return runResolvedModules(modules, out, err);
+        return runResolvedModules(modules, commonRoot(modules), out, err, ReportOptions.textWithOptionalJunit(null));
+    }
+
+    public static int runWithExistingCoverage(List<ResolvedCoverageModule> modules,
+                                              Path reportRoot,
+                                              PrintStream out,
+                                              PrintStream err,
+                                              Path junitReportPath) throws Exception {
+        return runResolvedModules(
+                modules,
+                reportRoot.toAbsolutePath().normalize(),
+                out,
+                err,
+                ReportOptions.textWithOptionalJunit(junitReportPath.toAbsolutePath().normalize())
+        );
     }
 
     public static int run(String[] args, Path projectRoot, PrintStream out, PrintStream err) throws Exception {
@@ -50,8 +64,10 @@ public final class Main {
     }
 
     private static int runResolvedModules(List<ResolvedCoverageModule> modules,
+                                          Path reportRoot,
                                           PrintStream out,
-                                          PrintStream err) throws Exception {
+                                          PrintStream err,
+                                          ReportOptions reportOptions) throws Exception {
         List<MethodMetrics> metrics = new ArrayList<>();
         for (ResolvedCoverageModule module : modules) {
             if (module.sourceFiles().isEmpty()) {
@@ -60,14 +76,11 @@ public final class Main {
             if (!Files.exists(module.coverageReport())) {
                 err.println("Warning: JaCoCo XML not found at " + module.coverageReport() + ". Coverage will be N/A.");
             }
-            metrics.addAll(CrapAnalyzer.analyze(module.moduleRoot(), module.sourceFiles(), module.coverageReport()));
-        }
-        if (metrics.isEmpty()) {
-            out.println("No Java files to analyze.");
-            return 0;
+            metrics.addAll(CrapAnalyzer.analyze(reportRoot, module.sourceFiles(), module.coverageReport()));
         }
 
-        out.print(ReportFormatter.format(metrics));
+        CrapReport report = CrapReport.from(metrics, ReportPublisher.THRESHOLD);
+        ReportPublisher.publish(report, reportOptions, out);
 
         double max = Main.maxCrap(metrics);
         if (CliApplication.thresholdExceeded(max)) {
@@ -84,9 +97,36 @@ public final class Main {
                   crap-java --changed                      Analyze changed Java files under any nested src/main/java tree
                   crap-java --build-tool gradle           Force Gradle for all resolved modules
                   crap-java --build-tool maven --changed  Force Maven for changed files
+                  crap-java --format json                 Write report as toon, json, text, or junit (default: toon)
+                  crap-java --output report.toon          Write the selected report format to a file
+                  crap-java --junit-report report.xml     Also write a JUnit XML report for CI
                   crap-java <path...>                     Analyze files, or for directory args analyze nested src/main/java trees under each path
                   crap-java --help                        Print this help message
                 """;
+    }
+
+    private static Path commonRoot(List<ResolvedCoverageModule> modules) {
+        Path common = null;
+        for (ResolvedCoverageModule module : modules) {
+            Path root = module.moduleRoot();
+            if (common == null) {
+                common = root;
+            } else {
+                common = commonRoot(common, root);
+            }
+        }
+        return common == null ? Path.of(".").toAbsolutePath().normalize() : common;
+    }
+
+    private static Path commonRoot(Path left, Path right) {
+        Path absoluteLeft = left.toAbsolutePath().normalize();
+        Path absoluteRight = right.toAbsolutePath().normalize();
+        Path common = absoluteLeft.getRoot();
+        int max = Math.min(absoluteLeft.getNameCount(), absoluteRight.getNameCount());
+        for (int index = 0; index < max && absoluteLeft.getName(index).equals(absoluteRight.getName(index)); index++) {
+            common = common == null ? absoluteLeft.getName(index) : common.resolve(absoluteLeft.getName(index));
+        }
+        return common == null ? absoluteLeft : common;
     }
 
     static double maxCrap(List<MethodMetrics> metrics) {

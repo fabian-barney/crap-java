@@ -11,6 +11,7 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 import org.jspecify.annotations.Nullable;
 
+import java.io.File;
 import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -29,6 +30,9 @@ public class CrapJavaCheckMojo extends AbstractMojo {
 
     @Parameter(defaultValue = "${project}", readonly = true, required = true)
     private @Nullable MavenProject project;
+
+    @Parameter(property = "crapJava.junitReportPath")
+    private @Nullable File junitReportPath;
 
     public CrapJavaCheckMojo() {
         this((useExistingCoverage, args, projectRoot, out, err) -> useExistingCoverage
@@ -60,13 +64,30 @@ public class CrapJavaCheckMojo extends AbstractMojo {
 
     private void runCheck(Path executionRoot) throws MojoExecutionException, MojoFailureException {
         try {
-            int exit = runner.run(true, new String[0], executionRoot, System.out, System.err);
+            int exit = runner.run(true, reportArgs(executionRoot), executionRoot, System.out, System.err);
             handleExitCode(exit);
         } catch (MojoFailureException | MojoExecutionException ex) {
             throw ex;
         } catch (Exception ex) {
             throw new MojoExecutionException("Failed to execute crap-java", ex);
         }
+    }
+
+    private String[] reportArgs(Path executionRoot) {
+        return new String[]{
+                "--format",
+                "text",
+                "--junit-report",
+                junitReportPath(executionRoot).toString()
+        };
+    }
+
+    private Path junitReportPath(Path executionRoot) {
+        File configured = junitReportPath;
+        if (configured != null) {
+            return configured.toPath().normalize();
+        }
+        return executionRoot.resolve("target/crap-java/TEST-crap-java.xml").normalize();
     }
 
     private void ensureCoverageReportsExist() throws MojoFailureException {

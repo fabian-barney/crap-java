@@ -31,6 +31,7 @@ class MainTest {
         assertEquals(0, exit);
         assertTrue(utf8(out).contains("Usage:"));
         assertTrue(utf8(out).contains("--build-tool"));
+        assertTrue(utf8(out).contains("--format"));
     }
 
     @Test
@@ -90,6 +91,8 @@ class MainTest {
         );
 
         assertEquals(0, exit);
+        assertTrue(utf8(out).contains("schemaVersion: 1"));
+        assertTrue(utf8(out).contains("coverageKind: instruction"));
         assertTrue(utf8(out).contains("Sample"));
         assertTrue(utf8(out).contains("alpha"));
     }
@@ -156,7 +159,7 @@ class MainTest {
         ByteArrayOutputStream err = new ByteArrayOutputStream();
 
         int exit = Main.runWithExistingCoverage(
-                new String[]{"src/main/java/demo/Sample.java"},
+                new String[]{"--format", "text", "src/main/java/demo/Sample.java"},
                 tempDir,
                 new PrintStream(out),
                 new PrintStream(err)
@@ -166,6 +169,58 @@ class MainTest {
         assertTrue(Files.exists(jacocoXml));
         assertTrue(utf8(out).contains("100.0%"));
         assertEquals("", utf8(err));
+    }
+
+    @Test
+    void writesPrimaryOutputAndAdditionalJunitReportFiles() throws Exception {
+        Files.writeString(tempDir.resolve("pom.xml"), "<project/>");
+        Path sourceRoot = tempDir.resolve("src/main/java/demo");
+        Files.createDirectories(sourceRoot);
+        Path source = sourceRoot.resolve("Sample.java");
+        Files.writeString(source, """
+                package demo;
+
+                class Sample {
+                    int alpha() {
+                        return 1;
+                    }
+                }
+                """);
+        Path jacocoXml = tempDir.resolve("target/site/jacoco/jacoco.xml");
+        Files.createDirectories(jacocoXml.getParent());
+        Files.writeString(jacocoXml, """
+                <report name="demo">
+                  <package name="demo">
+                    <class name="demo/Sample" sourcefilename="Sample.java">
+                      <method name="alpha" desc="()I" line="4">
+                        <counter type="INSTRUCTION" missed="0" covered="1"/>
+                      </method>
+                    </class>
+                  </package>
+                </report>
+                """);
+        Path jsonReport = tempDir.resolve("target/crap-java/report.json");
+        Path junitReport = tempDir.resolve("target/crap-java/TEST-crap-java.xml");
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        ByteArrayOutputStream err = new ByteArrayOutputStream();
+
+        int exit = Main.runWithExistingCoverage(
+                new String[]{
+                        "--format", "json",
+                        "--output", "target/crap-java/report.json",
+                        "--junit-report", "target/crap-java/TEST-crap-java.xml",
+                        "src/main/java/demo/Sample.java"
+                },
+                tempDir,
+                new PrintStream(out),
+                new PrintStream(err)
+        );
+
+        assertEquals(0, exit);
+        assertEquals("", utf8(out));
+        assertEquals("", utf8(err));
+        assertTrue(Files.readString(jsonReport).contains("\"coverageKind\": \"instruction\""));
+        assertTrue(Files.readString(junitReport).contains("<testsuites tests=\"1\" failures=\"0\" errors=\"0\" skipped=\"0\" time=\"0\">"));
     }
 
     @Test
@@ -211,11 +266,60 @@ class MainTest {
     }
 
     @Test
+    void runWithExistingCoverageUsesCommonRootForPreResolvedModules() throws Exception {
+        Path appRoot = tempDir.resolve("app");
+        Path libRoot = tempDir.resolve("lib");
+        Path appSource = appRoot.resolve("src/main/java/demo/app/AppSample.java");
+        Path libSource = libRoot.resolve("src/main/java/demo/lib/LibSample.java");
+        Files.createDirectories(appSource.getParent());
+        Files.createDirectories(libSource.getParent());
+        Files.writeString(appSource, """
+                package demo.app;
+
+                class AppSample {
+                    int alpha() {
+                        return 1;
+                    }
+                }
+                """);
+        Files.writeString(libSource, """
+                package demo.lib;
+
+                class LibSample {
+                    int beta() {
+                        return 2;
+                    }
+                }
+                """);
+        Path appJacocoXml = appRoot.resolve("build/reports/jacoco/test/jacocoTestReport.xml");
+        Path libJacocoXml = libRoot.resolve("build/reports/jacoco/test/jacocoTestReport.xml");
+        writeCoverageXml(appJacocoXml, "demo/app/AppSample", "alpha", 4);
+        writeCoverageXml(libJacocoXml, "demo/lib/LibSample", "beta", 4);
+
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        ByteArrayOutputStream err = new ByteArrayOutputStream();
+
+        int exit = Main.runWithExistingCoverage(
+                List.of(
+                        new Main.ResolvedCoverageModule(appRoot, appJacocoXml, List.of(appSource)),
+                        new Main.ResolvedCoverageModule(libRoot, libJacocoXml, List.of(libSource))
+                ),
+                new PrintStream(out),
+                new PrintStream(err)
+        );
+
+        assertEquals(0, exit);
+        assertTrue(utf8(out).contains("demo.app.AppSample"));
+        assertTrue(utf8(out).contains("demo.lib.LibSample"));
+        assertEquals("", utf8(err));
+    }
+
+    @Test
     void maxCrapReturnsLargestNonNullScore() {
         List<MethodMetrics> metrics = List.of(
-                new MethodMetrics("alpha", "demo.Sample", 1, null, null),
-                new MethodMetrics("beta", "demo.Sample", 1, 75.0, 4.5),
-                new MethodMetrics("gamma", "demo.Sample", 1, 85.0, 7.0)
+                new MethodMetrics("alpha", "demo.Sample", "src/main/java/demo/Sample.java", 1, 2, 1, null, null),
+                new MethodMetrics("beta", "demo.Sample", "src/main/java/demo/Sample.java", 3, 4, 1, 75.0, 4.5),
+                new MethodMetrics("gamma", "demo.Sample", "src/main/java/demo/Sample.java", 5, 6, 1, 85.0, 7.0)
         );
 
         assertEquals(7.0, Main.maxCrap(metrics));
@@ -223,6 +327,21 @@ class MainTest {
 
     private static String utf8(ByteArrayOutputStream output) {
         return output.toString(StandardCharsets.UTF_8);
+    }
+
+    private static void writeCoverageXml(Path path, String className, String methodName, int line) throws Exception {
+        Files.createDirectories(path.getParent());
+        Files.writeString(path, """
+                <report name="demo">
+                  <package name="demo">
+                    <class name="%s" sourcefilename="Sample.java">
+                      <method name="%s" desc="()I" line="%d">
+                        <counter type="INSTRUCTION" missed="0" covered="1"/>
+                      </method>
+                    </class>
+                  </package>
+                </report>
+                """.formatted(className, methodName, line));
     }
 }
 

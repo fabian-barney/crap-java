@@ -49,6 +49,7 @@ tasks.withType<JavaCompile>().configureEach {
 
 dependencies {
     implementation(files(coreJar.asFile))
+    implementation("dev.toonformat:jtoon:1.0.9")
     testImplementation(platform("org.junit:junit-bom:5.10.2"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testImplementation(gradleTestKit())
