@@ -128,13 +128,33 @@ jobs:
           echo "CLI_JAR=${filtered[0]}" >> "$GITHUB_ENV"
 
       - name: Run Maven-source crap-java gate
-        run: java -jar "$CLI_JAR" --build-tool maven core/src/main/java cli/src/main/java maven-plugin/src/main/java
+        run: |
+          mkdir -p target/crap-java
+          java -jar "$CLI_JAR" \
+            --format text \
+            --junit-report target/crap-java/TEST-crap-java-maven-sources.xml \
+            --build-tool maven \
+            core/src/main/java cli/src/main/java maven-plugin/src/main/java
 
       - name: Set up Gradle wrapper permissions
         run: chmod +x gradle-plugin/gradlew
 
       - name: Run Gradle-plugin crap-java gate
-        run: java -jar "$CLI_JAR" --build-tool gradle gradle-plugin/src/main/java
+        run: |
+          mkdir -p target/crap-java
+          java -jar "$CLI_JAR" \
+            --format text \
+            --junit-report target/crap-java/TEST-crap-java-gradle-plugin.xml \
+            --build-tool gradle \
+            gradle-plugin/src/main/java
+
+      - name: Upload crap-java JUnit reports
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: crap-java-junit-reports
+          path: target/crap-java/TEST-crap-java-*.xml
+          if-no-files-found: ignore
 
   # Keep the self-hosted cognitive gate separate from the Gradle plugin test job
   # so complexity violations in gradle-plugin/src/main/java fail this metric job.

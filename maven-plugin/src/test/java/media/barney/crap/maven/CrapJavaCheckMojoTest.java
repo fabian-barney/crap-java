@@ -61,6 +61,29 @@ class CrapJavaCheckMojoTest {
         assertTrue(runner.invoked);
         assertTrue(runner.useExistingCoverage);
         assertEquals(root, runner.projectRoot);
+        assertEquals(List.of(
+                "--format",
+                "text",
+                "--junit-report",
+                root.resolve("target/crap-java/TEST-crap-java.xml").toString()
+        ), List.of(runner.args));
+    }
+
+    @Test
+    void usesConfiguredJunitReportPath() throws Exception {
+        Path root = tempDir.resolve("root");
+        writeCoverageReport(root);
+        Path report = root.resolve("custom/crap.xml");
+
+        RecordingRunner runner = new RecordingRunner();
+        CrapJavaCheckMojo mojo = mojo(runner);
+        setField(mojo, "session", session(List.of(project(root, "root")), root));
+        setField(mojo, "project", project(root, "root"));
+        setField(mojo, "junitReportPath", report.toFile());
+
+        mojo.execute();
+
+        assertEquals(List.of("--format", "text", "--junit-report", report.toString()), List.of(runner.args));
     }
 
     @Test
@@ -225,6 +248,7 @@ class CrapJavaCheckMojoTest {
     private static final class RecordingRunner implements CrapJavaCheckMojo.CrapJavaRunner {
         private boolean invoked;
         private boolean useExistingCoverage;
+        private String[] args = new String[0];
         private @Nullable Path projectRoot;
         private int exitCode;
         private @Nullable Exception failure;
@@ -234,6 +258,7 @@ class CrapJavaCheckMojoTest {
                 throws Exception {
             invoked = true;
             this.useExistingCoverage = useExistingCoverage;
+            this.args = args.clone();
             this.projectRoot = projectRoot;
             if (failure != null) {
                 throw failure;

@@ -29,6 +29,7 @@ class CrapJavaGradlePluginFunctionalTest {
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":crap-java-check").getOutcome());
         assertEquals(TaskOutcome.SUCCESS, result.task(":jacocoTestReport").getOutcome());
+        assertTrue(Files.exists(tempDir.resolve("build/reports/crap-java/TEST-crap-java.xml")));
     }
 
     @Test
@@ -149,6 +150,7 @@ class CrapJavaGradlePluginFunctionalTest {
         assertTrue(Files.exists(tempDir.resolve("build/reports/jacoco/test/jacocoTestReport.xml")));
         assertTrue(Files.exists(tempDir.resolve("app/build/reports/jacoco/test/jacocoTestReport.xml")));
         assertTrue(Files.exists(tempDir.resolve("lib/build/reports/jacoco/test/jacocoTestReport.xml")));
+        assertTrue(Files.exists(tempDir.resolve("build/reports/crap-java/TEST-crap-java.xml")));
     }
 
     @Test
@@ -160,7 +162,8 @@ class CrapJavaGradlePluginFunctionalTest {
 
         assertTrue(first.getOutput().contains("Configuration cache entry stored."));
         assertTrue(second.getOutput().contains("Configuration cache entry reused."));
-        assertEquals(TaskOutcome.SUCCESS, second.task(":crap-java-check").getOutcome());
+        TaskOutcome outcome = second.task(":crap-java-check").getOutcome();
+        assertTrue(outcome == TaskOutcome.SUCCESS || outcome == TaskOutcome.UP_TO_DATE);
     }
 
     private BuildResult runBuild(String... arguments) {

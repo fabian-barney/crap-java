@@ -37,6 +37,9 @@ class CrapJavaGradlePluginTest {
                 .collect(Collectors.toSet());
         assertEquals(Set.of("test", "jacocoTestReport"), dependencyNames);
         assertEquals(Map.of(".", "build/reports/jacoco/test/jacocoTestReport.xml"), checkTask.getModuleCoverageReports().get());
+        assertTrue(checkTask.getJunitReport().get().getAsFile().toPath().normalize().toString()
+                .replace('\\', '/')
+                .endsWith("build/reports/crap-java/TEST-crap-java.xml"));
         assertNotNull(project.getTasks().findByName("jacocoTestReport"));
     }
 
@@ -75,10 +78,13 @@ class CrapJavaGradlePluginTest {
         task.getAnalysisSources().from(source);
         task.getCoverageReports().from(jacocoXml);
         task.getModuleCoverageReports().put(".", "build/reports/jacoco/test/jacocoTestReport.xml");
+        Path junitReport = projectRoot.resolve("build/reports/crap-java/TEST-crap-java.xml");
+        task.getJunitReport().fileValue(junitReport.toFile());
 
         task.runCheck();
 
         assertTrue(Files.exists(jacocoXml));
+        assertTrue(Files.readString(junitReport).contains("<testsuites tests=\"1\" failures=\"0\" errors=\"0\" skipped=\"0\" time=\"0\">"));
     }
 }
 

@@ -57,7 +57,8 @@ class CliApplicationTest {
                 .execute(new String[0]);
 
         assertEquals(0, exit);
-        assertTrue(utf8(out).contains("No Java files to analyze."));
+        assertTrue(utf8(out).contains("schemaVersion: 1"));
+        assertTrue(utf8(out).contains("methods[0]"));
     }
 
     @Test
@@ -79,7 +80,7 @@ class CliApplicationTest {
                 .execute(new String[]{"--changed"});
 
         assertEquals(0, exit);
-        assertTrue(utf8(out).contains("No Java files to analyze."));
+        assertTrue(utf8(out).contains("methods[0]"));
         assertEquals("", utf8(err));
     }
 

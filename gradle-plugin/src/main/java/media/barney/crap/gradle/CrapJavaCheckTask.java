@@ -5,11 +5,13 @@ import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
 import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.DirectoryProperty;
+import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.provider.MapProperty;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.Optional;
+import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.PathSensitive;
 import org.gradle.api.tasks.PathSensitivity;
 import org.gradle.api.tasks.TaskAction;
@@ -38,20 +40,28 @@ public abstract class CrapJavaCheckTask extends DefaultTask {
     @Input
     public abstract MapProperty<String, String> getModuleCoverageReports();
 
+    @OutputFile
+    public abstract RegularFileProperty getJunitReport();
+
     @TaskAction
     void runCheck() throws Exception {
         List<Path> sourceFiles = getAnalysisSources().getFiles().stream()
                 .map(file -> file.toPath().toAbsolutePath().normalize())
                 .sorted()
                 .toList();
+        Path analysisRoot = getAnalysisRoot().get().getAsFile().toPath().toAbsolutePath().normalize();
+        Path junitReport = getJunitReport().get().getAsFile().toPath().toAbsolutePath().normalize();
         if (sourceFiles.isEmpty()) {
-            getLogger().lifecycle("No Java files to analyze.");
+            try (var out = GradleLoggingPrintStreams.standardOut(getLogger());
+                 var err = GradleLoggingPrintStreams.standardErr(getLogger())) {
+                Main.runWithExistingCoverage(List.of(), analysisRoot, out, err, junitReport);
+            }
             return;
         }
         List<Main.ResolvedCoverageModule> modules = resolvedModules(sourceFiles);
         try (var out = GradleLoggingPrintStreams.standardOut(getLogger());
              var err = GradleLoggingPrintStreams.standardErr(getLogger())) {
-            int exit = Main.runWithExistingCoverage(modules, out, err);
+            int exit = Main.runWithExistingCoverage(modules, analysisRoot, out, err, junitReport);
             if (exit != 0) {
                 throw new GradleException("crap-java-check failed with exit " + exit);
             }

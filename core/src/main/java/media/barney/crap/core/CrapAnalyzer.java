@@ -21,24 +21,40 @@ final class CrapAnalyzer {
     static List<MethodMetrics> analyze(Path projectRoot, List<Path> changedFiles, Path jacocoXml) throws IOException {
         Map<String, CoverageData> coverageMap = JacocoCoverageParser.parse(jacocoXml);
         List<MethodMetrics> metrics = new ArrayList<>();
+        Path normalizedProjectRoot = projectRoot.toAbsolutePath().normalize();
 
         for (Path file : changedFiles) {
             if (!Files.exists(file)) {
                 continue;
             }
+            Path normalizedFile = file.toAbsolutePath().normalize();
             String source = Files.readString(file);
             String primaryClassName = classNameFromSource(file, source);
             List<MethodDescriptor> methods = JavaMethodParser.parse(primaryClassName, source);
             for (MethodDescriptor method : methods) {
                 Double coverage = lookupCoverage(coverageMap, method.className(), method.name(), method.startLine());
                 Double crap = CrapScore.calculate(method.complexity(), coverage);
-                metrics.add(new MethodMetrics(method.name(), method.className(), method.complexity(), coverage, crap));
+                metrics.add(new MethodMetrics(
+                        method.name(),
+                        method.className(),
+                        sourcePath(normalizedProjectRoot, normalizedFile),
+                        method.startLine(),
+                        method.endLine(),
+                        method.complexity(),
+                        coverage,
+                        crap
+                ));
             }
         }
 
         metrics.sort(Comparator.comparing(MethodMetrics::crapScore,
                 Comparator.nullsLast(Comparator.reverseOrder())));
         return metrics;
+    }
+
+    private static String sourcePath(Path projectRoot, Path file) {
+        Path path = file.startsWith(projectRoot) ? projectRoot.relativize(file) : file;
+        return path.normalize().toString().replace('\\', '/');
     }
 
     static String classNameFromSource(Path file, String source) {
