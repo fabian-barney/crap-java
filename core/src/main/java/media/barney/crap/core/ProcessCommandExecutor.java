@@ -32,6 +32,7 @@ final class ProcessCommandExecutor implements CommandExecutor {
         Process process = new ProcessBuilder(command)
                 .directory(directory.toFile())
                 .start();
+        process.getOutputStream().close();
         Thread stdout = pipe(process.getInputStream());
         Thread stderr = pipe(process.getErrorStream());
         if (!process.waitFor(timeout.toMillis(), TimeUnit.MILLISECONDS)) {

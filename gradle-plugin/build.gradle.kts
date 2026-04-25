@@ -4,6 +4,7 @@ import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.jvm.tasks.Jar
 import org.gradle.api.publish.maven.MavenPublication
 import org.gradle.testing.jacoco.tasks.JacocoReport
+import javax.xml.parsers.DocumentBuilderFactory
 
 plugins {
     `java-gradle-plugin`
@@ -24,6 +25,7 @@ jacoco {
 }
 
 val projectVersion = version.toString()
+val jtoonVersion = parentPomProperty("jtoon.version")
 val coreJar = layout.projectDirectory.file("../core/target/crap-java-core-${projectVersion}.jar")
 val gpgPrivateKey = providers.environmentVariable("MAVEN_GPG_PRIVATE_KEY")
 val gpgPassphrase = providers.environmentVariable("MAVEN_GPG_PASSPHRASE")
@@ -49,11 +51,19 @@ tasks.withType<JavaCompile>().configureEach {
 
 dependencies {
     implementation(files(coreJar.asFile))
-    implementation("dev.toonformat:jtoon:1.0.9")
+    implementation("dev.toonformat:jtoon:$jtoonVersion")
     testImplementation(platform("org.junit:junit-bom:5.10.2"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testImplementation(gradleTestKit())
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+}
+
+fun parentPomProperty(name: String): String {
+    val factory = DocumentBuilderFactory.newInstance()
+    factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true)
+    val document = factory.newDocumentBuilder().parse(layout.projectDirectory.file("../pom.xml").asFile)
+    return document.getElementsByTagName(name).item(0)?.textContent
+        ?: throw GradleException("Missing parent POM property: $name")
 }
 
 tasks.withType<Test>().configureEach {

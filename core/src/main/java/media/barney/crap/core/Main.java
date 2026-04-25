@@ -5,6 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public final class Main {
 
@@ -84,7 +85,7 @@ public final class Main {
 
         double max = Main.maxCrap(metrics);
         if (CliApplication.thresholdExceeded(max)) {
-            err.printf("CRAP threshold exceeded: %.1f > 8.0%n", max);
+            err.printf(Locale.ROOT, "CRAP threshold exceeded: %.1f > %.1f%n", max, ReportPublisher.THRESHOLD);
             return 2;
         }
         return 0;

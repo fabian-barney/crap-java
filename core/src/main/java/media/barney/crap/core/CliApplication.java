@@ -8,6 +8,7 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import org.jspecify.annotations.Nullable;
@@ -54,7 +55,7 @@ final class CliApplication {
 
             double max = Main.maxCrap(metrics);
             if (thresholdExceeded(max)) {
-                err.printf("CRAP threshold exceeded: %.1f > 8.0%n", max);
+                err.printf(Locale.ROOT, "CRAP threshold exceeded: %.1f > %.1f%n", max, ReportPublisher.THRESHOLD);
                 return 2;
             }
             return 0;
