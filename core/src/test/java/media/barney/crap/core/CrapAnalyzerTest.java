@@ -62,7 +62,84 @@ class CrapAnalyzerTest {
         assertEquals("demo.Sample", metric.className());
         assertEquals(2, metric.complexity());
         assertEquals(75.0, Objects.requireNonNull(metric.coveragePercent()), 0.001);
+        assertEquals("instruction", metric.coverageKind());
         assertEquals(2.0625, Objects.requireNonNull(metric.crapScore()), 0.00001);
+    }
+
+    @Test
+    void computesScoresFromBranchCoverageWhenBranchCoverageIsWorse() throws IOException {
+        Path sourceRoot = tempDir.resolve("src/main/java/demo");
+        Files.createDirectories(sourceRoot);
+        Path source = sourceRoot.resolve("Sample.java");
+        Files.writeString(source, """
+                package demo;
+                class Sample {
+                    int alpha(boolean a) {
+                        if (a) {
+                            return 1;
+                        }
+                        return 0;
+                    }
+                }
+                """);
+
+        Path jacoco = tempDir.resolve("jacoco.xml");
+        Files.writeString(jacoco, """
+                <report>
+                  <package name="demo">
+                    <class name="demo/Sample" sourcefilename="Sample.java">
+                      <method name="alpha" desc="(Z)I" line="3">
+                        <counter type="INSTRUCTION" missed="1" covered="3"/>
+                        <counter type="BRANCH" missed="1" covered="1"/>
+                      </method>
+                    </class>
+                  </package>
+                </report>
+                """);
+
+        MethodMetrics metric = CrapAnalyzer.analyze(tempDir, List.of(source), jacoco).get(0);
+
+        assertEquals(50.0, Objects.requireNonNull(metric.coveragePercent()), 0.001);
+        assertEquals("branch", metric.coverageKind());
+        assertEquals(2.5, Objects.requireNonNull(metric.crapScore()), 0.00001);
+    }
+
+    @Test
+    void computesScoresFromInstructionCoverageWhenInstructionCoverageTies() throws IOException {
+        Path sourceRoot = tempDir.resolve("src/main/java/demo");
+        Files.createDirectories(sourceRoot);
+        Path source = sourceRoot.resolve("Sample.java");
+        Files.writeString(source, """
+                package demo;
+                class Sample {
+                    int alpha(boolean a) {
+                        if (a) {
+                            return 1;
+                        }
+                        return 0;
+                    }
+                }
+                """);
+
+        Path jacoco = tempDir.resolve("jacoco.xml");
+        Files.writeString(jacoco, """
+                <report>
+                  <package name="demo">
+                    <class name="demo/Sample" sourcefilename="Sample.java">
+                      <method name="alpha" desc="(Z)I" line="3">
+                        <counter type="INSTRUCTION" missed="1" covered="1"/>
+                        <counter type="BRANCH" missed="1" covered="1"/>
+                      </method>
+                    </class>
+                  </package>
+                </report>
+                """);
+
+        MethodMetrics metric = CrapAnalyzer.analyze(tempDir, List.of(source), jacoco).get(0);
+
+        assertEquals(50.0, Objects.requireNonNull(metric.coveragePercent()), 0.001);
+        assertEquals("instruction", metric.coverageKind());
+        assertEquals(2.5, Objects.requireNonNull(metric.crapScore()), 0.00001);
     }
 
     @Test
@@ -133,10 +210,13 @@ class CrapAnalyzerTest {
 
         assertEquals("demo.Outer", Objects.requireNonNull(metricsByMethod.get("outer")).className());
         assertEquals(100.0, Objects.requireNonNull(Objects.requireNonNull(metricsByMethod.get("outer")).coveragePercent()), 0.001);
+        assertEquals("instruction", Objects.requireNonNull(metricsByMethod.get("outer")).coverageKind());
         assertEquals("demo.Outer$Inner", Objects.requireNonNull(metricsByMethod.get("inner")).className());
         assertEquals(100.0, Objects.requireNonNull(Objects.requireNonNull(metricsByMethod.get("inner")).coveragePercent()), 0.001);
+        assertEquals("instruction", Objects.requireNonNull(metricsByMethod.get("inner")).coverageKind());
         assertEquals("demo.Secondary", Objects.requireNonNull(metricsByMethod.get("beta")).className());
         assertEquals(100.0, Objects.requireNonNull(Objects.requireNonNull(metricsByMethod.get("beta")).coveragePercent()), 0.001);
+        assertEquals("instruction", Objects.requireNonNull(metricsByMethod.get("beta")).coverageKind());
     }
 
     @Test
@@ -146,9 +226,10 @@ class CrapAnalyzerTest {
                 "demo.Sample#alpha:12", new CoverageData(0, 8)
         );
 
-        Double coverage = CrapAnalyzer.lookupCoverage(coverageMap, "demo.Sample", "alpha", 10);
+        EffectiveCoverage coverage = CrapAnalyzer.lookupCoverage(coverageMap, "demo.Sample", "alpha", 10);
 
-        assertEquals(75.0, Objects.requireNonNull(coverage), 0.001);
+        assertEquals(75.0, Objects.requireNonNull(coverage).percent(), 0.001);
+        assertEquals("instruction", coverage.kind());
     }
 
     @Test
@@ -158,9 +239,22 @@ class CrapAnalyzerTest {
                 "demo.Sample#alpha:15", new CoverageData(0, 8)
         );
 
-        Double coverage = CrapAnalyzer.lookupCoverage(coverageMap, "demo.Sample", "alpha", 13);
+        EffectiveCoverage coverage = CrapAnalyzer.lookupCoverage(coverageMap, "demo.Sample", "alpha", 13);
 
-        assertEquals(100.0, Objects.requireNonNull(coverage), 0.001);
+        assertEquals(100.0, Objects.requireNonNull(coverage).percent(), 0.001);
+        assertEquals("instruction", coverage.kind());
+    }
+
+    @Test
+    void lookupCoverageReturnsBranchKindWhenBranchCoverageIsWorse() {
+        Map<String, CoverageData> coverageMap = Map.of(
+                "demo.Sample#alpha:10", new CoverageData(1, 9, 1, 1)
+        );
+
+        EffectiveCoverage coverage = CrapAnalyzer.lookupCoverage(coverageMap, "demo.Sample", "alpha", 10);
+
+        assertEquals(50.0, Objects.requireNonNull(coverage).percent(), 0.001);
+        assertEquals("branch", coverage.kind());
     }
 
     @Test
@@ -176,7 +270,7 @@ class CrapAnalyzerTest {
 
     @Test
     void lookupCoverageReturnsNullWhenMethodHasNoCoverageEntries() {
-        Double coverage = CrapAnalyzer.lookupCoverage(Map.of(), "demo.Sample", "alpha", 10);
+        EffectiveCoverage coverage = CrapAnalyzer.lookupCoverage(Map.of(), "demo.Sample", "alpha", 10);
 
         assertNull(coverage);
     }

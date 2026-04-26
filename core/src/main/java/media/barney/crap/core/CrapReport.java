@@ -4,67 +4,20 @@ import java.util.List;
 import org.jspecify.annotations.Nullable;
 
 record CrapReport(
-        int schemaVersion,
-        String tool,
-        double threshold,
-        String coverageKind,
-        ReportSummary summary,
+        String status,
         List<MethodReport> methods
 ) {
-    private static final int SCHEMA_VERSION = 1;
-    private static final String TOOL = "crap-java";
-    private static final String COVERAGE_KIND = "instruction";
-
     static CrapReport from(List<MethodMetrics> metrics, double threshold) {
         List<MethodReport> methods = metrics.stream()
                 .map(metric -> MethodReport.from(metric, threshold))
                 .toList();
-        return new CrapReport(
-                SCHEMA_VERSION,
-                TOOL,
-                threshold,
-                COVERAGE_KIND,
-                ReportSummary.from(methods),
-                methods
-        );
+        return new CrapReport(status(methods), methods);
     }
 
-    record ReportSummary(
-            String status,
-            int total,
-            int passed,
-            int failed,
-            int skipped,
-            @Nullable Double maxCrapScore
-    ) {
-        private static ReportSummary from(List<MethodReport> methods) {
-            int passed = 0;
-            int failed = 0;
-            int skipped = 0;
-            double max = 0.0;
-            boolean hasScore = false;
-            for (MethodReport method : methods) {
-                if (method.status() == MethodStatus.PASSED) {
-                    passed++;
-                } else if (method.status() == MethodStatus.FAILED) {
-                    failed++;
-                } else {
-                    skipped++;
-                }
-                if (method.crapScore() != null) {
-                    max = Math.max(max, method.crapScore());
-                    hasScore = true;
-                }
-            }
-            return new ReportSummary(
-                    failed > 0 ? "failed" : "passed",
-                    methods.size(),
-                    passed,
-                    failed,
-                    skipped,
-                    hasScore ? max : null
-            );
-        }
+    private static String status(List<MethodReport> methods) {
+        boolean failed = methods.stream()
+                .anyMatch(method -> method.status() == MethodStatus.FAILED);
+        return failed ? MethodStatus.FAILED.value() : MethodStatus.PASSED.value();
     }
 
     record MethodReport(
@@ -76,6 +29,8 @@ record CrapReport(
             int endLine,
             int complexity,
             @Nullable Double coveragePercent,
+            String coverageKind,
+            double threshold,
             @Nullable Double crapScore
     ) {
         private static MethodReport from(MethodMetrics metric, double threshold) {
@@ -88,6 +43,8 @@ record CrapReport(
                     metric.endLine(),
                     metric.complexity(),
                     metric.coveragePercent(),
+                    metric.coverageKind(),
+                    threshold,
                     metric.crapScore()
             );
         }

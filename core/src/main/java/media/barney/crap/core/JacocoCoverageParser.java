@@ -66,7 +66,7 @@ final class JacocoCoverageParser {
             if (!(node instanceof Element method) || !"method".equals(method.getTagName())) {
                 continue;
             }
-            CoverageData data = readInstructionCoverage(method);
+            CoverageData data = readCoverage(method);
             if (data == null) {
                 continue;
             }
@@ -77,19 +77,30 @@ final class JacocoCoverageParser {
         }
     }
 
-    private static @Nullable CoverageData readInstructionCoverage(Element method) {
+    private static @Nullable CoverageData readCoverage(Element method) {
+        CoverageCounter instructionCoverage = null;
+        CoverageCounter branchCoverage = null;
         for (Node node = method.getFirstChild(); node != null; node = node.getNextSibling()) {
             if (!(node instanceof Element counter) || !"counter".equals(counter.getTagName())) {
                 continue;
             }
-            if (!"INSTRUCTION".equals(counter.getAttribute("type"))) {
-                continue;
+            String type = counter.getAttribute("type");
+            if ("INSTRUCTION".equals(type)) {
+                instructionCoverage = readCounter(counter);
+            } else if ("BRANCH".equals(type)) {
+                branchCoverage = readCounter(counter);
             }
-            int missed = parseInt(counter.getAttribute("missed"));
-            int covered = parseInt(counter.getAttribute("covered"));
-            return new CoverageData(missed, covered);
         }
-        return null;
+        if (instructionCoverage == null) {
+            return null;
+        }
+        return new CoverageData(instructionCoverage, branchCoverage);
+    }
+
+    private static CoverageCounter readCounter(Element counter) {
+        int missed = parseInt(counter.getAttribute("missed"));
+        int covered = parseInt(counter.getAttribute("covered"));
+        return new CoverageCounter(missed, covered);
     }
 
     private static int parseInt(String value) {

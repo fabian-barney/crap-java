@@ -23,27 +23,32 @@ final class ReportFormatter {
 
     private static String formatText(CrapReport report) {
         List<CrapReport.MethodReport> sorted = sortedMethods(report.methods());
-        String header = String.format("%-8s %-30s %-35s %4s %7s %8s", "Status", "Method", "Class", "CC", "Cov%", "CRAP");
+        String header = String.format(
+                "%-8s %-30s %-35s %4s %7s %-11s %8s",
+                "Status",
+                "Method",
+                "Class",
+                "CC",
+                "Cov%",
+                "CovKind",
+                "CRAP"
+        );
         String separator = "-".repeat(header.length());
         StringBuilder builder = new StringBuilder();
         builder.append("CRAP Report\n");
         builder.append("===========\n");
-        builder.append("Coverage kind: ").append(report.coverageKind()).append('\n');
-        builder.append(String.format(Locale.ROOT, "Summary: %d total, %d passed, %d failed, %d skipped%n",
-                report.summary().total(),
-                report.summary().passed(),
-                report.summary().failed(),
-                report.summary().skipped()));
+        builder.append("Status: ").append(report.status()).append('\n');
         builder.append(header).append('\n');
         builder.append(separator).append('\n');
 
         for (CrapReport.MethodReport entry : sorted) {
-            builder.append(String.format(Locale.ROOT, "%-8s %-30s %-35s %4d %7s %8s",
+            builder.append(String.format(Locale.ROOT, "%-8s %-30s %-35s %4d %7s %-11s %8s",
                     entry.status().value(),
                     entry.methodName(),
                     entry.className(),
                     entry.complexity(),
                     formatCoverage(entry.coveragePercent()),
+                    entry.coverageKind(),
                     formatDisplayNumber(entry.crapScore())));
             builder.append('\n');
         }
@@ -54,18 +59,7 @@ final class ReportFormatter {
     private static String formatJson(CrapReport report) {
         StringBuilder builder = new StringBuilder();
         builder.append("{\n");
-        field(builder, 1, "schemaVersion", Integer.toString(report.schemaVersion()), true);
-        field(builder, 1, "tool", quote(report.tool()), true);
-        field(builder, 1, "threshold", number(report.threshold()), true);
-        field(builder, 1, "coverageKind", quote(report.coverageKind()), true);
-        builder.append("  \"summary\": {\n");
-        field(builder, 2, "status", quote(report.summary().status()), true);
-        field(builder, 2, "total", Integer.toString(report.summary().total()), true);
-        field(builder, 2, "passed", Integer.toString(report.summary().passed()), true);
-        field(builder, 2, "failed", Integer.toString(report.summary().failed()), true);
-        field(builder, 2, "skipped", Integer.toString(report.summary().skipped()), true);
-        field(builder, 2, "maxCrapScore", nullableNumber(report.summary().maxCrapScore()), false);
-        builder.append("  },\n");
+        field(builder, 1, "status", quote(report.status()), true);
         builder.append("  \"methods\": [\n");
         List<CrapReport.MethodReport> methods = sortedMethods(report.methods());
         for (int index = 0; index < methods.size(); index++) {
@@ -86,6 +80,8 @@ final class ReportFormatter {
         field(builder, 3, "endLine", Integer.toString(method.endLine()), true);
         field(builder, 3, "complexity", Integer.toString(method.complexity()), true);
         field(builder, 3, "coveragePercent", nullableNumber(method.coveragePercent()), true);
+        field(builder, 3, "coverageKind", quote(method.coverageKind()), true);
+        field(builder, 3, "threshold", number(method.threshold()), true);
         field(builder, 3, "crapScore", nullableNumber(method.crapScore()), false);
         builder.append("    }");
         if (comma) {
@@ -107,29 +103,36 @@ final class ReportFormatter {
 
     private static String formatJunit(CrapReport report) {
         StringBuilder builder = new StringBuilder();
+        int failed = countStatus(report.methods(), MethodStatus.FAILED);
+        int skipped = countStatus(report.methods(), MethodStatus.SKIPPED);
         builder.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
-        builder.append("<testsuites tests=\"").append(report.summary().total())
-                .append("\" failures=\"").append(report.summary().failed())
-                .append("\" errors=\"0\" skipped=\"").append(report.summary().skipped())
+        builder.append("<testsuites tests=\"").append(report.methods().size())
+                .append("\" failures=\"").append(failed)
+                .append("\" errors=\"0\" skipped=\"").append(skipped)
                 .append("\" time=\"0\">\n");
-        builder.append("  <testsuite name=\"crap-java\" tests=\"").append(report.summary().total())
-                .append("\" failures=\"").append(report.summary().failed())
-                .append("\" errors=\"0\" skipped=\"").append(report.summary().skipped())
+        builder.append("  <testsuite name=\"crap-java\" tests=\"").append(report.methods().size())
+                .append("\" failures=\"").append(failed)
+                .append("\" errors=\"0\" skipped=\"").append(skipped)
                 .append("\" time=\"0\">\n");
-        builder.append("    <properties>\n");
-        property(builder, 3, "schemaVersion", Integer.toString(report.schemaVersion()));
-        property(builder, 3, "threshold", number(report.threshold()));
-        property(builder, 3, "coverageKind", report.coverageKind());
-        builder.append("    </properties>\n");
         for (CrapReport.MethodReport method : sortedMethods(report.methods())) {
-            testcase(builder, report, method);
+            testcase(builder, method);
         }
         builder.append("  </testsuite>\n");
         builder.append("</testsuites>\n");
         return builder.toString();
     }
 
-    private static void testcase(StringBuilder builder, CrapReport report, CrapReport.MethodReport method) {
+    private static int countStatus(List<CrapReport.MethodReport> methods, MethodStatus status) {
+        int count = 0;
+        for (CrapReport.MethodReport method : methods) {
+            if (method.status() == status) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    private static void testcase(StringBuilder builder, CrapReport.MethodReport method) {
         builder.append("    <testcase classname=\"").append(xml(method.className()))
                 .append("\" name=\"").append(xml(testcaseName(method)))
                 .append("\" file=\"").append(xml(method.sourcePath()))
@@ -143,14 +146,14 @@ final class ReportFormatter {
         property(builder, 4, "startLine", Integer.toString(method.startLine()));
         property(builder, 4, "endLine", Integer.toString(method.endLine()));
         property(builder, 4, "complexity", Integer.toString(method.complexity()));
-        property(builder, 4, "coverageKind", report.coverageKind());
+        property(builder, 4, "coverageKind", method.coverageKind());
         property(builder, 4, "coveragePercent", nullableProperty(method.coveragePercent()));
         property(builder, 4, "crapScore", nullableProperty(method.crapScore()));
-        property(builder, 4, "threshold", number(report.threshold()));
+        property(builder, 4, "threshold", number(method.threshold()));
         builder.append("      </properties>\n");
         if (method.status() == MethodStatus.FAILED) {
             String message = "CRAP threshold exceeded: "
-                    + formatDisplayNumber(method.crapScore()) + " > " + formatDisplayNumber(report.threshold());
+                    + formatDisplayNumber(method.crapScore()) + " > " + formatDisplayNumber(method.threshold());
             builder.append("      <failure message=\"").append(xml(message))
                     .append("\" type=\"crap-java.threshold\">")
                     .append(xml(message))

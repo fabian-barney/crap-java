@@ -17,10 +17,11 @@ class ReportFormatterTest {
                 metric("bar", "demo.Sample", 9, 2, null, null)
         ), ReportFormat.TEXT);
 
-        assertTrue(report.contains("Coverage kind: instruction"));
-        assertTrue(report.contains("Summary: 2 total, 1 passed, 0 failed, 1 skipped"));
+        assertTrue(report.contains("Status: passed"));
+        assertTrue(report.contains("CovKind"));
         assertTrue(report.contains("passed"));
         assertTrue(report.contains("skipped"));
+        assertTrue(report.contains("instruction"));
         assertTrue(report.contains("85.0%"));
         assertTrue(report.contains("N/A"));
     }
@@ -34,18 +35,7 @@ class ReportFormatterTest {
 
         String expected = """
                 {
-                  "schemaVersion": 1,
-                  "tool": "crap-java",
-                  "threshold": 8.0,
-                  "coverageKind": "instruction",
-                  "summary": {
-                    "status": "failed",
-                    "total": 2,
-                    "passed": 0,
-                    "failed": 1,
-                    "skipped": 1,
-                    "maxCrapScore": 9.645
-                  },
+                  "status": "failed",
                   "methods": [
                     {
                       "status": "failed",
@@ -56,6 +46,8 @@ class ReportFormatterTest {
                       "endLine": 6,
                       "complexity": 5,
                       "coveragePercent": 10.0,
+                      "coverageKind": "instruction",
+                      "threshold": 8.0,
                       "crapScore": 9.645
                     },
                     {
@@ -67,6 +59,8 @@ class ReportFormatterTest {
                       "endLine": 22,
                       "complexity": 2,
                       "coveragePercent": null,
+                      "coverageKind": "N/A",
+                      "threshold": 8.0,
                       "crapScore": null
                     }
                   ]
@@ -83,11 +77,10 @@ class ReportFormatterTest {
                 metric("bar", "demo.Sample", 9, 2, null, null)
         ), ReportFormat.TOON);
 
-        assertTrue(report.contains("schemaVersion: 1"));
-        assertTrue(report.contains("coverageKind: instruction"));
-        assertTrue(report.contains("methods[2]{status,methodName,className,sourcePath,startLine,endLine,complexity,coveragePercent,crapScore}:"));
-        assertTrue(report.contains("passed,foo,demo.Sample,src/main/java/demo/Sample.java,4,6,3,85,4.5"));
-        assertTrue(report.contains("skipped,bar,demo.Sample,src/main/java/demo/Sample.java,9,11,2,null,null"));
+        assertTrue(report.contains("status: passed"));
+        assertTrue(report.contains("methods[2]{status,methodName,className,sourcePath,startLine,endLine,complexity,coveragePercent,coverageKind,threshold,crapScore}:"));
+        assertTrue(report.contains("passed,foo,demo.Sample,src/main/java/demo/Sample.java,4,6,3,85,instruction,8,4.5"));
+        assertTrue(report.contains("skipped,bar,demo.Sample,src/main/java/demo/Sample.java,9,11,2,null,N/A,8,null"));
     }
 
     @Test
@@ -99,6 +92,8 @@ class ReportFormatterTest {
 
         assertTrue(report.contains("<testsuites tests=\"2\" failures=\"1\" errors=\"0\" skipped=\"1\" time=\"0\">"));
         assertTrue(report.contains("<property name=\"coverageKind\" value=\"instruction\"/>"));
+        assertTrue(report.contains("<property name=\"coverageKind\" value=\"N/A\"/>"));
+        assertTrue(report.contains("<property name=\"threshold\" value=\"8.0\"/>"));
         assertTrue(report.contains("<testcase classname=\"demo.Sample\" name=\"FAILED danger:4 CRAP 9.6\""));
         assertTrue(report.contains("<failure message=\"CRAP threshold exceeded: 9.6 &gt; 8.0\""));
         assertTrue(report.contains("<testcase classname=\"demo.Sample\" name=\"SKIPPED unknown:20 CRAP N/A\""));
@@ -115,6 +110,7 @@ class ReportFormatterTest {
                 2,
                 1,
                 100.0,
+                "instruction",
                 1.0
         );
 
@@ -133,6 +129,7 @@ class ReportFormatterTest {
                 2,
                 1,
                 100.0,
+                "instruction",
                 1.0
         );
 
@@ -159,6 +156,7 @@ class ReportFormatterTest {
                 startLine + 2,
                 complexity,
                 coverage,
+                coverage == null ? "N/A" : "instruction",
                 score
         );
     }

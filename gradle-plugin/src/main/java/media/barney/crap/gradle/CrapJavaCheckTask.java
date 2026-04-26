@@ -111,7 +111,7 @@ public abstract class CrapJavaCheckTask extends DefaultTask {
                 .orElseThrow(() -> new GradleException("No configured Gradle module matches " + relativeSourcePath));
     }
 
-    private static boolean matchesModulePath(String relativeSourcePath, String modulePath) {
+    static boolean matchesModulePath(String relativeSourcePath, String modulePath) {
         if (".".equals(modulePath)) {
             return true;
         }

@@ -91,8 +91,8 @@ class MainTest {
         );
 
         assertEquals(0, exit);
-        assertTrue(utf8(out).contains("schemaVersion: 1"));
-        assertTrue(utf8(out).contains("coverageKind: instruction"));
+        assertTrue(utf8(out).contains("status: passed"));
+        assertTrue(utf8(out).contains("coverageKind"));
         assertTrue(utf8(out).contains("Sample"));
         assertTrue(utf8(out).contains("alpha"));
     }
@@ -317,9 +317,9 @@ class MainTest {
     @Test
     void maxCrapReturnsLargestNonNullScore() {
         List<MethodMetrics> metrics = List.of(
-                new MethodMetrics("alpha", "demo.Sample", "src/main/java/demo/Sample.java", 1, 2, 1, null, null),
-                new MethodMetrics("beta", "demo.Sample", "src/main/java/demo/Sample.java", 3, 4, 1, 75.0, 4.5),
-                new MethodMetrics("gamma", "demo.Sample", "src/main/java/demo/Sample.java", 5, 6, 1, 85.0, 7.0)
+                new MethodMetrics("alpha", "demo.Sample", "src/main/java/demo/Sample.java", 1, 2, 1, null, "N/A", null),
+                new MethodMetrics("beta", "demo.Sample", "src/main/java/demo/Sample.java", 3, 4, 1, 75.0, "instruction", 4.5),
+                new MethodMetrics("gamma", "demo.Sample", "src/main/java/demo/Sample.java", 5, 6, 1, 85.0, "instruction", 7.0)
         );
 
         assertEquals(7.0, Main.maxCrap(metrics));

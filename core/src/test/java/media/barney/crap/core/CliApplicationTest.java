@@ -57,7 +57,7 @@ class CliApplicationTest {
                 .execute(new String[0]);
 
         assertEquals(0, exit);
-        assertTrue(utf8(out).contains("schemaVersion: 1"));
+        assertTrue(utf8(out).contains("status: passed"));
         assertTrue(utf8(out).contains("methods[0]"));
     }
 

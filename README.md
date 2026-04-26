@@ -17,7 +17,9 @@ The toolkit resolves Maven and Gradle modules natively, including standard multi
 `CRAP = CC^2 * (1 - coverage)^3 + CC`
 
 - `CC` is cyclomatic complexity.
-- `coverage` is method coverage fraction from JaCoCo `INSTRUCTION` counters.
+- `coverage` is the lower available method coverage fraction from JaCoCo
+  `INSTRUCTION` and `BRANCH` counters. JaCoCo omits `BRANCH` counters for
+  branchless methods, so those methods use instruction coverage.
 
 ## Coverage Pipeline
 
@@ -130,8 +132,9 @@ java -jar cli/target/crap-java-cli-0.4.1.jar module-a module-b
 
 The CLI writes only the requested report format to stdout, making the default
 TOON output suitable for agent workflows. Warnings and threshold errors are
-written to stderr. Machine-readable reports include `coverageKind:
-instruction`; later releases may add more coverage kinds.
+written to stderr. Machine-readable reports include a top-level `status`
+(`passed` or `failed`) and method-level `coverageKind` values identifying the
+coverage input used for each CRAP score (`instruction`, `branch`, or `N/A`).
 
 The JUnit XML format exposes each analyzed method as a testcase. Methods with
 CRAP scores over `8.0` fail, methods with unavailable coverage are skipped, and

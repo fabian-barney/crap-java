@@ -1,13 +1,14 @@
 package media.barney.crap.core;
 
 import java.util.Locale;
+import org.jspecify.annotations.Nullable;
 
 enum BuildToolSelection {
     AUTO,
     MAVEN,
     GRADLE;
 
-    static BuildToolSelection parse(String value) {
+    static BuildToolSelection parse(@Nullable String value) {
         if (value == null || value.isBlank()) {
             throw new IllegalArgumentException("--build-tool requires one of: auto, maven, gradle");
         }

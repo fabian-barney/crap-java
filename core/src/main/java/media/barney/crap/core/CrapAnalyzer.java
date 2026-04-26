@@ -32,8 +32,10 @@ final class CrapAnalyzer {
             String primaryClassName = classNameFromSource(file, source);
             List<MethodDescriptor> methods = JavaMethodParser.parse(primaryClassName, source);
             for (MethodDescriptor method : methods) {
-                Double coverage = lookupCoverage(coverageMap, method.className(), method.name(), method.startLine());
-                Double crap = CrapScore.calculate(method.complexity(), coverage);
+                EffectiveCoverage coverage = lookupCoverage(coverageMap, method.className(), method.name(), method.startLine());
+                Double coveragePercent = coverage == null ? null : coverage.percent();
+                String coverageKind = coverage == null ? CoverageData.UNAVAILABLE_KIND : coverage.kind();
+                Double crap = CrapScore.calculate(method.complexity(), coveragePercent);
                 metrics.add(new MethodMetrics(
                         method.name(),
                         method.className(),
@@ -41,7 +43,8 @@ final class CrapAnalyzer {
                         method.startLine(),
                         method.endLine(),
                         method.complexity(),
-                        coverage,
+                        coveragePercent,
+                        coverageKind,
                         crap
                 ));
             }
@@ -66,11 +69,11 @@ final class CrapAnalyzer {
         return matcher.group(1) + "." + simpleName;
     }
 
-    static @Nullable Double lookupCoverage(Map<String, CoverageData> coverageMap,
-                                           String className,
-                                           String methodName,
-                                           int line) {
-        Double exactCoverage = exactCoverage(coverageMap, className, methodName, line);
+    static @Nullable EffectiveCoverage lookupCoverage(Map<String, CoverageData> coverageMap,
+                                                      String className,
+                                                      String methodName,
+                                                      int line) {
+        EffectiveCoverage exactCoverage = exactCoverage(coverageMap, className, methodName, line);
         if (exactCoverage != null) {
             return exactCoverage;
         }
@@ -79,19 +82,19 @@ final class CrapAnalyzer {
         if (nearest == null) {
             return null;
         }
-        return nearest.coveragePercent();
+        return nearest.effectiveCoverage();
     }
 
-    static @Nullable Double exactCoverage(Map<String, CoverageData> coverageMap,
-                                          String className,
-                                          String methodName,
-                                          int line) {
+    static @Nullable EffectiveCoverage exactCoverage(Map<String, CoverageData> coverageMap,
+                                                     String className,
+                                                     String methodName,
+                                                     int line) {
         String exactKey = className + "#" + methodName + ":" + line;
         CoverageData exact = coverageMap.get(exactKey);
         if (exact == null) {
             return null;
         }
-        return exact.coveragePercent();
+        return exact.effectiveCoverage();
     }
 
     static @Nullable CoverageData nearestCoverage(Map<String, CoverageData> coverageMap,

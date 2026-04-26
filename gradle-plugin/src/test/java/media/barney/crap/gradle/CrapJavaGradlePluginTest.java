@@ -13,6 +13,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -85,6 +86,26 @@ class CrapJavaGradlePluginTest {
 
         assertTrue(Files.exists(jacocoXml));
         assertTrue(Files.readString(junitReport).contains("<testsuites tests=\"1\" failures=\"0\" errors=\"0\" skipped=\"0\" time=\"0\">"));
+    }
+
+    @Test
+    void rootModuleMatchesEverySourcePath() {
+        assertTrue(CrapJavaCheckTask.matchesModulePath("app/src/main/java/demo/Sample.java", "."));
+    }
+
+    @Test
+    void modulePathMatchesExactModuleRoot() {
+        assertTrue(CrapJavaCheckTask.matchesModulePath("app", "app"));
+    }
+
+    @Test
+    void modulePathMatchesNestedSourcePath() {
+        assertTrue(CrapJavaCheckTask.matchesModulePath("app/src/main/java/demo/Sample.java", "app"));
+    }
+
+    @Test
+    void modulePathDoesNotMatchPartialPathSegment() {
+        assertFalse(CrapJavaCheckTask.matchesModulePath("application/src/main/java/demo/Sample.java", "app"));
     }
 }
 

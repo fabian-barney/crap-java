@@ -10,6 +10,7 @@ record MethodMetrics(
         int endLine,
         int complexity,
         @Nullable Double coveragePercent,
+        String coverageKind,
         @Nullable Double crapScore
 ) {
 }

@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+
+- CRAP scoring now uses the worse method coverage out of JaCoCo instruction and branch counters, reporting the selected coverage kind per method.
+- Simplified machine-readable reports to a top-level status plus method-level entries.
+
 ## 0.4.1 - 2026-04-08
 
 ### Changed
