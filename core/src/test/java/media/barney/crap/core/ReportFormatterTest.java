@@ -36,10 +36,11 @@ class ReportFormatterTest {
         ), ReportFormat.TEXT);
 
         List<String> lines = report.lines().toList();
-        String header = lines.get(4);
-        String separator = lines.get(5);
-        String failed = lines.get(6);
-        String passed = lines.get(7);
+        int headerIndex = tableHeaderIndex(lines, "Status");
+        String header = lines.get(headerIndex);
+        String separator = lines.get(headerIndex + 1);
+        String failed = lines.get(headerIndex + 2);
+        String passed = lines.get(headerIndex + 3);
 
         assertTrue(failed.contains("veryLongMethodNameForWideColumn"));
         assertTrue(failed.contains("demo.really.LongClassNameForWideColumn"));
@@ -171,8 +172,9 @@ class ReportFormatterTest {
         assertFalse(report.contains("CRAP Report"));
 
         List<String> lines = report.lines().toList();
-        assertEquals(lines.get(2).length(), lines.get(3).length());
-        assertEquals(lines.get(2).length(), lines.get(4).length());
+        int headerIndex = tableHeaderIndex(lines, "Method");
+        assertEquals(lines.get(headerIndex).length(), lines.get(headerIndex + 1).length());
+        assertEquals(lines.get(headerIndex).length(), lines.get(headerIndex + 2).length());
     }
 
     @Test
@@ -245,6 +247,16 @@ class ReportFormatterTest {
 
     private static CrapReport report(MethodMetrics... metrics) {
         return CrapReport.from(List.of(metrics), Main.DEFAULT_THRESHOLD);
+    }
+
+    private static int tableHeaderIndex(List<String> lines, String firstColumn) {
+        for (int index = 0; index < lines.size(); index++) {
+            String line = lines.get(index);
+            if (line.startsWith(firstColumn) && line.contains("Class") && line.contains("CovKind")) {
+                return index;
+            }
+        }
+        throw new AssertionError("Missing text table header");
     }
 
     private static MethodMetrics metric(String method,

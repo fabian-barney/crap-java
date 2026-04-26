@@ -63,18 +63,17 @@ final class ReportFormatter {
     }
 
     private static List<TableColumn> fullTextColumns() {
-        return List.of(
-                new TableColumn("Status", Alignment.LEFT, method -> method.status().value()),
-                new TableColumn("Method", Alignment.LEFT, CrapReport.MethodReport::methodName),
-                new TableColumn("Class", Alignment.LEFT, CrapReport.MethodReport::className),
-                new TableColumn("CC", Alignment.RIGHT, method -> Integer.toString(method.complexity())),
-                new TableColumn("Cov%", Alignment.RIGHT, method -> formatCoverage(method.coveragePercent())),
-                new TableColumn("CovKind", Alignment.LEFT, CrapReport.MethodReport::coverageKind),
-                new TableColumn("CRAP", Alignment.RIGHT, method -> formatDisplayNumber(method.crapScore()))
-        );
+        List<TableColumn> columns = new ArrayList<>();
+        columns.add(new TableColumn("Status", Alignment.LEFT, method -> method.status().value()));
+        columns.addAll(methodTextColumns());
+        return columns;
     }
 
     private static List<TableColumn> agentTextColumns() {
+        return methodTextColumns();
+    }
+
+    private static List<TableColumn> methodTextColumns() {
         return List.of(
                 new TableColumn("Method", Alignment.LEFT, CrapReport.MethodReport::methodName),
                 new TableColumn("Class", Alignment.LEFT, CrapReport.MethodReport::className),
