@@ -1,6 +1,21 @@
 package media.barney.crap.core;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.util.DefaultIndenter;
+import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
+import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlText;
+import com.fasterxml.jackson.dataformat.xml.ser.ToXmlGenerator;
 import dev.toonformat.jtoon.JToon;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -8,6 +23,12 @@ import java.util.Locale;
 import org.jspecify.annotations.Nullable;
 
 final class ReportFormatter {
+
+    private static final ObjectWriter JSON_WRITER = JsonMapper.builder()
+            .build()
+            .writer(new JsonPrettyPrinter());
+    private static final ObjectWriter XML_WRITER = xmlMapper()
+            .writerWithDefaultPrettyPrinter();
 
     private ReportFormatter() {
     }
@@ -148,72 +169,11 @@ final class ReportFormatter {
     }
 
     private static String formatJson(CrapReport report) {
-        StringBuilder builder = new StringBuilder();
-        builder.append("{\n");
-        field(builder, 1, "status", quote(report.status()), true);
-        field(builder, 1, "threshold", number(report.threshold()), true);
-        builder.append("  \"methods\": [\n");
-        List<CrapReport.MethodReport> methods = sortedMethods(report.methods());
-        for (int index = 0; index < methods.size(); index++) {
-            appendMethodJson(builder, methods.get(index), index < methods.size() - 1);
-        }
-        builder.append("  ]\n");
-        builder.append("}\n");
-        return builder.toString();
-    }
-
-    private static void appendMethodJson(StringBuilder builder, CrapReport.MethodReport method, boolean comma) {
-        builder.append("    {\n");
-        field(builder, 3, "status", quote(method.status().value()), true);
-        field(builder, 3, "methodName", quote(method.methodName()), true);
-        field(builder, 3, "className", quote(method.className()), true);
-        field(builder, 3, "sourcePath", quote(method.sourcePath()), true);
-        field(builder, 3, "startLine", Integer.toString(method.startLine()), true);
-        field(builder, 3, "endLine", Integer.toString(method.endLine()), true);
-        field(builder, 3, "complexity", Integer.toString(method.complexity()), true);
-        field(builder, 3, "coveragePercent", nullableNumber(method.coveragePercent()), true);
-        field(builder, 3, "coverageKind", quote(method.coverageKind()), true);
-        field(builder, 3, "crapScore", nullableNumber(method.crapScore()), false);
-        builder.append("    }");
-        if (comma) {
-            builder.append(',');
-        }
-        builder.append('\n');
-    }
-
-    private static void field(StringBuilder builder, int indent, String name, String value, boolean comma) {
-        builder.append("  ".repeat(indent))
-                .append(quote(name))
-                .append(": ")
-                .append(value);
-        if (comma) {
-            builder.append(',');
-        }
-        builder.append('\n');
+        return writeJson(jsonReport(report));
     }
 
     private static String formatJunit(CrapReport report) {
-        StringBuilder builder = new StringBuilder();
-        int failed = countStatus(report.methods(), MethodStatus.FAILED);
-        int skipped = countStatus(report.methods(), MethodStatus.SKIPPED);
-        builder.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
-        builder.append("<testsuites tests=\"").append(report.methods().size())
-                .append("\" failures=\"").append(failed)
-                .append("\" errors=\"0\" skipped=\"").append(skipped)
-                .append("\" time=\"0\">\n");
-        builder.append("  <testsuite name=\"crap-java\" tests=\"").append(report.methods().size())
-                .append("\" failures=\"").append(failed)
-                .append("\" errors=\"0\" skipped=\"").append(skipped)
-                .append("\" time=\"0\">\n");
-        builder.append("    <properties>\n");
-        property(builder, 3, "threshold", number(report.threshold()));
-        builder.append("    </properties>\n");
-        for (CrapReport.MethodReport method : sortedMethods(report.methods())) {
-            testcase(builder, method, report.threshold());
-        }
-        builder.append("  </testsuite>\n");
-        builder.append("</testsuites>\n");
-        return builder.toString();
+        return writeXml(junitTestSuites(report));
     }
 
     private static int countStatus(List<CrapReport.MethodReport> methods, MethodStatus status) {
@@ -226,49 +186,115 @@ final class ReportFormatter {
         return count;
     }
 
-    private static void testcase(StringBuilder builder, CrapReport.MethodReport method, double threshold) {
-        builder.append("    <testcase classname=\"").append(xml(method.className()))
-                .append("\" name=\"").append(xml(testcaseName(method)))
-                .append("\" file=\"").append(xml(method.sourcePath()))
-                .append("\" line=\"").append(method.startLine())
-                .append("\" time=\"0\">\n");
-        builder.append("      <properties>\n");
-        property(builder, 4, "status", method.status().value());
-        property(builder, 4, "methodName", method.methodName());
-        property(builder, 4, "className", method.className());
-        property(builder, 4, "sourcePath", method.sourcePath());
-        property(builder, 4, "startLine", Integer.toString(method.startLine()));
-        property(builder, 4, "endLine", Integer.toString(method.endLine()));
-        property(builder, 4, "complexity", Integer.toString(method.complexity()));
-        property(builder, 4, "coverageKind", method.coverageKind());
-        property(builder, 4, "coveragePercent", nullableProperty(method.coveragePercent()));
-        property(builder, 4, "crapScore", nullableProperty(method.crapScore()));
-        builder.append("      </properties>\n");
-        if (method.status() == MethodStatus.FAILED) {
-            String message = "CRAP threshold exceeded: "
-                    + formatDisplayNumber(method.crapScore()) + " > " + formatDisplayNumber(threshold);
-            builder.append("      <failure message=\"").append(xml(message))
-                    .append("\" type=\"crap-java.threshold\">")
-                    .append(xml(message))
-                    .append("</failure>\n");
-        } else if (method.status() == MethodStatus.SKIPPED) {
-            builder.append("      <skipped message=\"CRAP score unavailable\">")
-                    .append("Coverage data unavailable for ")
-                    .append(xml(method.className()))
-                    .append("#")
-                    .append(xml(method.methodName()))
-                    .append("</skipped>\n");
-        }
-        builder.append("    </testcase>\n");
+    private static JsonReport jsonReport(CrapReport report) {
+        return new JsonReport(
+                report.status(),
+                report.threshold(),
+                sortedMethods(report.methods()).stream()
+                        .map(ReportFormatter::jsonMethod)
+                        .toList()
+        );
     }
 
-    private static void property(StringBuilder builder, int indent, String name, String value) {
-        builder.append("  ".repeat(indent))
-                .append("<property name=\"")
-                .append(xml(name))
-                .append("\" value=\"")
-                .append(xml(value))
-                .append("\"/>\n");
+    private static JsonMethod jsonMethod(CrapReport.MethodReport method) {
+        return new JsonMethod(
+                method.status().value(),
+                method.methodName(),
+                method.className(),
+                method.sourcePath(),
+                method.startLine(),
+                method.endLine(),
+                method.complexity(),
+                method.coveragePercent(),
+                method.coverageKind(),
+                method.crapScore()
+        );
+    }
+
+    private static String writeJson(JsonReport report) {
+        try {
+            return JSON_WRITER.writeValueAsString(report) + '\n';
+        } catch (JsonProcessingException ex) {
+            throw new IllegalStateException("Unable to format JSON report", ex);
+        }
+    }
+
+    private static JunitTestSuites junitTestSuites(CrapReport report) {
+        List<CrapReport.MethodReport> methods = sortedMethods(report.methods());
+        int failed = countStatus(methods, MethodStatus.FAILED);
+        int skipped = countStatus(methods, MethodStatus.SKIPPED);
+        JunitTestSuite testSuite = new JunitTestSuite(
+                "crap-java",
+                methods.size(),
+                failed,
+                0,
+                skipped,
+                "0",
+                new JunitProperties(List.of(new JunitProperty("threshold", number(report.threshold())))),
+                methods.stream()
+                        .map(method -> junitTestCase(method, report.threshold()))
+                        .toList()
+        );
+        return new JunitTestSuites(methods.size(), failed, 0, skipped, "0", List.of(testSuite));
+    }
+
+    private static JunitTestCase junitTestCase(CrapReport.MethodReport method, double threshold) {
+        return new JunitTestCase(
+                method.className(),
+                testcaseName(method),
+                method.sourcePath(),
+                method.startLine(),
+                "0",
+                new JunitProperties(List.of(
+                        new JunitProperty("status", method.status().value()),
+                        new JunitProperty("methodName", method.methodName()),
+                        new JunitProperty("className", method.className()),
+                        new JunitProperty("sourcePath", method.sourcePath()),
+                        new JunitProperty("startLine", Integer.toString(method.startLine())),
+                        new JunitProperty("endLine", Integer.toString(method.endLine())),
+                        new JunitProperty("complexity", Integer.toString(method.complexity())),
+                        new JunitProperty("coverageKind", method.coverageKind()),
+                        new JunitProperty("coveragePercent", nullableProperty(method.coveragePercent())),
+                        new JunitProperty("crapScore", nullableProperty(method.crapScore()))
+                )),
+                junitFailure(method, threshold),
+                junitSkipped(method)
+        );
+    }
+
+    private static @Nullable JunitFailure junitFailure(CrapReport.MethodReport method, double threshold) {
+        if (method.status() != MethodStatus.FAILED) {
+            return null;
+        }
+        String message = "CRAP threshold exceeded: "
+                + formatDisplayNumber(method.crapScore()) + " > " + formatDisplayNumber(threshold);
+        return new JunitFailure(message, "crap-java.threshold", message);
+    }
+
+    private static @Nullable JunitSkipped junitSkipped(CrapReport.MethodReport method) {
+        if (method.status() != MethodStatus.SKIPPED) {
+            return null;
+        }
+        return new JunitSkipped(
+                "CRAP score unavailable",
+                "Coverage data unavailable for " + method.className() + "#" + method.methodName()
+        );
+    }
+
+    private static String writeXml(JunitTestSuites testSuites) {
+        try {
+            return XML_WRITER.writeValueAsString(testSuites) + '\n';
+        } catch (JsonProcessingException ex) {
+            throw new IllegalStateException("Unable to format JUnit XML report", ex);
+        }
+    }
+
+    private static ObjectMapper xmlMapper() {
+        XmlMapper mapper = XmlMapper.builder()
+                .configure(ToXmlGenerator.Feature.WRITE_XML_DECLARATION, true)
+                .build();
+        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+        return mapper;
     }
 
     private static String testcaseName(CrapReport.MethodReport method) {
@@ -314,49 +340,112 @@ final class ReportFormatter {
         return value == null ? "N/A" : number(value);
     }
 
-    private static String nullableNumber(@Nullable Double value) {
-        return value == null ? "null" : number(value);
-    }
-
     private static String number(double value) {
         return Double.toString(value);
     }
 
-    private static String quote(String value) {
-        StringBuilder builder = new StringBuilder();
-        builder.append('"');
-        for (int index = 0; index < value.length(); index++) {
-            builder.append(jsonEscape(value.charAt(index)));
-        }
-        builder.append('"');
-        return builder.toString();
+    private record JsonReport(
+            String status,
+            double threshold,
+            List<JsonMethod> methods
+    ) {
     }
 
-    private static String jsonEscape(char ch) {
-        return switch (ch) {
-            case '"' -> "\\\"";
-            case '\\' -> "\\\\";
-            case '\n' -> "\\n";
-            case '\r' -> "\\r";
-            case '\t' -> "\\t";
-            default -> ch < 0x20 ? String.format(Locale.ROOT, "\\u%04x", (int) ch) : Character.toString(ch);
-        };
+    private record JsonMethod(
+            String status,
+            String methodName,
+            String className,
+            String sourcePath,
+            int startLine,
+            int endLine,
+            int complexity,
+            @Nullable Double coveragePercent,
+            String coverageKind,
+            @Nullable Double crapScore
+    ) {
     }
 
-    private static String xml(String value) {
-        StringBuilder builder = new StringBuilder();
-        for (int index = 0; index < value.length(); index++) {
-            char ch = value.charAt(index);
-            switch (ch) {
-                case '&' -> builder.append("&amp;");
-                case '<' -> builder.append("&lt;");
-                case '>' -> builder.append("&gt;");
-                case '"' -> builder.append("&quot;");
-                case '\'' -> builder.append("&apos;");
-                default -> builder.append(ch);
-            }
+    @JacksonXmlRootElement(localName = "testsuites")
+    private record JunitTestSuites(
+            @JacksonXmlProperty(isAttribute = true) int tests,
+            @JacksonXmlProperty(isAttribute = true) int failures,
+            @JacksonXmlProperty(isAttribute = true) int errors,
+            @JacksonXmlProperty(isAttribute = true) int skipped,
+            @JacksonXmlProperty(isAttribute = true) String time,
+            @JacksonXmlElementWrapper(useWrapping = false)
+            @JacksonXmlProperty(localName = "testsuite") List<JunitTestSuite> testSuites
+    ) {
+    }
+
+    private record JunitTestSuite(
+            @JacksonXmlProperty(isAttribute = true) String name,
+            @JacksonXmlProperty(isAttribute = true) int tests,
+            @JacksonXmlProperty(isAttribute = true) int failures,
+            @JacksonXmlProperty(isAttribute = true) int errors,
+            @JacksonXmlProperty(isAttribute = true) int skipped,
+            @JacksonXmlProperty(isAttribute = true) String time,
+            @JacksonXmlProperty(localName = "properties") JunitProperties properties,
+            @JacksonXmlElementWrapper(useWrapping = false)
+            @JacksonXmlProperty(localName = "testcase") List<JunitTestCase> testCases
+    ) {
+    }
+
+    private record JunitTestCase(
+            @JacksonXmlProperty(isAttribute = true, localName = "classname") String className,
+            @JacksonXmlProperty(isAttribute = true) String name,
+            @JacksonXmlProperty(isAttribute = true) String file,
+            @JacksonXmlProperty(isAttribute = true) int line,
+            @JacksonXmlProperty(isAttribute = true) String time,
+            @JacksonXmlProperty(localName = "properties") JunitProperties properties,
+            @Nullable JunitFailure failure,
+            @Nullable JunitSkipped skipped
+    ) {
+    }
+
+    private record JunitProperties(
+            @JacksonXmlElementWrapper(useWrapping = false)
+            @JacksonXmlProperty(localName = "property") List<JunitProperty> property
+    ) {
+    }
+
+    private record JunitProperty(
+            @JacksonXmlProperty(isAttribute = true) String name,
+            @JacksonXmlProperty(isAttribute = true) String value
+    ) {
+    }
+
+    private record JunitFailure(
+            @JacksonXmlProperty(isAttribute = true) String message,
+            @JacksonXmlProperty(isAttribute = true) String type,
+            @JacksonXmlText String text
+    ) {
+    }
+
+    private record JunitSkipped(
+            @JacksonXmlProperty(isAttribute = true) String message,
+            @JacksonXmlText String text
+    ) {
+    }
+
+    private static final class JsonPrettyPrinter extends DefaultPrettyPrinter {
+        private JsonPrettyPrinter() {
+            indentObjectsWith(new DefaultIndenter("  ", "\n"));
+            indentArraysWith(new DefaultIndenter("  ", "\n"));
         }
-        return builder.toString();
+
+        private JsonPrettyPrinter(JsonPrettyPrinter base) {
+            super(base);
+        }
+
+        @Override
+        public DefaultPrettyPrinter createInstance() {
+            return new JsonPrettyPrinter(this);
+        }
+
+        @Override
+        public void writeObjectFieldValueSeparator(JsonGenerator generator) throws IOException {
+            generator.writeRaw(": ");
+        }
     }
 
     private record TableColumn(String header, Alignment alignment, CellValue cellValue) {

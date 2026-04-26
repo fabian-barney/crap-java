@@ -49,6 +49,7 @@
     <junit.version>5.10.2</junit.version>
     <jspecify.version>1.0.0</jspecify.version>
     <jtoon.version>1.0.9</jtoon.version>
+    <jackson.version>2.21.2</jackson.version>
     <errorprone.version>2.48.0</errorprone.version>
     <nullaway.version>0.13.1</nullaway.version>
     <maven.source.plugin.version>3.3.1</maven.source.plugin.version>
@@ -64,6 +65,13 @@
         <groupId>org.junit</groupId>
         <artifactId>junit-bom</artifactId>
         <version>${junit.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>com.fasterxml.jackson</groupId>
+        <artifactId>jackson-bom</artifactId>
+        <version>${jackson.version}</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>

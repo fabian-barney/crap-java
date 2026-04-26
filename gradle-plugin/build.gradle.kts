@@ -26,6 +26,7 @@ jacoco {
 
 val projectVersion = version.toString()
 val jtoonVersion = parentPomProperty("jtoon.version")
+val jacksonVersion = parentPomProperty("jackson.version")
 val coreJar = layout.projectDirectory.file("../core/target/crap-java-core-${projectVersion}.jar")
 val gpgPrivateKey = providers.environmentVariable("MAVEN_GPG_PRIVATE_KEY")
 val gpgPassphrase = providers.environmentVariable("MAVEN_GPG_PASSPHRASE")
@@ -52,6 +53,9 @@ tasks.withType<JavaCompile>().configureEach {
 dependencies {
     implementation(files(coreJar.asFile))
     implementation("dev.toonformat:jtoon:$jtoonVersion")
+    implementation(platform("com.fasterxml.jackson:jackson-bom:$jacksonVersion"))
+    implementation("com.fasterxml.jackson.core:jackson-databind")
+    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-xml")
     testImplementation(platform("org.junit:junit-bom:5.10.2"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testImplementation(gradleTestKit())

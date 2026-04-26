@@ -2,8 +2,15 @@ package media.barney.crap.core;
 
 import org.junit.jupiter.api.Test;
 import org.jspecify.annotations.Nullable;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
 
+import java.io.StringReader;
 import java.util.List;
+import javax.xml.XMLConstants;
+import javax.xml.parsers.DocumentBuilderFactory;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -191,20 +198,33 @@ class ReportFormatterTest {
     }
 
     @Test
-    void formatsJunitReportWithFailuresSkippedAndProperties() {
+    void formatsJunitReportWithFailuresSkippedAndProperties() throws Exception {
         String report = ReportFormatter.format(report(
                 metric("danger", "demo.Sample", 4, 5, 10.0, 9.645),
                 metric("unknown", "demo.Sample", 20, 2, null, null)
         ), ReportFormat.JUNIT);
 
-        assertTrue(report.contains("<testsuites tests=\"2\" failures=\"1\" errors=\"0\" skipped=\"1\" time=\"0\">"));
+        Document document = parseXml(report);
+        Element root = document.getDocumentElement();
+        Element failure = (Element) document.getElementsByTagName("failure").item(0);
+        Element skipped = (Element) document.getElementsByTagName("skipped").item(0);
+
+        assertEquals("testsuites", root.getNodeName());
+        assertEquals("2", root.getAttribute("tests"));
+        assertEquals("1", root.getAttribute("failures"));
+        assertEquals("0", root.getAttribute("errors"));
+        assertEquals("1", root.getAttribute("skipped"));
+        assertEquals("0", root.getAttribute("time"));
         assertTrue(report.contains("    <property name=\"threshold\" value=\"8.0\"/>"));
         assertTrue(report.contains("<property name=\"coverageKind\" value=\"instruction\"/>"));
         assertTrue(report.contains("<property name=\"coverageKind\" value=\"N/A\"/>"));
         assertTrue(report.contains("<testcase classname=\"demo.Sample\" name=\"FAILED danger:4 CRAP 9.6\""));
-        assertTrue(report.contains("<failure message=\"CRAP threshold exceeded: 9.6 &gt; 8.0\""));
         assertTrue(report.contains("<testcase classname=\"demo.Sample\" name=\"SKIPPED unknown:20 CRAP N/A\""));
-        assertTrue(report.contains("<skipped message=\"CRAP score unavailable\">"));
+        assertEquals("CRAP threshold exceeded: 9.6 > 8.0", failure.getAttribute("message"));
+        assertEquals("crap-java.threshold", failure.getAttribute("type"));
+        assertEquals("CRAP threshold exceeded: 9.6 > 8.0", failure.getTextContent());
+        assertEquals("CRAP score unavailable", skipped.getAttribute("message"));
+        assertEquals("Coverage data unavailable for demo.Sample#unknown", skipped.getTextContent());
     }
 
     @Test
@@ -227,7 +247,7 @@ class ReportFormatterTest {
     }
 
     @Test
-    void escapesXmlSpecialCharacters() {
+    void escapesXmlSpecialCharacters() throws Exception {
         MethodMetrics metric = new MethodMetrics(
                 "amp&apos'quote\"lt<gt>",
                 "demo.Special",
@@ -242,7 +262,7 @@ class ReportFormatterTest {
 
         String junit = ReportFormatter.format(report(metric), ReportFormat.JUNIT);
 
-        assertTrue(junit.contains("amp&amp;apos&apos;quote&quot;lt&lt;gt&gt;"));
+        assertEquals("amp&apos'quote\"lt<gt>", propertyValue(parseXml(junit), "methodName"));
     }
 
     private static CrapReport report(MethodMetrics... metrics) {
@@ -257,6 +277,24 @@ class ReportFormatterTest {
             }
         }
         throw new AssertionError("Missing text table header");
+    }
+
+    private static Document parseXml(String xml) throws Exception {
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+        factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+        return factory.newDocumentBuilder().parse(new InputSource(new StringReader(xml)));
+    }
+
+    private static String propertyValue(Document document, String name) {
+        NodeList properties = document.getElementsByTagName("property");
+        for (int index = 0; index < properties.getLength(); index++) {
+            Element property = (Element) properties.item(index);
+            if (name.equals(property.getAttribute("name"))) {
+                return property.getAttribute("value");
+            }
+        }
+        throw new AssertionError("Missing XML property: " + name);
     }
 
     private static MethodMetrics metric(String method,
