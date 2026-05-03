@@ -32,14 +32,14 @@ import java.util.Set;
 public abstract class CrapJavaCheckTask extends DefaultTask {
 
     private final Provider<RegularFile> defaultJunitReport;
-    private final Provider<RegularFile> junitReportState;
+    private final RegularFile junitReportState;
 
     public CrapJavaCheckTask() {
         defaultJunitReport = getProject().getProviders()
                 .provider(this::defaultJunitReportRelativePath)
                 .flatMap(path -> getProject().getLayout().getBuildDirectory().file(path));
-        junitReportState = getProject().getLayout().getBuildDirectory()
-                .file("tmp/crap-java/" + getName() + "/junit-report.path");
+        junitReportState = getProject().getLayout().getProjectDirectory()
+                .file(".gradle/crap-java/" + getName() + "/junit-report.path");
         getThreshold().convention(Main.DEFAULT_THRESHOLD);
         getAgent().convention(false);
         getFormat().convention(getAgent().map(agent -> agent ? "toon" : "none"));
@@ -107,6 +107,7 @@ public abstract class CrapJavaCheckTask extends DefaultTask {
         Path analysisRoot = getAnalysisRoot().get().getAsFile().toPath().toAbsolutePath().normalize();
         Path configuredOutputPath = outputPath();
         Path configuredJunitReportPath = junitReportPath();
+        deleteMovedJunitReport(configuredJunitReportPath);
         if (sourceFiles.isEmpty()) {
             try (var out = GradleLoggingPrintStreams.standardOut(getLogger());
                  var err = GradleLoggingPrintStreams.standardErr(getLogger())) {
@@ -145,6 +146,16 @@ public abstract class CrapJavaCheckTask extends DefaultTask {
             if (exit != 0) {
                 throw new GradleException("crap-java-check failed with exit " + exit);
             }
+        }
+    }
+
+    private void deleteMovedJunitReport(Path currentPath) throws Exception {
+        if (currentPath == null) {
+            return;
+        }
+        Path rememberedPath = rememberedJunitReportPath();
+        if (rememberedPath != null && !rememberedPath.equals(currentPath)) {
+            Files.deleteIfExists(rememberedPath);
         }
     }
 
@@ -222,8 +233,7 @@ public abstract class CrapJavaCheckTask extends DefaultTask {
     }
 
     private Path junitReportStatePath() {
-        return junitReportState.get()
-                .getAsFile()
+        return junitReportState.getAsFile()
                 .toPath()
                 .toAbsolutePath()
                 .normalize();

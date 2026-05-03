@@ -275,6 +275,59 @@ class CrapJavaGradlePluginFunctionalTest {
         assertFalse(secondResult.getOutput().contains("<testsuites"));
     }
 
+    @Test
+    void enabledJunitRemovesPreviousSidecarWhenReportPathChanges() throws Exception {
+        Path oldJunit = tempDir.resolve("build/reports/crap-java/old-junit.xml");
+        Path newJunit = tempDir.resolve("build/reports/crap-java/new-junit.xml");
+        writeSingleModuleProject("""
+
+                crapJava {
+                    junitReport.set(layout.buildDirectory.file("reports/crap-java/old-junit.xml"))
+                }
+                """);
+        BuildResult firstResult = runBuild("crap-java-check");
+        assertEquals(TaskOutcome.SUCCESS, firstResult.task(":crap-java-check").getOutcome());
+        assertTrue(Files.exists(oldJunit));
+        writeSingleModuleProject("""
+
+                crapJava {
+                    junitReport.set(layout.buildDirectory.file("reports/crap-java/new-junit.xml"))
+                }
+                """);
+
+        BuildResult secondResult = runBuild("crap-java-check");
+
+        assertEquals(TaskOutcome.SUCCESS, secondResult.task(":crap-java-check").getOutcome());
+        assertFalse(Files.exists(oldJunit));
+        assertTrue(Files.exists(newJunit));
+    }
+
+    @Test
+    void disabledJunitRemovesLastWrittenSidecarAfterClean() throws Exception {
+        Path oldJunit = tempDir.resolve("outside-junit.xml");
+        writeSingleModuleProject("""
+
+                crapJava {
+                    junitReport.set(layout.projectDirectory.file("outside-junit.xml"))
+                }
+                """);
+        BuildResult firstResult = runBuild("crap-java-check");
+        assertEquals(TaskOutcome.SUCCESS, firstResult.task(":crap-java-check").getOutcome());
+        assertTrue(Files.exists(oldJunit));
+        writeSingleModuleProject("""
+
+                crapJava {
+                    junit.set(false)
+                }
+                """);
+
+        BuildResult secondResult = runBuild("clean", "crap-java-check");
+
+        assertEquals(TaskOutcome.SUCCESS, secondResult.task(":crap-java-check").getOutcome());
+        assertFalse(Files.exists(oldJunit));
+        assertFalse(secondResult.getOutput().contains("<testsuites"));
+    }
+
     private BuildResult runBuild(String... arguments) {
         List<String> gradleArguments = new ArrayList<>();
         gradleArguments.add("-Dgradle.user.home=" + tempDir.resolve("gradle-user-home"));
