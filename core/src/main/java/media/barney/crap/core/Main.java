@@ -6,6 +6,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import org.jspecify.annotations.Nullable;
 
 public final class Main {
 
@@ -52,12 +53,42 @@ public final class Main {
                                               PrintStream err,
                                               Path junitReportPath,
                                               double threshold) throws Exception {
+        return runWithExistingCoverage(
+                modules,
+                reportRoot,
+                out,
+                err,
+                ReportFormat.TEXT.name(),
+                false,
+                false,
+                null,
+                junitReportPath,
+                threshold
+        );
+    }
+
+    public static int runWithExistingCoverage(List<ResolvedCoverageModule> modules,
+                                              Path reportRoot,
+                                              PrintStream out,
+                                              PrintStream err,
+                                              String reportFormat,
+                                              boolean failuresOnly,
+                                              boolean omitRedundancy,
+                                              @Nullable Path outputPath,
+                                              @Nullable Path junitReportPath,
+                                              double threshold) throws Exception {
         return runResolvedModules(
                 modules,
                 reportRoot.toAbsolutePath().normalize(),
                 out,
                 err,
-                ReportOptions.textWithOptionalJunit(junitReportPath.toAbsolutePath().normalize()),
+                new ReportOptions(
+                        ReportFormat.parse(reportFormat),
+                        failuresOnly,
+                        omitRedundancy,
+                        normalize(outputPath),
+                        normalize(junitReportPath)
+                ),
                 threshold
         );
     }
@@ -137,6 +168,10 @@ public final class Main {
         if (!warning.isEmpty()) {
             err.println(warning);
         }
+    }
+
+    private static @Nullable Path normalize(@Nullable Path path) {
+        return path == null ? null : path.toAbsolutePath().normalize();
     }
 
     private static Path commonRoot(List<ResolvedCoverageModule> modules) {

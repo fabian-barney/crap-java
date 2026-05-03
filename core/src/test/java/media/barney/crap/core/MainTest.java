@@ -12,6 +12,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class MainTest {
@@ -423,6 +424,66 @@ class MainTest {
         assertTrue(junit.contains("<property name=\"status\" value=\"failed\"/>"));
         assertTrue(junit.contains("<property name=\"status\" value=\"passed\"/>"));
         assertTrue(junit.contains("<property name=\"status\" value=\"skipped\"/>"));
+    }
+
+    @Test
+    void runWithExistingCoveragePreResolvedModulesHonorsPrimaryReportControls() throws Exception {
+        writeMixedCoverageSample();
+        Path source = tempDir.resolve("src/main/java/demo/Sample.java");
+        Path jacocoXml = tempDir.resolve("target/site/jacoco/jacoco.xml");
+        Path jsonReport = tempDir.resolve("target/crap-java/gradle.json");
+        Path junitReport = tempDir.resolve("target/crap-java/TEST-crap-java.xml");
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        ByteArrayOutputStream err = new ByteArrayOutputStream();
+
+        int exit = Main.runWithExistingCoverage(
+                List.of(new Main.ResolvedCoverageModule(tempDir, jacocoXml, List.of(source))),
+                tempDir,
+                new PrintStream(out),
+                new PrintStream(err),
+                "json",
+                true,
+                true,
+                jsonReport,
+                junitReport,
+                8.0
+        );
+
+        String primary = Files.readString(jsonReport);
+        String junit = Files.readString(junitReport);
+        assertEquals(2, exit);
+        assertEquals("", utf8(out));
+        assertTrue(primary.contains("\"status\": \"failed\""));
+        assertFalse(primary.contains("      \"status\":"));
+        assertTrue(primary.contains("\"method\": \"danger\""));
+        assertFalse(primary.contains("\"method\": \"safe\""));
+        assertFalse(primary.contains("\"method\": \"unknown\""));
+        assertTrue(junit.contains("FAILED danger"));
+        assertTrue(junit.contains("PASSED safe"));
+        assertTrue(junit.contains("SKIPPED unknown"));
+    }
+
+    @Test
+    void runWithExistingCoverageRejectsSharedPrimaryAndJunitReportPath() throws Exception {
+        writeMixedCoverageSample();
+        Path source = tempDir.resolve("src/main/java/demo/Sample.java");
+        Path jacocoXml = tempDir.resolve("target/site/jacoco/jacoco.xml");
+        Path report = tempDir.resolve("target/crap-java/report.xml");
+
+        IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () -> Main.runWithExistingCoverage(
+                List.of(new Main.ResolvedCoverageModule(tempDir, jacocoXml, List.of(source))),
+                tempDir,
+                new PrintStream(new ByteArrayOutputStream()),
+                new PrintStream(new ByteArrayOutputStream()),
+                "json",
+                false,
+                false,
+                report,
+                report,
+                8.0
+        ));
+
+        assertEquals("output and junitReport must not point to the same file", thrown.getMessage());
     }
 
     @Test
