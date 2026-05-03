@@ -213,6 +213,92 @@ class ReportFormatterTest {
     }
 
     @Test
+    void formatsOmitRedundancyJsonWithoutMethodStatus() {
+        String report = ReportFormatter.format(report(
+                metric("danger", "demo.Sample", 4, 5, 10.0, 9.645),
+                metric("unknown", "demo.Sample", 20, 2, null, null)
+        ), ReportFormat.JSON, false, false, true);
+
+        String expected = """
+                {
+                  "status": "failed",
+                  "threshold": 8.0,
+                  "methods": [
+                    {
+                      "crap": 9.645,
+                      "cc": 5,
+                      "cov": 10.0,
+                      "covKind": "instruction",
+                      "method": "danger",
+                      "src": "demo.Sample",
+                      "lineStart": 4,
+                      "lineEnd": 6
+                    },
+                    {
+                      "crap": null,
+                      "cc": 2,
+                      "cov": null,
+                      "covKind": "N/A",
+                      "method": "unknown",
+                      "src": "demo.Sample",
+                      "lineStart": 20,
+                      "lineEnd": 22
+                    }
+                  ]
+                }
+                """;
+
+        assertEquals(expected, report);
+    }
+
+    @Test
+    void formatsOmitRedundancyToonWithoutMethodStatus() {
+        String report = ReportFormatter.format(report(
+                metric("foo", "demo.Sample", 4, 3, 85.0, 4.5),
+                metric("bar", "demo.Sample", 9, 2, null, null)
+        ), ReportFormat.TOON, false, false, true);
+
+        assertTrue(report.contains("status: passed"));
+        assertTrue(report.contains("threshold: 8"));
+        assertTrue(report.contains("methods[2]{crap,cc,cov,covKind,method,src,lineStart,lineEnd}:"));
+        assertTrue(report.contains("4.5,3,85,instruction,foo,demo.Sample,4,6"));
+        assertTrue(report.contains("null,2,null,N/A,bar,demo.Sample,9,11"));
+        assertFalse(report.contains("methods[2]{status,"));
+    }
+
+    @Test
+    void formatsOmitRedundancyTextWithoutMethodStatusColumn() {
+        String report = ReportFormatter.format(report(
+                metric("danger", "demo.Sample", 4, 5, 10.0, 9.645),
+                metric("safe", "demo.Sample", 9, 1, 100.0, 1.0)
+        ), ReportFormat.TEXT, false, false, true);
+
+        List<String> lines = report.lines().toList();
+        int headerIndex = tableHeaderIndex(lines, "Method");
+
+        assertTrue(report.startsWith("CRAP Report\n===========\nStatus: failed\nThreshold: 8.0\n"));
+        assertTrue(lines.get(headerIndex).startsWith("Method"));
+        assertFalse(lines.get(headerIndex).startsWith("Status"));
+        assertTrue(report.contains("danger"));
+        assertTrue(report.contains("safe"));
+    }
+
+    @Test
+    void formatsOmitRedundancyJunitWithoutStatusProperty() throws Exception {
+        String report = ReportFormatter.format(report(
+                metric("danger", "demo.Sample", 4, 5, 10.0, 9.645),
+                metric("unknown", "demo.Sample", 20, 2, null, null)
+        ), ReportFormat.JUNIT, false, false, true);
+
+        Element root = parseXml(report).getDocumentElement();
+
+        assertEquals("2", root.getAttribute("tests"));
+        assertTrue(report.contains("<property name=\"threshold\" value=\"8.0\"/>"));
+        assertTrue(report.contains("<property name=\"methodName\" value=\"danger\"/>"));
+        assertFalse(report.contains("<property name=\"status\""));
+    }
+
+    @Test
     void formatsAgentToonWithOnlyFailures() {
         String report = ReportFormatter.format(report(
                 metric("danger", "demo.Sample", 4, 5, 10.0, 9.645),

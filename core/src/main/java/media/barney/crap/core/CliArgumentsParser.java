@@ -19,6 +19,7 @@ final class CliArgumentsParser {
                     Thresholds.DEFAULT,
                     false,
                     false,
+                    false,
                     null,
                     null,
                     List.of()
@@ -34,6 +35,7 @@ final class CliArgumentsParser {
                     state.threshold,
                     state.agent,
                     state.failuresOnly,
+                    state.omitRedundancy,
                     state.outputPath,
                     state.junitReportPath,
                     List.of()
@@ -50,6 +52,7 @@ final class CliArgumentsParser {
                     state.threshold,
                     state.agent,
                     state.failuresOnly,
+                    state.omitRedundancy,
                     state.outputPath,
                     state.junitReportPath,
                     List.of()
@@ -63,6 +66,7 @@ final class CliArgumentsParser {
                     state.threshold,
                     state.agent,
                     state.failuresOnly,
+                    state.omitRedundancy,
                     state.outputPath,
                     state.junitReportPath,
                     List.of()
@@ -75,6 +79,7 @@ final class CliArgumentsParser {
                 state.threshold,
                 state.agent,
                 state.failuresOnly,
+                state.omitRedundancy,
                 state.outputPath,
                 state.junitReportPath,
                 List.copyOf(values)
@@ -115,6 +120,11 @@ final class CliArgumentsParser {
         if (isBooleanOption(arg, "--failures-only")) {
             state.failuresOnly = parseBooleanOption(arg, "--failures-only", state.failuresOnlySeen);
             state.failuresOnlySeen = true;
+            return index;
+        }
+        if (isBooleanOption(arg, "--omit-redundancy")) {
+            state.omitRedundancy = parseBooleanOption(arg, "--omit-redundancy", state.omitRedundancySeen);
+            state.omitRedundancySeen = true;
             return index;
         }
         return parseValuedOption(args, index, state, arg);
@@ -248,6 +258,7 @@ final class CliArgumentsParser {
                               double threshold,
                               boolean agent,
                               boolean failuresOnly,
+                              boolean omitRedundancy,
                               @Nullable String outputPath,
                               @Nullable String junitReportPath,
                               List<String> fileArgs) {
@@ -266,6 +277,8 @@ final class CliArgumentsParser {
         private boolean agentSeen;
         private boolean failuresOnly;
         private boolean failuresOnlySeen;
+        private boolean omitRedundancy;
+        private boolean omitRedundancySeen;
         private @Nullable String outputPath;
         private boolean outputPathSeen;
         private @Nullable String junitReportPath;
@@ -275,7 +288,7 @@ final class CliArgumentsParser {
         private ParseState build() {
             ensureAgentFormatIsSupported(agent, reportFormat);
             ensureFailuresOnlyDoesNotConflictWithAgent(agent, failuresOnly, failuresOnlySeen);
-            return new ParseState(help, changed, buildToolSelection, reportFormat, threshold, agent, failuresOnly, outputPath, junitReportPath, values);
+            return new ParseState(help, changed, buildToolSelection, reportFormat, threshold, agent, failuresOnly, omitRedundancy, outputPath, junitReportPath, values);
         }
     }
 }

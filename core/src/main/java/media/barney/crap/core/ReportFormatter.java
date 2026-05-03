@@ -42,39 +42,47 @@ final class ReportFormatter {
     }
 
     static String format(CrapReport report, ReportFormat format, boolean agent, boolean failuresOnly) {
-        if (agent) {
-            return formatAgent(report, format);
-        }
-        return formatFull(failuresOnly ? failuresOnly(report) : report, format);
+        return format(report, format, agent, failuresOnly, false);
     }
 
-    private static String formatFull(CrapReport report, ReportFormat format) {
+    static String format(CrapReport report,
+                         ReportFormat format,
+                         boolean agent,
+                         boolean failuresOnly,
+                         boolean omitRedundancy) {
+        if (agent) {
+            return formatAgent(report, format, omitRedundancy);
+        }
+        return formatFull(failuresOnly ? failuresOnly(report) : report, format, omitRedundancy);
+    }
+
+    private static String formatFull(CrapReport report, ReportFormat format, boolean omitRedundancy) {
         return switch (format) {
-            case TOON -> JToon.encodeJson(formatJson(report));
-            case JSON -> formatJson(report);
-            case TEXT -> formatText(report);
-            case JUNIT -> formatJunit(report);
+            case TOON -> JToon.encodeJson(formatJson(report, omitRedundancy));
+            case JSON -> formatJson(report, omitRedundancy);
+            case TEXT -> formatText(report, omitRedundancy);
+            case JUNIT -> formatJunit(report, omitRedundancy);
         };
     }
 
-    private static String formatAgent(CrapReport report, ReportFormat format) {
+    private static String formatAgent(CrapReport report, ReportFormat format, boolean omitRedundancy) {
         CrapReport failures = failuresOnly(report);
         return switch (format) {
-            case TOON -> JToon.encodeJson(formatJson(failures));
-            case JSON -> formatJson(failures);
+            case TOON -> JToon.encodeJson(formatJson(failures, omitRedundancy));
+            case JSON -> formatJson(failures, omitRedundancy);
             case TEXT -> formatAgentText(report);
             case JUNIT -> throw new IllegalArgumentException("--agent cannot be combined with --format junit");
         };
     }
 
-    private static String formatText(CrapReport report) {
+    private static String formatText(CrapReport report, boolean omitRedundancy) {
         List<CrapReport.MethodReport> sorted = sortedMethods(report.methods());
         StringBuilder builder = new StringBuilder();
         builder.append("CRAP Report\n");
         builder.append("===========\n");
         builder.append("Status: ").append(report.status()).append('\n');
         builder.append("Threshold: ").append(formatDisplayNumber(report.threshold())).append('\n');
-        appendMethodTable(builder, fullTextColumns(), sorted);
+        appendMethodTable(builder, omitRedundancy ? methodTextColumns() : fullTextColumns(), sorted);
         return builder.toString();
     }
 
@@ -175,12 +183,12 @@ final class ReportFormatter {
         builder.append('\n');
     }
 
-    private static String formatJson(CrapReport report) {
-        return writeJson(jsonReport(report));
+    private static String formatJson(CrapReport report, boolean omitRedundancy) {
+        return writeJson(jsonReport(report, omitRedundancy));
     }
 
-    private static String formatJunit(CrapReport report) {
-        return writeXml(junitTestSuites(report));
+    private static String formatJunit(CrapReport report, boolean omitRedundancy) {
+        return writeXml(junitTestSuites(report, omitRedundancy));
     }
 
     private static int countStatus(List<CrapReport.MethodReport> methods, MethodStatus status) {
@@ -193,19 +201,19 @@ final class ReportFormatter {
         return count;
     }
 
-    private static JsonReport jsonReport(CrapReport report) {
+    private static JsonReport jsonReport(CrapReport report, boolean omitRedundancy) {
         return new JsonReport(
                 report.status(),
                 report.threshold(),
                 sortedMethods(report.methods()).stream()
-                        .map(ReportFormatter::jsonMethod)
+                        .map(method -> jsonMethod(method, omitRedundancy))
                         .toList()
         );
     }
 
-    private static JsonMethod jsonMethod(CrapReport.MethodReport method) {
+    private static JsonMethod jsonMethod(CrapReport.MethodReport method, boolean omitRedundancy) {
         return new JsonMethod(
-                method.status().value(),
+                omitRedundancy ? null : method.status().value(),
                 method.crapScore(),
                 method.complexity(),
                 method.coveragePercent(),
@@ -225,7 +233,7 @@ final class ReportFormatter {
         }
     }
 
-    private static JunitTestSuites junitTestSuites(CrapReport report) {
+    private static JunitTestSuites junitTestSuites(CrapReport report, boolean omitRedundancy) {
         List<CrapReport.MethodReport> methods = sortedMethods(report.methods());
         int failed = countStatus(methods, MethodStatus.FAILED);
         int skipped = countStatus(methods, MethodStatus.SKIPPED);
@@ -238,34 +246,44 @@ final class ReportFormatter {
                 "0",
                 new JunitProperties(List.of(new JunitProperty("threshold", number(report.threshold())))),
                 methods.stream()
-                        .map(method -> junitTestCase(method, report.threshold()))
+                        .map(method -> junitTestCase(method, report.threshold(), omitRedundancy))
                         .toList()
         );
         return new JunitTestSuites(methods.size(), failed, 0, skipped, "0", List.of(testSuite));
     }
 
-    private static JunitTestCase junitTestCase(CrapReport.MethodReport method, double threshold) {
+    private static JunitTestCase junitTestCase(CrapReport.MethodReport method,
+                                               double threshold,
+                                               boolean omitRedundancy) {
         return new JunitTestCase(
                 method.className(),
                 testcaseName(method),
                 method.sourcePath(),
                 method.startLine(),
                 "0",
-                new JunitProperties(List.of(
-                        new JunitProperty("status", method.status().value()),
-                        new JunitProperty("methodName", method.methodName()),
-                        new JunitProperty("className", method.className()),
-                        new JunitProperty("sourcePath", method.sourcePath()),
-                        new JunitProperty("startLine", Integer.toString(method.startLine())),
-                        new JunitProperty("endLine", Integer.toString(method.endLine())),
-                        new JunitProperty("complexity", Integer.toString(method.complexity())),
-                        new JunitProperty("coverageKind", method.coverageKind()),
-                        new JunitProperty("coveragePercent", nullableProperty(method.coveragePercent())),
-                        new JunitProperty("crapScore", nullableProperty(method.crapScore()))
-                )),
+                junitProperties(method, omitRedundancy),
                 junitFailure(method, threshold),
                 junitSkipped(method)
         );
+    }
+
+    private static JunitProperties junitProperties(CrapReport.MethodReport method, boolean omitRedundancy) {
+        List<JunitProperty> properties = new ArrayList<>();
+        if (!omitRedundancy) {
+            properties.add(new JunitProperty("status", method.status().value()));
+        }
+        properties.addAll(List.of(
+                new JunitProperty("methodName", method.methodName()),
+                new JunitProperty("className", method.className()),
+                new JunitProperty("sourcePath", method.sourcePath()),
+                new JunitProperty("startLine", Integer.toString(method.startLine())),
+                new JunitProperty("endLine", Integer.toString(method.endLine())),
+                new JunitProperty("complexity", Integer.toString(method.complexity())),
+                new JunitProperty("coverageKind", method.coverageKind()),
+                new JunitProperty("coveragePercent", nullableProperty(method.coveragePercent())),
+                new JunitProperty("crapScore", nullableProperty(method.crapScore()))
+        ));
+        return new JunitProperties(properties);
     }
 
     private static @Nullable JunitFailure junitFailure(CrapReport.MethodReport method, double threshold) {
@@ -358,7 +376,8 @@ final class ReportFormatter {
     }
 
     private record JsonMethod(
-            String status,
+            @JsonInclude(JsonInclude.Include.NON_NULL)
+            @Nullable String status,
             @Nullable Double crap,
             int cc,
             @Nullable Double cov,

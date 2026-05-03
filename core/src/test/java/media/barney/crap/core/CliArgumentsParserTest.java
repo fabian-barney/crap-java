@@ -20,6 +20,7 @@ class CliArgumentsParserTest {
         assertEquals(Main.DEFAULT_THRESHOLD, args.threshold());
         assertFalse(args.agent());
         assertFalse(args.failuresOnly());
+        assertFalse(args.omitRedundancy());
     }
 
     @Test
@@ -65,6 +66,7 @@ class CliArgumentsParserTest {
         assertEquals(Main.DEFAULT_THRESHOLD, args.threshold());
         assertFalse(args.agent());
         assertFalse(args.failuresOnly());
+        assertFalse(args.omitRedundancy());
         assertEquals("target/crap-java/report.json", args.outputPath());
         assertEquals("target/crap-java/TEST-crap-java.xml", args.junitReportPath());
         assertEquals(List.of("src/main/java/demo/A.java"), args.fileArgs());
@@ -150,6 +152,41 @@ class CliArgumentsParserTest {
     void failuresOnlyFlagCanOnlyBeProvidedOnce() {
         assertThrows(IllegalArgumentException.class,
                 () -> CliArgumentsParser.parse(new String[]{"--failures-only", "--failures-only=false"}));
+    }
+
+    @Test
+    void omitRedundancyFlagDefaultsToTrueWhenUnassigned() {
+        CliArguments args = CliArgumentsParser.parse(new String[]{"--omit-redundancy", "--changed"});
+
+        assertEquals(CliMode.CHANGED_SRC, args.mode());
+        assertTrue(args.omitRedundancy());
+    }
+
+    @Test
+    void omitRedundancyFlagAcceptsExplicitBooleanAssignments() {
+        CliArguments enabled = CliArgumentsParser.parse(new String[]{"--omit-redundancy=true", "--changed"});
+        CliArguments disabled = CliArgumentsParser.parse(new String[]{"--omit-redundancy=false", "--changed"});
+        CliArguments enabledUppercase = CliArgumentsParser.parse(new String[]{"--omit-redundancy=TRUE", "--changed"});
+        CliArguments disabledUppercase = CliArgumentsParser.parse(new String[]{"--omit-redundancy=FALSE", "--changed"});
+
+        assertTrue(enabled.omitRedundancy());
+        assertFalse(disabled.omitRedundancy());
+        assertTrue(enabledUppercase.omitRedundancy());
+        assertFalse(disabledUppercase.omitRedundancy());
+    }
+
+    @Test
+    void omitRedundancyFlagRejectsInvalidAssignments() {
+        assertThrows(IllegalArgumentException.class,
+                () -> CliArgumentsParser.parse(new String[]{"--omit-redundancy=yes", "--changed"}));
+        assertThrows(IllegalArgumentException.class,
+                () -> CliArgumentsParser.parse(new String[]{"--omit-redundancy=", "--changed"}));
+    }
+
+    @Test
+    void omitRedundancyFlagCanOnlyBeProvidedOnce() {
+        assertThrows(IllegalArgumentException.class,
+                () -> CliArgumentsParser.parse(new String[]{"--omit-redundancy", "--omit-redundancy=false"}));
     }
 
     @Test

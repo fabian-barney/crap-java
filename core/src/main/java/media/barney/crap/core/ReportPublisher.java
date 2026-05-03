@@ -19,7 +19,13 @@ final class ReportPublisher {
     }
 
     private static void publishPrimary(CrapReport report, ReportOptions options, PrintStream out) throws IOException {
-        String content = ReportFormatter.format(report, options.format(), options.agent(), options.failuresOnly());
+        String content = ReportFormatter.format(
+                report,
+                options.format(),
+                options.agent(),
+                options.failuresOnly(),
+                options.omitRedundancy()
+        );
         if (options.outputPath() == null) {
             out.print(content);
             return;

@@ -10,6 +10,7 @@ record CliArguments(
         double threshold,
         boolean agent,
         boolean failuresOnly,
+        boolean omitRedundancy,
         @Nullable String outputPath,
         @Nullable String junitReportPath,
         List<String> fileArgs

@@ -123,6 +123,7 @@ public final class Main {
                   crap-java --format json                 Write report as toon, json, text, or junit (default: toon)
                   crap-java --agent                       Write compact agent output (failures only; default format: toon)
                   crap-java --failures-only[=true|false]  Only include failing methods in the primary report
+                  crap-java --omit-redundancy[=true|false]  Omit redundant method fields from the primary report
                   crap-java --output report.toon          Write the selected report format to a file
                   crap-java --junit-report report.xml     Also write a JUnit XML report for CI
                   crap-java --threshold 6                 Override the CRAP threshold (default: 8.0)

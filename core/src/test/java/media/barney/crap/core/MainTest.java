@@ -35,6 +35,7 @@ class MainTest {
         assertTrue(utf8(out).contains("--format"));
         assertTrue(utf8(out).contains("--agent"));
         assertTrue(utf8(out).contains("--failures-only"));
+        assertTrue(utf8(out).contains("--omit-redundancy"));
         assertTrue(utf8(out).contains("--threshold"));
     }
 
@@ -297,6 +298,42 @@ class MainTest {
         assertTrue(junit.contains("FAILED danger"));
         assertTrue(junit.contains("PASSED safe"));
         assertTrue(junit.contains("SKIPPED unknown"));
+    }
+
+    @Test
+    void omitRedundancyOmitsPrimaryStatusFieldsButKeepsJunitSidecarComplete() throws Exception {
+        writeMixedCoverageSample();
+        Path jsonReport = tempDir.resolve("target/crap-java/compact.json");
+        Path junitReport = tempDir.resolve("target/crap-java/TEST-crap-java.xml");
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        ByteArrayOutputStream err = new ByteArrayOutputStream();
+
+        int exit = Main.runWithExistingCoverage(
+                new String[]{
+                        "--omit-redundancy",
+                        "--format", "json",
+                        "--output", "target/crap-java/compact.json",
+                        "--junit-report", "target/crap-java/TEST-crap-java.xml",
+                        "src/main/java/demo/Sample.java"
+                },
+                tempDir,
+                new PrintStream(out),
+                new PrintStream(err)
+        );
+
+        String primary = Files.readString(jsonReport);
+        String junit = Files.readString(junitReport);
+        assertEquals(2, exit);
+        assertEquals("", utf8(out));
+        assertTrue(primary.contains("\"status\": \"failed\""));
+        assertTrue(primary.contains("\"threshold\": 8.0"));
+        assertFalse(primary.contains("      \"status\":"));
+        assertTrue(primary.contains("\"method\": \"danger\""));
+        assertTrue(primary.contains("\"method\": \"safe\""));
+        assertTrue(primary.contains("\"method\": \"unknown\""));
+        assertTrue(junit.contains("<property name=\"status\" value=\"failed\"/>"));
+        assertTrue(junit.contains("<property name=\"status\" value=\"passed\"/>"));
+        assertTrue(junit.contains("<property name=\"status\" value=\"skipped\"/>"));
     }
 
     @Test
