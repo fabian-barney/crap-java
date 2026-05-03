@@ -24,8 +24,10 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public abstract class CrapJavaCheckTask extends DefaultTask {
 
@@ -150,10 +152,31 @@ public abstract class CrapJavaCheckTask extends DefaultTask {
     }
 
     private void deleteDisabledJunitReport() throws Exception {
-        if (getJunit().get() || !getJunitReport().isPresent()) {
+        if (getJunit().get()) {
             return;
         }
-        Files.deleteIfExists(getJunitReport().get().getAsFile().toPath().toAbsolutePath().normalize());
+        for (Path path : disabledJunitReportPaths()) {
+            Files.deleteIfExists(path);
+        }
+    }
+
+    private Set<Path> disabledJunitReportPaths() {
+        Set<Path> paths = new LinkedHashSet<>();
+        if (getJunitReport().isPresent()) {
+            paths.add(getJunitReport().get().getAsFile().toPath().toAbsolutePath().normalize());
+        }
+        paths.add(defaultJunitReportPath());
+        return paths;
+    }
+
+    private Path defaultJunitReportPath() {
+        return getProject().getLayout().getBuildDirectory()
+                .file("reports/crap-java/TEST-crap-java.xml")
+                .get()
+                .getAsFile()
+                .toPath()
+                .toAbsolutePath()
+                .normalize();
     }
 
     private List<Main.ResolvedCoverageModule> resolvedModules(List<Path> sourceFiles) {

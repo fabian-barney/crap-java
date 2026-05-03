@@ -158,6 +158,21 @@ class CrapJavaGradlePluginTest {
     }
 
     @Test
+    void taskAgentFalseOverridesExtensionAgentComposedDefaults() {
+        Project project = ProjectBuilder.builder().withProjectDir(tempDir.toFile()).build();
+
+        project.getPluginManager().apply("java");
+        project.getPluginManager().apply(CrapJavaGradlePlugin.class);
+        project.getExtensions().getByType(CrapJavaExtension.class).getAgent().set(true);
+        CrapJavaCheckTask checkTask = (CrapJavaCheckTask) project.getTasks().getByName("crap-java-check");
+        checkTask.getAgent().set(false);
+
+        assertEquals("none", checkTask.getFormat().get());
+        assertFalse(checkTask.getFailuresOnly().get());
+        assertFalse(checkTask.getOmitRedundancy().get());
+    }
+
+    @Test
     void configuredTaskReportControlsOverrideExtensionDefaults() {
         Project project = ProjectBuilder.builder().withProjectDir(tempDir.toFile()).build();
 

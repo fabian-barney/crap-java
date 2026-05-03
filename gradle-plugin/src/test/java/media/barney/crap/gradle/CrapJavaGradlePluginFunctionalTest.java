@@ -225,12 +225,15 @@ class CrapJavaGradlePluginFunctionalTest {
     @Test
     void disabledJunitRemovesStaleSidecarAndDoesNotWriteNewSidecar() throws Exception {
         Path defaultJunit = tempDir.resolve("build/reports/crap-java/TEST-crap-java.xml");
+        Path customJunit = tempDir.resolve("build/reports/crap-java/custom-junit.xml");
         Files.createDirectories(defaultJunit.getParent());
         Files.writeString(defaultJunit, "<testsuites tests=\"99\"/>");
+        Files.writeString(customJunit, "<testsuites tests=\"88\"/>");
         writeSingleModuleProject("""
 
                 crapJava {
                     junit.set(false)
+                    junitReport.set(layout.buildDirectory.file("reports/crap-java/custom-junit.xml"))
                 }
                 """);
 
@@ -238,6 +241,7 @@ class CrapJavaGradlePluginFunctionalTest {
 
         assertEquals(TaskOutcome.SUCCESS, result.task(":crap-java-check").getOutcome());
         assertFalse(Files.exists(defaultJunit));
+        assertFalse(Files.exists(customJunit));
         assertFalse(result.getOutput().contains("<testsuites"));
         assertFalse(result.getOutput().contains("CRAP Report"));
     }

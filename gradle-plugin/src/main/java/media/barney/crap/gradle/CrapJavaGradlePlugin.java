@@ -105,8 +105,8 @@ public class CrapJavaGradlePlugin implements Plugin<Project> {
             boolean extensionAgent = extension.getAgent().getOrElse(false);
             boolean taskAgent = task.getAgent().getOrElse(extensionAgent);
             String extensionFormat = extension.getFormat().getOrElse(extensionAgent ? "toon" : "none");
-            if (taskAgent && !extensionAgent && "none".equals(extensionFormat)) {
-                return "toon";
+            if (taskAgent != extensionAgent && isDefaultAgentFormat(extensionAgent, extensionFormat)) {
+                return taskAgent ? "toon" : "none";
             }
             return extensionFormat;
         });
@@ -120,11 +120,15 @@ public class CrapJavaGradlePlugin implements Plugin<Project> {
             boolean extensionAgent = extension.getAgent().getOrElse(false);
             boolean extensionValue = extensionControl.getOrElse(extensionAgent);
             boolean taskAgent = task.getAgent().getOrElse(extensionAgent);
-            if (taskAgent && !extensionAgent && !extensionValue) {
-                return true;
+            if (taskAgent != extensionAgent && extensionValue == extensionAgent) {
+                return taskAgent;
             }
             return extensionValue;
         });
+    }
+
+    private static boolean isDefaultAgentFormat(boolean agent, String format) {
+        return agent ? "toon".equals(format) : "none".equals(format);
     }
 }
 
