@@ -36,7 +36,14 @@ class CrapJavaGradlePluginTest {
         assertEquals("Runs the crap-java CRAP metric gate.", checkTask.getDescription());
         assertEquals(8.0, extension.getThreshold().get());
         assertFalse(extension.getAgent().get());
+        assertEquals("none", extension.getFormat().get());
+        assertFalse(extension.getFailuresOnly().get());
+        assertFalse(extension.getOmitRedundancy().get());
+        assertFalse(extension.getOutput().isPresent());
         assertTrue(extension.getJunit().get());
+        assertTrue(extension.getJunitReport().get().getAsFile().toPath().normalize().toString()
+                .replace('\\', '/')
+                .endsWith("build/reports/crap-java/TEST-crap-java.xml"));
         assertEquals(8.0, checkTask.getThreshold().get());
         assertEquals("none", checkTask.getFormat().get());
         assertFalse(checkTask.getAgent().get());
@@ -52,6 +59,7 @@ class CrapJavaGradlePluginTest {
         assertTrue(checkTask.getJunitReport().get().getAsFile().toPath().normalize().toString()
                 .replace('\\', '/')
                 .endsWith("build/reports/crap-java/TEST-crap-java.xml"));
+        assertTrue(checkTask.getJunitReportOutput().isPresent());
         assertNotNull(project.getTasks().findByName("jacocoTestReport"));
     }
 
@@ -94,6 +102,7 @@ class CrapJavaGradlePluginTest {
         assertEquals(output.normalize(), checkTask.getOutput().get().getAsFile().toPath().normalize());
         assertFalse(checkTask.getJunit().get());
         assertEquals(junitReport.normalize(), checkTask.getJunitReport().get().getAsFile().toPath().normalize());
+        assertFalse(checkTask.getJunitReportOutput().isPresent());
     }
 
     @Test
@@ -105,24 +114,41 @@ class CrapJavaGradlePluginTest {
         project.getExtensions().getByType(CrapJavaExtension.class).getAgent().set(true);
 
         CrapJavaCheckTask checkTask = (CrapJavaCheckTask) project.getTasks().getByName("crap-java-check");
+        CrapJavaExtension extension = project.getExtensions().getByType(CrapJavaExtension.class);
 
+        assertEquals("toon", extension.getFormat().get());
+        assertTrue(extension.getFailuresOnly().get());
+        assertTrue(extension.getOmitRedundancy().get());
         assertEquals("toon", checkTask.getFormat().get());
         assertTrue(checkTask.getFailuresOnly().get());
         assertTrue(checkTask.getOmitRedundancy().get());
     }
 
     @Test
-    void taskAgentComposesPrimaryDefaultsWhenControlsAreUnset() {
+    void configuredTaskReportControlsOverrideExtensionDefaults() {
         Project project = ProjectBuilder.builder().withProjectDir(tempDir.toFile()).build();
 
         project.getPluginManager().apply("java");
         project.getPluginManager().apply(CrapJavaGradlePlugin.class);
         CrapJavaCheckTask checkTask = (CrapJavaCheckTask) project.getTasks().getByName("crap-java-check");
+        Path output = tempDir.resolve("build/reports/crap-java/task-report.json");
+        Path junitReport = tempDir.resolve("build/reports/crap-java/task-junit.xml");
         checkTask.getAgent().set(true);
+        checkTask.getFormat().set("json");
+        checkTask.getFailuresOnly().set(false);
+        checkTask.getOmitRedundancy().set(true);
+        checkTask.getOutput().fileValue(output.toFile());
+        checkTask.getJunit().set(false);
+        checkTask.getJunitReport().fileValue(junitReport.toFile());
 
-        assertEquals("toon", checkTask.getFormat().get());
-        assertTrue(checkTask.getFailuresOnly().get());
+        assertEquals("json", checkTask.getFormat().get());
+        assertTrue(checkTask.getAgent().get());
+        assertFalse(checkTask.getFailuresOnly().get());
         assertTrue(checkTask.getOmitRedundancy().get());
+        assertEquals(output.normalize(), checkTask.getOutput().get().getAsFile().toPath().normalize());
+        assertFalse(checkTask.getJunit().get());
+        assertEquals(junitReport.normalize(), checkTask.getJunitReport().get().getAsFile().toPath().normalize());
+        assertFalse(checkTask.getJunitReportOutput().isPresent());
     }
 
     @Test

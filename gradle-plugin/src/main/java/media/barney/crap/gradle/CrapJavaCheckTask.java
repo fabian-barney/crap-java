@@ -5,9 +5,11 @@ import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
 import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.DirectoryProperty;
+import org.gradle.api.file.RegularFile;
 import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.provider.MapProperty;
 import org.gradle.api.provider.Property;
+import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.Internal;
@@ -63,9 +65,16 @@ public abstract class CrapJavaCheckTask extends DefaultTask {
     @Input
     public abstract Property<Boolean> getJunit();
 
+    @Internal
+    public abstract RegularFileProperty getJunitReport();
+
     @OutputFile
     @Optional
-    public abstract RegularFileProperty getJunitReport();
+    public Provider<RegularFile> getJunitReportOutput() {
+        return getJunit().flatMap(enabled -> enabled
+                ? getJunitReport()
+                : getProject().getProviders().provider(() -> (RegularFile) null));
+    }
 
     @TaskAction
     void runCheck() throws Exception {
