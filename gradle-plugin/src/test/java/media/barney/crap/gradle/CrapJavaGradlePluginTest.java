@@ -120,7 +120,7 @@ class CrapJavaGradlePluginTest {
         assertTrue(checkTask.getJunit().get());
         assertTrue(checkTask.getJunitReport().get().getAsFile().toPath().normalize().toString()
                 .replace('\\', '/')
-                .endsWith("build/reports/crap-java/TEST-crap-java.xml"));
+                .endsWith("build/reports/crap-java/custom-crap-java-check/TEST-crap-java.xml"));
         assertTrue(checkTask.getJunitReportOutput().isPresent());
     }
 

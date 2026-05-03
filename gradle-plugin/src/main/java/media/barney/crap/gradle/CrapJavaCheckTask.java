@@ -38,8 +38,9 @@ public abstract class CrapJavaCheckTask extends DefaultTask {
         getFailuresOnly().convention(getAgent());
         getOmitRedundancy().convention(getAgent());
         getJunit().convention(true);
-        getJunitReport().convention(getProject().getLayout().getBuildDirectory()
-                .file("reports/crap-java/TEST-crap-java.xml"));
+        getJunitReport().convention(getProject().getProviders()
+                .provider(this::defaultJunitReportRelativePath)
+                .flatMap(path -> getProject().getLayout().getBuildDirectory().file(path)));
     }
 
     @Internal
@@ -177,6 +178,13 @@ public abstract class CrapJavaCheckTask extends DefaultTask {
                 .toPath()
                 .toAbsolutePath()
                 .normalize();
+    }
+
+    private String defaultJunitReportRelativePath() {
+        if ("crap-java-check".equals(getName())) {
+            return "reports/crap-java/TEST-crap-java.xml";
+        }
+        return "reports/crap-java/" + getName() + "/TEST-crap-java.xml";
     }
 
     private List<Main.ResolvedCoverageModule> resolvedModules(List<Path> sourceFiles) {
