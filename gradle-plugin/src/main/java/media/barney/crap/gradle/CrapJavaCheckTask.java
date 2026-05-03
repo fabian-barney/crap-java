@@ -31,16 +31,22 @@ import java.util.Set;
 
 public abstract class CrapJavaCheckTask extends DefaultTask {
 
+    private final Provider<RegularFile> defaultJunitReport;
+    private final Provider<RegularFile> junitReportState;
+
     public CrapJavaCheckTask() {
+        defaultJunitReport = getProject().getProviders()
+                .provider(this::defaultJunitReportRelativePath)
+                .flatMap(path -> getProject().getLayout().getBuildDirectory().file(path));
+        junitReportState = getProject().getLayout().getBuildDirectory()
+                .file("tmp/crap-java/" + getName() + "/junit-report.path");
         getThreshold().convention(Main.DEFAULT_THRESHOLD);
         getAgent().convention(false);
         getFormat().convention(getAgent().map(agent -> agent ? "toon" : "none"));
         getFailuresOnly().convention(getAgent());
         getOmitRedundancy().convention(getAgent());
         getJunit().convention(true);
-        getJunitReport().convention(getProject().getProviders()
-                .provider(this::defaultJunitReportRelativePath)
-                .flatMap(path -> getProject().getLayout().getBuildDirectory().file(path)));
+        getJunitReport().convention(defaultJunitReport);
     }
 
     @Internal
@@ -99,6 +105,8 @@ public abstract class CrapJavaCheckTask extends DefaultTask {
                 .sorted()
                 .toList();
         Path analysisRoot = getAnalysisRoot().get().getAsFile().toPath().toAbsolutePath().normalize();
+        Path configuredOutputPath = outputPath();
+        Path configuredJunitReportPath = junitReportPath();
         if (sourceFiles.isEmpty()) {
             try (var out = GradleLoggingPrintStreams.standardOut(getLogger());
                  var err = GradleLoggingPrintStreams.standardErr(getLogger())) {
@@ -110,10 +118,11 @@ public abstract class CrapJavaCheckTask extends DefaultTask {
                         getFormat().get(),
                         getFailuresOnly().get(),
                         getOmitRedundancy().get(),
-                        outputPath(),
-                        junitReportPath(),
+                        configuredOutputPath,
+                        configuredJunitReportPath,
                         getThreshold().get()
                 );
+                rememberJunitReportPath(configuredJunitReportPath);
             }
             return;
         }
@@ -128,10 +137,11 @@ public abstract class CrapJavaCheckTask extends DefaultTask {
                     getFormat().get(),
                     getFailuresOnly().get(),
                     getOmitRedundancy().get(),
-                    outputPath(),
-                    junitReportPath(),
+                    configuredOutputPath,
+                    configuredJunitReportPath,
                     getThreshold().get()
             );
+            rememberJunitReportPath(configuredJunitReportPath);
             if (exit != 0) {
                 throw new GradleException("crap-java-check failed with exit " + exit);
             }
@@ -159,21 +169,24 @@ public abstract class CrapJavaCheckTask extends DefaultTask {
         for (Path path : disabledJunitReportPaths()) {
             Files.deleteIfExists(path);
         }
+        Files.deleteIfExists(junitReportStatePath());
     }
 
-    private Set<Path> disabledJunitReportPaths() {
+    private Set<Path> disabledJunitReportPaths() throws Exception {
         Set<Path> paths = new LinkedHashSet<>();
         if (getJunitReport().isPresent()) {
             paths.add(getJunitReport().get().getAsFile().toPath().toAbsolutePath().normalize());
         }
         paths.add(defaultJunitReportPath());
+        Path rememberedPath = rememberedJunitReportPath();
+        if (rememberedPath != null) {
+            paths.add(rememberedPath);
+        }
         return paths;
     }
 
     private Path defaultJunitReportPath() {
-        return getProject().getLayout().getBuildDirectory()
-                .file("reports/crap-java/TEST-crap-java.xml")
-                .get()
+        return defaultJunitReport.get()
                 .getAsFile()
                 .toPath()
                 .toAbsolutePath()
@@ -185,6 +198,35 @@ public abstract class CrapJavaCheckTask extends DefaultTask {
             return "reports/crap-java/TEST-crap-java.xml";
         }
         return "reports/crap-java/" + getName() + "/TEST-crap-java.xml";
+    }
+
+    private void rememberJunitReportPath(Path path) throws Exception {
+        if (path == null) {
+            return;
+        }
+        Path statePath = junitReportStatePath();
+        Files.createDirectories(statePath.getParent());
+        Files.writeString(statePath, path.toString());
+    }
+
+    private Path rememberedJunitReportPath() throws Exception {
+        Path statePath = junitReportStatePath();
+        if (!Files.isRegularFile(statePath)) {
+            return null;
+        }
+        String value = Files.readString(statePath).trim();
+        if (value.isBlank()) {
+            return null;
+        }
+        return Path.of(value).toAbsolutePath().normalize();
+    }
+
+    private Path junitReportStatePath() {
+        return junitReportState.get()
+                .getAsFile()
+                .toPath()
+                .toAbsolutePath()
+                .normalize();
     }
 
     private List<Main.ResolvedCoverageModule> resolvedModules(List<Path> sourceFiles) {

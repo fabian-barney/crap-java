@@ -250,6 +250,28 @@ class CrapJavaGradlePluginTest {
     }
 
     @Test
+    void disabledCustomTaskDoesNotDeleteBuiltInTaskSidecar() throws Exception {
+        Path projectRoot = tempDir.toRealPath();
+        Project project = ProjectBuilder.builder().withProjectDir(projectRoot.toFile()).build();
+        Path builtInJunit = projectRoot.resolve("build/reports/crap-java/TEST-crap-java.xml");
+        Path customJunit = projectRoot.resolve("build/reports/crap-java/custom-crap-java-check/TEST-crap-java.xml");
+        Files.createDirectories(builtInJunit.getParent());
+        Files.createDirectories(customJunit.getParent());
+        Files.writeString(builtInJunit, "<testsuites tests=\"1\"/>");
+        Files.writeString(customJunit, "<testsuites tests=\"2\"/>");
+
+        CrapJavaCheckTask task = project.getTasks().register("custom-crap-java-check", CrapJavaCheckTask.class).get();
+        task.getAnalysisRoot().fileValue(projectRoot.toFile());
+        task.getModuleCoverageReports().set(Map.of());
+        task.getJunit().set(false);
+
+        task.runCheck();
+
+        assertTrue(Files.exists(builtInJunit));
+        assertFalse(Files.exists(customJunit));
+    }
+
+    @Test
     void rootModuleMatchesEverySourcePath() {
         assertTrue(CrapJavaCheckTask.matchesModulePath("app/src/main/java/demo/Sample.java", "."));
     }

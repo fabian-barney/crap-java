@@ -246,6 +246,35 @@ class CrapJavaGradlePluginFunctionalTest {
         assertFalse(result.getOutput().contains("CRAP Report"));
     }
 
+    @Test
+    void disabledJunitRemovesLastWrittenNonDefaultSidecar() throws Exception {
+        Path oldJunit = tempDir.resolve("build/reports/crap-java/old-junit.xml");
+        Path newJunit = tempDir.resolve("build/reports/crap-java/new-junit.xml");
+        writeSingleModuleProject("""
+
+                crapJava {
+                    junitReport.set(layout.buildDirectory.file("reports/crap-java/old-junit.xml"))
+                }
+                """);
+        BuildResult firstResult = runBuild("crap-java-check");
+        assertEquals(TaskOutcome.SUCCESS, firstResult.task(":crap-java-check").getOutcome());
+        assertTrue(Files.exists(oldJunit));
+        writeSingleModuleProject("""
+
+                crapJava {
+                    junit.set(false)
+                    junitReport.set(layout.buildDirectory.file("reports/crap-java/new-junit.xml"))
+                }
+                """);
+
+        BuildResult secondResult = runBuild("crap-java-check");
+
+        assertEquals(TaskOutcome.SUCCESS, secondResult.task(":crap-java-check").getOutcome());
+        assertFalse(Files.exists(oldJunit));
+        assertFalse(Files.exists(newJunit));
+        assertFalse(secondResult.getOutput().contains("<testsuites"));
+    }
+
     private BuildResult runBuild(String... arguments) {
         List<String> gradleArguments = new ArrayList<>();
         gradleArguments.add("-Dgradle.user.home=" + tempDir.resolve("gradle-user-home"));
