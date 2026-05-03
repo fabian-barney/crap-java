@@ -233,6 +233,14 @@ final class CliArgumentsParser {
         }
     }
 
+    private static void ensureFailuresOnlyDoesNotConflictWithAgent(boolean agent,
+                                                                   boolean failuresOnly,
+                                                                   boolean failuresOnlySeen) {
+        if (agent && failuresOnlySeen && !failuresOnly) {
+            throw new IllegalArgumentException("--agent cannot be combined with --failures-only=false");
+        }
+    }
+
     private record ParseState(boolean help,
                               boolean changed,
                               BuildToolSelection buildToolSelection,
@@ -266,6 +274,7 @@ final class CliArgumentsParser {
 
         private ParseState build() {
             ensureAgentFormatIsSupported(agent, reportFormat);
+            ensureFailuresOnlyDoesNotConflictWithAgent(agent, failuresOnly, failuresOnlySeen);
             return new ParseState(help, changed, buildToolSelection, reportFormat, threshold, agent, failuresOnly, outputPath, junitReportPath, values);
         }
     }

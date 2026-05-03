@@ -178,6 +178,41 @@ class ReportFormatterTest {
     }
 
     @Test
+    void formatsFailuresOnlyTextWithOnlyFailedMethods() {
+        String report = ReportFormatter.format(report(
+                metric("danger", "demo.Sample", 4, 5, 10.0, 9.645),
+                metric("safe", "demo.Sample", 9, 1, 100.0, 1.0),
+                metric("unknown", "demo.Sample", 20, 2, null, null)
+        ), ReportFormat.TEXT, false, true);
+
+        assertTrue(report.startsWith("CRAP Report\n===========\nStatus: failed\nThreshold: 8.0\n"));
+        assertTrue(report.contains("Status"));
+        assertTrue(report.contains("failed"));
+        assertTrue(report.contains("danger"));
+        assertFalse(report.contains("safe"));
+        assertFalse(report.contains("unknown"));
+    }
+
+    @Test
+    void formatsFailuresOnlyJunitWithOnlyFailedMethods() throws Exception {
+        String report = ReportFormatter.format(report(
+                metric("danger", "demo.Sample", 4, 5, 10.0, 9.645),
+                metric("safe", "demo.Sample", 9, 1, 100.0, 1.0),
+                metric("unknown", "demo.Sample", 20, 2, null, null)
+        ), ReportFormat.JUNIT, false, true);
+
+        Element root = parseXml(report).getDocumentElement();
+
+        assertEquals("1", root.getAttribute("tests"));
+        assertEquals("1", root.getAttribute("failures"));
+        assertEquals("0", root.getAttribute("skipped"));
+        assertTrue(report.contains("FAILED danger"));
+        assertTrue(report.contains("<property name=\"threshold\" value=\"8.0\"/>"));
+        assertFalse(report.contains("PASSED safe"));
+        assertFalse(report.contains("SKIPPED unknown"));
+    }
+
+    @Test
     void formatsAgentToonWithOnlyFailures() {
         String report = ReportFormatter.format(report(
                 metric("danger", "demo.Sample", 4, 5, 10.0, 9.645),

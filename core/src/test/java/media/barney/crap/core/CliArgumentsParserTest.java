@@ -110,6 +110,14 @@ class CliArgumentsParserTest {
     }
 
     @Test
+    void agentModeRejectsExplicitFailuresOnlyFalse() {
+        assertThrows(IllegalArgumentException.class,
+                () -> CliArgumentsParser.parse(new String[]{"--agent", "--failures-only=false"}));
+        assertThrows(IllegalArgumentException.class,
+                () -> CliArgumentsParser.parse(new String[]{"--failures-only=false", "--agent"}));
+    }
+
+    @Test
     void failuresOnlyFlagDefaultsToTrueWhenUnassigned() {
         CliArguments args = CliArgumentsParser.parse(new String[]{"--failures-only", "--changed"});
 
