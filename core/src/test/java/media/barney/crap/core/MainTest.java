@@ -229,6 +229,61 @@ class MainTest {
     }
 
     @Test
+    void noneFormatSuppressesStdoutButKeepsJunitSidecarComplete() throws Exception {
+        writeMixedCoverageSample();
+        Path junitReport = tempDir.resolve("target/crap-java/TEST-crap-java.xml");
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        ByteArrayOutputStream err = new ByteArrayOutputStream();
+
+        int exit = Main.runWithExistingCoverage(
+                new String[]{
+                        "--format", "none",
+                        "--junit-report", "target/crap-java/TEST-crap-java.xml",
+                        "src/main/java/demo/Sample.java"
+                },
+                tempDir,
+                new PrintStream(out),
+                new PrintStream(err)
+        );
+
+        String junit = Files.readString(junitReport);
+        assertEquals(2, exit);
+        assertEquals("", utf8(out));
+        assertTrue(junit.contains("<testsuites tests=\"3\" failures=\"1\" errors=\"0\" skipped=\"1\" time=\"0\">"));
+        assertTrue(junit.contains("FAILED danger"));
+        assertTrue(junit.contains("PASSED safe"));
+        assertTrue(junit.contains("SKIPPED unknown"));
+    }
+
+    @Test
+    void noneFormatWritesEmptyPrimaryFileWhenOutputConfigured() throws Exception {
+        writeMixedCoverageSample();
+        Path primaryReport = tempDir.resolve("target/crap-java/empty.report");
+        Path junitReport = tempDir.resolve("target/crap-java/TEST-crap-java.xml");
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        ByteArrayOutputStream err = new ByteArrayOutputStream();
+
+        int exit = Main.runWithExistingCoverage(
+                new String[]{
+                        "--format", "none",
+                        "--output", "target/crap-java/empty.report",
+                        "--junit-report", "target/crap-java/TEST-crap-java.xml",
+                        "src/main/java/demo/Sample.java"
+                },
+                tempDir,
+                new PrintStream(out),
+                new PrintStream(err)
+        );
+
+        String junit = Files.readString(junitReport);
+        assertEquals(2, exit);
+        assertEquals("", utf8(out));
+        assertTrue(Files.exists(primaryReport));
+        assertEquals("", Files.readString(primaryReport));
+        assertTrue(junit.contains("<testsuites tests=\"3\" failures=\"1\" errors=\"0\" skipped=\"1\" time=\"0\">"));
+    }
+
+    @Test
     void agentModeComposesPrimaryDefaultsButKeepsJunitSidecarComplete() throws Exception {
         writeMixedCoverageSample();
         Path jsonReport = tempDir.resolve("target/crap-java/agent.json");

@@ -47,6 +47,7 @@ final class ReportFormatter {
             case JSON -> formatJson(report, omitRedundancy);
             case TEXT -> formatText(report, omitRedundancy);
             case JUNIT -> formatJunit(report, omitRedundancy);
+            case NONE -> "";
         };
     }
 

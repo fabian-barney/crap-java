@@ -116,6 +116,15 @@ class ReportFormatterTest {
     }
 
     @Test
+    void formatsNoneReportAsEmptyContent() {
+        String report = ReportFormatter.format(report(
+                metric("danger", "demo.Sample", 4, 5, 10.0, 9.645)
+        ), ReportFormat.NONE, true, true);
+
+        assertEquals("", report);
+    }
+
+    @Test
     void formatsFailuresOnlyOmitRedundancyJsonWithOnlyFailuresAndGlobalStatusThreshold() {
         String report = ReportFormatter.format(report(
                 metric("danger", "demo.Sample", 4, 5, 10.0, 9.645),

@@ -13,6 +13,7 @@ class ReportFormatTest {
         assertEquals(ReportFormat.JSON, ReportFormat.parse("json"));
         assertEquals(ReportFormat.TEXT, ReportFormat.parse("text"));
         assertEquals(ReportFormat.JUNIT, ReportFormat.parse("junit"));
+        assertEquals(ReportFormat.NONE, ReportFormat.parse("none"));
         assertEquals(ReportFormat.JSON, ReportFormat.parse("JSON"));
     }
 
