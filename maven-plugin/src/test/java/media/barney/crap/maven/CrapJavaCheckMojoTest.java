@@ -63,7 +63,7 @@ class CrapJavaCheckMojoTest {
         assertEquals(root, runner.projectRoot);
         assertEquals(List.of(
                 "--format",
-                "text",
+                "none",
                 "--threshold",
                 "8.0",
                 "--junit-report",
@@ -72,7 +72,7 @@ class CrapJavaCheckMojoTest {
     }
 
     @Test
-    void usesConfiguredJunitReportPath() throws Exception {
+    void usesConfiguredJunitReport() throws Exception {
         Path root = tempDir.resolve("root");
         writeCoverageReport(root);
         Path report = root.resolve("custom/crap.xml");
@@ -81,11 +81,86 @@ class CrapJavaCheckMojoTest {
         CrapJavaCheckMojo mojo = mojo(runner);
         setField(mojo, "session", session(List.of(project(root, "root")), root));
         setField(mojo, "project", project(root, "root"));
-        setField(mojo, "junitReportPath", report.toFile());
+        setField(mojo, "junitReport", report.toFile());
 
         mojo.execute();
 
-        assertEquals(List.of("--format", "text", "--threshold", "8.0", "--junit-report", report.toString()), List.of(runner.args));
+        assertEquals(List.of("--format", "none", "--threshold", "8.0", "--junit-report", report.toString()), List.of(runner.args));
+    }
+
+    @Test
+    void usesConfiguredReportControls() throws Exception {
+        Path root = tempDir.resolve("root");
+        writeCoverageReport(root);
+        Path output = root.resolve("target/crap-java/report.json");
+
+        RecordingRunner runner = new RecordingRunner();
+        CrapJavaCheckMojo mojo = mojo(runner);
+        setField(mojo, "session", session(List.of(project(root, "root")), root));
+        setField(mojo, "project", project(root, "root"));
+        setField(mojo, "format", "json");
+        setField(mojo, "agent", true);
+        setField(mojo, "failuresOnly", false);
+        setField(mojo, "omitRedundancy", true);
+        setField(mojo, "output", output.toFile());
+
+        mojo.execute();
+
+        assertEquals(List.of(
+                "--format",
+                "json",
+                "--agent",
+                "--failures-only=false",
+                "--omit-redundancy=true",
+                "--output",
+                output.toString(),
+                "--threshold",
+                "8.0",
+                "--junit-report",
+                root.resolve("target/crap-java/TEST-crap-java.xml").toString()
+        ), List.of(runner.args));
+    }
+
+    @Test
+    void disablesJunitReport() throws Exception {
+        Path root = tempDir.resolve("root");
+        writeCoverageReport(root);
+
+        RecordingRunner runner = new RecordingRunner();
+        CrapJavaCheckMojo mojo = mojo(runner);
+        setField(mojo, "session", session(List.of(project(root, "root")), root));
+        setField(mojo, "project", project(root, "root"));
+        setField(mojo, "junit", false);
+
+        mojo.execute();
+
+        assertEquals(List.of("--format", "none", "--threshold", "8.0"), List.of(runner.args));
+    }
+
+    @Test
+    void resolvesConfiguredRelativeReportPathsAgainstExecutionRoot() throws Exception {
+        Path root = tempDir.resolve("root");
+        writeCoverageReport(root);
+
+        RecordingRunner runner = new RecordingRunner();
+        CrapJavaCheckMojo mojo = mojo(runner);
+        setField(mojo, "session", session(List.of(project(root, "root")), root));
+        setField(mojo, "project", project(root, "root"));
+        setField(mojo, "output", Path.of("target/crap-java/report.json").toFile());
+        setField(mojo, "junitReport", Path.of("target/crap-java/custom-junit.xml").toFile());
+
+        mojo.execute();
+
+        assertEquals(List.of(
+                "--format",
+                "none",
+                "--output",
+                root.resolve("target/crap-java/report.json").toString(),
+                "--threshold",
+                "8.0",
+                "--junit-report",
+                root.resolve("target/crap-java/custom-junit.xml").toString()
+        ), List.of(runner.args));
     }
 
     @Test
@@ -103,7 +178,7 @@ class CrapJavaCheckMojoTest {
 
         assertEquals(List.of(
                 "--format",
-                "text",
+                "none",
                 "--threshold",
                 "6.0",
                 "--junit-report",

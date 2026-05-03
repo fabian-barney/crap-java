@@ -1,9 +1,33 @@
 import java.nio.file.Files;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Path;
 
-if (!Files.exists(basedir.toPath().resolve("module-a/target/site/jacoco/jacoco.xml"))) {
+Path root = basedir.toPath();
+if (!Files.exists(root.resolve("module-a/target/site/jacoco/jacoco.xml"))) {
     throw new RuntimeException("Missing JaCoCo XML report for module-a");
 }
-if (!Files.exists(basedir.toPath().resolve("module-b/target/site/jacoco/jacoco.xml"))) {
+if (!Files.exists(root.resolve("module-b/target/site/jacoco/jacoco.xml"))) {
     throw new RuntimeException("Missing JaCoCo XML report for module-b");
+}
+if (!Files.exists(root.resolve("target/crap-java/TEST-crap-java.xml"))) {
+    throw new RuntimeException("Missing default crap-java JUnit sidecar for multi-module IT");
+}
+Path reportDir = root.resolve("target/crap-java");
+DirectoryStream reportArtifacts = Files.newDirectoryStream(reportDir);
+for (Path reportArtifact : reportArtifacts) {
+    if (!reportArtifact.getFileName().toString().equals("TEST-crap-java.xml")) {
+        throw new RuntimeException("Default Maven plugin run wrote unexpected primary report artifact: " + reportArtifact);
+    }
+}
+reportArtifacts.close();
+Path buildLog = root.resolve("build.log");
+if (Files.exists(buildLog)) {
+    String log = Files.readString(buildLog);
+    if (log.contains("CRAP Report")
+            || log.contains("status:")
+            || log.contains("\"status\"")
+            || log.contains("<testsuites")) {
+        throw new RuntimeException("Default Maven plugin run should not emit a primary report");
+    }
 }
 return true;

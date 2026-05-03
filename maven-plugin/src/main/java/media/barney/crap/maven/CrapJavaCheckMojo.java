@@ -31,8 +31,26 @@ public class CrapJavaCheckMojo extends AbstractMojo {
     @Parameter(defaultValue = "${project}", readonly = true, required = true)
     private @Nullable MavenProject project;
 
-    @Parameter(property = "crapJava.junitReportPath")
-    private @Nullable File junitReportPath;
+    @Parameter(property = "crapJava.format", defaultValue = "none")
+    private String format = "none";
+
+    @Parameter(property = "crapJava.agent", defaultValue = "false")
+    private boolean agent;
+
+    @Parameter(property = "crapJava.failuresOnly")
+    private @Nullable Boolean failuresOnly;
+
+    @Parameter(property = "crapJava.omitRedundancy")
+    private @Nullable Boolean omitRedundancy;
+
+    @Parameter(property = "crapJava.output")
+    private @Nullable File output;
+
+    @Parameter(property = "crapJava.junit", defaultValue = "true")
+    private boolean junit = true;
+
+    @Parameter(property = "crapJava.junitReport")
+    private @Nullable File junitReport;
 
     @Parameter(property = "crapJava.threshold", defaultValue = "8.0")
     private double threshold = Main.DEFAULT_THRESHOLD;
@@ -77,22 +95,42 @@ public class CrapJavaCheckMojo extends AbstractMojo {
     }
 
     private String[] reportArgs(Path executionRoot) {
-        return new String[]{
-                "--format",
-                "text",
-                "--threshold",
-                Double.toString(threshold),
-                "--junit-report",
-                junitReportPath(executionRoot).toString()
-        };
+        List<String> args = new ArrayList<>();
+        args.add("--format");
+        args.add(format);
+        if (agent) {
+            args.add("--agent");
+        }
+        if (failuresOnly != null) {
+            args.add("--failures-only=" + failuresOnly);
+        }
+        if (omitRedundancy != null) {
+            args.add("--omit-redundancy=" + omitRedundancy);
+        }
+        if (output != null) {
+            args.add("--output");
+            args.add(configuredPath(executionRoot, output).toString());
+        }
+        args.add("--threshold");
+        args.add(Double.toString(threshold));
+        if (junit) {
+            args.add("--junit-report");
+            args.add(junitReportPath(executionRoot).toString());
+        }
+        return args.toArray(String[]::new);
     }
 
     private Path junitReportPath(Path executionRoot) {
-        File configured = junitReportPath;
+        File configured = junitReport;
         if (configured != null) {
-            return configured.toPath().normalize();
+            return configuredPath(executionRoot, configured);
         }
         return executionRoot.resolve("target/crap-java/TEST-crap-java.xml").normalize();
+    }
+
+    private static Path configuredPath(Path executionRoot, File configured) {
+        Path path = configured.toPath().normalize();
+        return path.isAbsolute() ? path : executionRoot.resolve(path).normalize();
     }
 
     private void ensureCoverageReportsExist() throws MojoFailureException {
