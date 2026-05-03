@@ -79,30 +79,40 @@ class CliArgumentsParserTest {
         assertEquals(CliMode.CHANGED_SRC, args.mode());
         assertEquals(ReportFormat.TOON, args.reportFormat());
         assertTrue(args.agent());
+        assertTrue(args.failuresOnly());
+        assertTrue(args.omitRedundancy());
     }
 
     @Test
-    void agentModeAllowsNonJunitPrimaryFormatsJunitSidecarAndThreshold() {
+    void agentModeAllowsPrimaryFormatJunitSidecarAndThresholdOverrides() {
         CliArguments args = CliArgumentsParser.parse(new String[]{
                 "--agent",
-                "--format", "text",
+                "--format", "junit",
                 "--junit-report", "target/crap-java/TEST-crap-java.xml",
                 "--threshold", "6.0",
                 "--changed"
         });
 
-        assertEquals(ReportFormat.TEXT, args.reportFormat());
+        assertEquals(ReportFormat.JUNIT, args.reportFormat());
         assertEquals("target/crap-java/TEST-crap-java.xml", args.junitReportPath());
         assertEquals(6.0, args.threshold());
         assertTrue(args.agent());
+        assertTrue(args.failuresOnly());
+        assertTrue(args.omitRedundancy());
     }
 
     @Test
-    void agentModeRejectsJunitPrimaryFormat() {
-        assertThrows(IllegalArgumentException.class,
-                () -> CliArgumentsParser.parse(new String[]{"--agent", "--format", "junit"}));
-        assertThrows(IllegalArgumentException.class,
-                () -> CliArgumentsParser.parse(new String[]{"--format", "junit", "--agent"}));
+    void agentModeAllowsExplicitBooleanOverrides() {
+        CliArguments args = CliArgumentsParser.parse(new String[]{
+                "--agent",
+                "--failures-only=false",
+                "--omit-redundancy=false",
+                "--changed"
+        });
+
+        assertTrue(args.agent());
+        assertFalse(args.failuresOnly());
+        assertFalse(args.omitRedundancy());
     }
 
     @Test
@@ -112,11 +122,12 @@ class CliArgumentsParserTest {
     }
 
     @Test
-    void agentModeRejectsExplicitFailuresOnlyFalse() {
-        assertThrows(IllegalArgumentException.class,
-                () -> CliArgumentsParser.parse(new String[]{"--agent", "--failures-only=false"}));
-        assertThrows(IllegalArgumentException.class,
-                () -> CliArgumentsParser.parse(new String[]{"--failures-only=false", "--agent"}));
+    void agentModeAllowsExplicitFailuresOnlyFalseBeforeAgent() {
+        CliArguments args = CliArgumentsParser.parse(new String[]{"--failures-only=false", "--agent", "--changed"});
+
+        assertTrue(args.agent());
+        assertFalse(args.failuresOnly());
+        assertTrue(args.omitRedundancy());
     }
 
     @Test

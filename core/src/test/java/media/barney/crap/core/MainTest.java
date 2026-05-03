@@ -229,7 +229,7 @@ class MainTest {
     }
 
     @Test
-    void agentModeFiltersPrimaryOutputButKeepsJunitSidecarComplete() throws Exception {
+    void agentModeComposesPrimaryDefaultsButKeepsJunitSidecarComplete() throws Exception {
         writeMixedCoverageSample();
         Path jsonReport = tempDir.resolve("target/crap-java/agent.json");
         Path junitReport = tempDir.resolve("target/crap-java/TEST-crap-java.xml");
@@ -255,6 +255,7 @@ class MainTest {
         assertEquals("", utf8(out));
         assertTrue(primary.contains("\"status\": \"failed\""));
         assertTrue(primary.contains("\"threshold\": 8.0"));
+        assertFalse(primary.contains("      \"status\":"));
         assertTrue(primary.contains("\"method\": \"danger\""));
         assertFalse(primary.contains("\"method\": \"safe\""));
         assertFalse(primary.contains("\"method\": \"unknown\""));
@@ -262,6 +263,39 @@ class MainTest {
         assertTrue(junit.contains("FAILED danger"));
         assertTrue(junit.contains("PASSED safe"));
         assertTrue(junit.contains("SKIPPED unknown"));
+    }
+
+    @Test
+    void agentModeAllowsExplicitPrimaryControlOverrides() throws Exception {
+        writeMixedCoverageSample();
+        Path jsonReport = tempDir.resolve("target/crap-java/agent-full.json");
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        ByteArrayOutputStream err = new ByteArrayOutputStream();
+
+        int exit = Main.runWithExistingCoverage(
+                new String[]{
+                        "--agent",
+                        "--format", "json",
+                        "--failures-only=false",
+                        "--omit-redundancy=false",
+                        "--output", "target/crap-java/agent-full.json",
+                        "src/main/java/demo/Sample.java"
+                },
+                tempDir,
+                new PrintStream(out),
+                new PrintStream(err)
+        );
+
+        String primary = Files.readString(jsonReport);
+        assertEquals(2, exit);
+        assertEquals("", utf8(out));
+        assertTrue(primary.contains("\"status\": \"failed\""));
+        assertTrue(primary.contains("      \"status\": \"failed\""));
+        assertTrue(primary.contains("      \"status\": \"passed\""));
+        assertTrue(primary.contains("      \"status\": \"skipped\""));
+        assertTrue(primary.contains("\"method\": \"danger\""));
+        assertTrue(primary.contains("\"method\": \"safe\""));
+        assertTrue(primary.contains("\"method\": \"unknown\""));
     }
 
     @Test

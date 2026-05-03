@@ -116,12 +116,12 @@ class ReportFormatterTest {
     }
 
     @Test
-    void formatsAgentJsonWithOnlyFailuresAndGlobalStatusThreshold() {
+    void formatsFailuresOnlyOmitRedundancyJsonWithOnlyFailuresAndGlobalStatusThreshold() {
         String report = ReportFormatter.format(report(
                 metric("danger", "demo.Sample", 4, 5, 10.0, 9.645),
                 metric("safe", "demo.Sample", 9, 1, 100.0, 1.0),
                 metric("unknown", "demo.Sample", 20, 2, null, null)
-        ), ReportFormat.JSON, true);
+        ), ReportFormat.JSON, true, true);
 
         String expected = """
                 {
@@ -129,7 +129,6 @@ class ReportFormatterTest {
                   "threshold": 8.0,
                   "methods": [
                     {
-                      "status": "failed",
                       "crap": 9.645,
                       "cc": 5,
                       "cov": 10.0,
@@ -152,7 +151,7 @@ class ReportFormatterTest {
                 metric("danger", "demo.Sample", 4, 5, 10.0, 9.645),
                 metric("safe", "demo.Sample", 9, 1, 100.0, 1.0),
                 metric("unknown", "demo.Sample", 20, 2, null, null)
-        ), ReportFormat.JSON, false, true);
+        ), ReportFormat.JSON, true, false);
 
         String expected = """
                 {
@@ -183,7 +182,7 @@ class ReportFormatterTest {
                 metric("danger", "demo.Sample", 4, 5, 10.0, 9.645),
                 metric("safe", "demo.Sample", 9, 1, 100.0, 1.0),
                 metric("unknown", "demo.Sample", 20, 2, null, null)
-        ), ReportFormat.TEXT, false, true);
+        ), ReportFormat.TEXT, true, false);
 
         assertTrue(report.startsWith("CRAP Report\n===========\nStatus: failed\nThreshold: 8.0\n"));
         assertTrue(report.contains("Status"));
@@ -199,7 +198,7 @@ class ReportFormatterTest {
                 metric("danger", "demo.Sample", 4, 5, 10.0, 9.645),
                 metric("safe", "demo.Sample", 9, 1, 100.0, 1.0),
                 metric("unknown", "demo.Sample", 20, 2, null, null)
-        ), ReportFormat.JUNIT, false, true);
+        ), ReportFormat.JUNIT, true, false);
 
         Element root = parseXml(report).getDocumentElement();
 
@@ -217,7 +216,7 @@ class ReportFormatterTest {
         String report = ReportFormatter.format(report(
                 metric("danger", "demo.Sample", 4, 5, 10.0, 9.645),
                 metric("unknown", "demo.Sample", 20, 2, null, null)
-        ), ReportFormat.JSON, false, false, true);
+        ), ReportFormat.JSON, false, true);
 
         String expected = """
                 {
@@ -256,7 +255,7 @@ class ReportFormatterTest {
         String report = ReportFormatter.format(report(
                 metric("foo", "demo.Sample", 4, 3, 85.0, 4.5),
                 metric("bar", "demo.Sample", 9, 2, null, null)
-        ), ReportFormat.TOON, false, false, true);
+        ), ReportFormat.TOON, false, true);
 
         assertTrue(report.contains("status: passed"));
         assertTrue(report.contains("threshold: 8"));
@@ -271,7 +270,7 @@ class ReportFormatterTest {
         String report = ReportFormatter.format(report(
                 metric("danger", "demo.Sample", 4, 5, 10.0, 9.645),
                 metric("safe", "demo.Sample", 9, 1, 100.0, 1.0)
-        ), ReportFormat.TEXT, false, false, true);
+        ), ReportFormat.TEXT, false, true);
 
         List<String> lines = report.lines().toList();
         int headerIndex = tableHeaderIndex(lines, "Method");
@@ -288,7 +287,7 @@ class ReportFormatterTest {
         String report = ReportFormatter.format(report(
                 metric("danger", "demo.Sample", 4, 5, 10.0, 9.645),
                 metric("unknown", "demo.Sample", 20, 2, null, null)
-        ), ReportFormat.JUNIT, false, false, true);
+        ), ReportFormat.JUNIT, false, true);
 
         Element root = parseXml(report).getDocumentElement();
 
@@ -299,51 +298,51 @@ class ReportFormatterTest {
     }
 
     @Test
-    void formatsAgentToonWithOnlyFailures() {
+    void formatsFailuresOnlyOmitRedundancyToonWithOnlyFailures() {
         String report = ReportFormatter.format(report(
                 metric("danger", "demo.Sample", 4, 5, 10.0, 9.645),
                 metric("safe", "demo.Sample", 9, 1, 100.0, 1.0)
-        ), ReportFormat.TOON, true);
+        ), ReportFormat.TOON, true, true);
 
         assertTrue(report.contains("status: failed"));
         assertTrue(report.contains("threshold: 8"));
-        assertTrue(report.contains("methods[1]{status,crap,cc,cov,covKind,method,src,lineStart,lineEnd}:"));
-        assertTrue(report.contains("failed,9.645,5,10,instruction,danger,demo.Sample,4,6"));
+        assertTrue(report.contains("methods[1]{crap,cc,cov,covKind,method,src,lineStart,lineEnd}:"));
+        assertTrue(report.contains("9.645,5,10,instruction,danger,demo.Sample,4,6"));
     }
 
     @Test
-    void formatsAgentTextWithOnlyFailures() {
+    void formatsFailuresOnlyOmitRedundancyTextWithOnlyFailures() {
         String report = ReportFormatter.format(report(
                 metric("danger", "demo.Sample", 4, 5, 10.0, 9.645),
                 metric("safe", "demo.Sample", 9, 1, 100.0, 1.0),
                 metric("unknown", "demo.Sample", 20, 2, null, null)
-        ), ReportFormat.TEXT, true);
+        ), ReportFormat.TEXT, true, true);
 
-        assertTrue(report.startsWith("Status: failed\nThreshold: 8.0\n"));
+        assertTrue(report.startsWith("CRAP Report\n===========\nStatus: failed\nThreshold: 8.0\n"));
         assertTrue(report.contains("Method"));
         assertTrue(report.contains("danger"));
         assertTrue(report.contains("9.6"));
         assertFalse(report.contains("safe"));
         assertFalse(report.contains("unknown"));
-        assertFalse(report.contains("CRAP Report"));
 
         List<String> lines = report.lines().toList();
         int headerIndex = tableHeaderIndex(lines, "Method");
+        assertTrue(lines.get(headerIndex).startsWith("Method"));
         assertEquals(lines.get(headerIndex).length(), lines.get(headerIndex + 1).length());
         assertEquals(lines.get(headerIndex).length(), lines.get(headerIndex + 2).length());
     }
 
     @Test
-    void formatsAgentTextWithoutMethodRowsWhenPassed() {
+    void formatsFailuresOnlyOmitRedundancyTextWithoutMethodRowsWhenPassed() {
         String report = ReportFormatter.format(report(
                 metric("safe", "demo.Sample", 9, 1, 100.0, 1.0),
                 metric("unknown", "demo.Sample", 20, 2, null, null)
-        ), ReportFormat.TEXT, true);
+        ), ReportFormat.TEXT, true, true);
 
-        assertEquals("""
-                Status: passed
-                Threshold: 8.0
-                """, report);
+        assertTrue(report.startsWith("CRAP Report\n===========\nStatus: passed\nThreshold: 8.0\n"));
+        assertTrue(report.contains("Method"));
+        assertFalse(report.contains("safe"));
+        assertFalse(report.contains("unknown"));
     }
 
     @Test

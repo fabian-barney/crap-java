@@ -34,25 +34,10 @@ final class ReportFormatter {
     }
 
     static String format(CrapReport report, ReportFormat format) {
-        return format(report, format, false);
+        return format(report, format, false, false);
     }
 
-    static String format(CrapReport report, ReportFormat format, boolean agent) {
-        return format(report, format, agent, false);
-    }
-
-    static String format(CrapReport report, ReportFormat format, boolean agent, boolean failuresOnly) {
-        return format(report, format, agent, failuresOnly, false);
-    }
-
-    static String format(CrapReport report,
-                         ReportFormat format,
-                         boolean agent,
-                         boolean failuresOnly,
-                         boolean omitRedundancy) {
-        if (agent) {
-            return formatAgent(report, format, omitRedundancy);
-        }
+    static String format(CrapReport report, ReportFormat format, boolean failuresOnly, boolean omitRedundancy) {
         return formatFull(failuresOnly ? failuresOnly(report) : report, format, omitRedundancy);
     }
 
@@ -62,16 +47,6 @@ final class ReportFormatter {
             case JSON -> formatJson(report, omitRedundancy);
             case TEXT -> formatText(report, omitRedundancy);
             case JUNIT -> formatJunit(report, omitRedundancy);
-        };
-    }
-
-    private static String formatAgent(CrapReport report, ReportFormat format, boolean omitRedundancy) {
-        CrapReport failures = failuresOnly(report);
-        return switch (format) {
-            case TOON -> JToon.encodeJson(formatJson(failures, omitRedundancy));
-            case JSON -> formatJson(failures, omitRedundancy);
-            case TEXT -> formatAgentText(report);
-            case JUNIT -> throw new IllegalArgumentException("--agent cannot be combined with --format junit");
         };
     }
 
@@ -86,27 +61,11 @@ final class ReportFormatter {
         return builder.toString();
     }
 
-    private static String formatAgentText(CrapReport report) {
-        List<CrapReport.MethodReport> failedMethods = sortedMethods(failuresOnly(report).methods());
-        StringBuilder builder = new StringBuilder();
-        builder.append("Status: ").append(report.status()).append('\n');
-        builder.append("Threshold: ").append(formatDisplayNumber(report.threshold())).append('\n');
-        if (failedMethods.isEmpty()) {
-            return builder.toString();
-        }
-        appendMethodTable(builder, agentTextColumns(), failedMethods);
-        return builder.toString();
-    }
-
     private static List<TableColumn> fullTextColumns() {
         List<TableColumn> columns = new ArrayList<>();
         columns.add(new TableColumn("Status", Alignment.LEFT, method -> method.status().value()));
         columns.addAll(methodTextColumns());
         return columns;
-    }
-
-    private static List<TableColumn> agentTextColumns() {
-        return methodTextColumns();
     }
 
     private static List<TableColumn> methodTextColumns() {

@@ -22,7 +22,6 @@ final class ReportPublisher {
         String content = ReportFormatter.format(
                 report,
                 options.format(),
-                options.agent(),
                 options.failuresOnly(),
                 options.omitRedundancy()
         );

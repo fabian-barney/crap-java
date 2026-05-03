@@ -121,7 +121,7 @@ public final class Main {
                   crap-java --build-tool gradle           Force Gradle for all resolved modules
                   crap-java --build-tool maven --changed  Force Maven for changed files
                   crap-java --format json                 Write report as toon, json, text, or junit (default: toon)
-                  crap-java --agent                       Write compact agent output (failures only; default format: toon)
+                  crap-java --agent                       Apply AI-agent defaults: toon, failures only, omit redundancy
                   crap-java --failures-only[=true|false]  Only include failing methods in the primary report
                   crap-java --omit-redundancy[=true|false]  Omit redundant method fields from the primary report
                   crap-java --output report.toon          Write the selected report format to a file
