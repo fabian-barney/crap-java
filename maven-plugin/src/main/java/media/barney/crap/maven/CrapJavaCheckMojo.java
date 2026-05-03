@@ -109,7 +109,7 @@ public class CrapJavaCheckMojo extends AbstractMojo {
         }
         if (output != null) {
             args.add("--output");
-            args.add(output.toPath().normalize().toString());
+            args.add(configuredPath(executionRoot, output).toString());
         }
         args.add("--threshold");
         args.add(Double.toString(threshold));
@@ -123,9 +123,14 @@ public class CrapJavaCheckMojo extends AbstractMojo {
     private Path junitReportPath(Path executionRoot) {
         File configured = junitReport;
         if (configured != null) {
-            return configured.toPath().normalize();
+            return configuredPath(executionRoot, configured);
         }
         return executionRoot.resolve("target/crap-java/TEST-crap-java.xml").normalize();
+    }
+
+    private static Path configuredPath(Path executionRoot, File configured) {
+        Path path = configured.toPath().normalize();
+        return path.isAbsolute() ? path : executionRoot.resolve(path).normalize();
     }
 
     private void ensureCoverageReportsExist() throws MojoFailureException {

@@ -138,6 +138,32 @@ class CrapJavaCheckMojoTest {
     }
 
     @Test
+    void resolvesConfiguredRelativeReportPathsAgainstExecutionRoot() throws Exception {
+        Path root = tempDir.resolve("root");
+        writeCoverageReport(root);
+
+        RecordingRunner runner = new RecordingRunner();
+        CrapJavaCheckMojo mojo = mojo(runner);
+        setField(mojo, "session", session(List.of(project(root, "root")), root));
+        setField(mojo, "project", project(root, "root"));
+        setField(mojo, "output", Path.of("target/crap-java/report.json").toFile());
+        setField(mojo, "junitReport", Path.of("target/crap-java/custom-junit.xml").toFile());
+
+        mojo.execute();
+
+        assertEquals(List.of(
+                "--format",
+                "none",
+                "--output",
+                root.resolve("target/crap-java/report.json").toString(),
+                "--threshold",
+                "8.0",
+                "--junit-report",
+                root.resolve("target/crap-java/custom-junit.xml").toString()
+        ), List.of(runner.args));
+    }
+
+    @Test
     void usesConfiguredThreshold() throws Exception {
         Path root = tempDir.resolve("root");
         writeCoverageReport(root);
