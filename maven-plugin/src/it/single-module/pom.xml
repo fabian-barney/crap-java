@@ -9,6 +9,7 @@
 
   <properties>
     <maven.compiler.release>17</maven.compiler.release>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 
   <dependencies>
@@ -60,4 +61,13 @@
       </plugin>
     </plugins>
   </build>
+
+  <profiles>
+    <profile>
+      <id>quality-gate-crap</id>
+    </profile>
+    <profile>
+      <id>quality-gate-cognitive</id>
+    </profile>
+  </profiles>
 </project>
