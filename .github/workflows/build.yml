@@ -237,6 +237,9 @@ jobs:
           name: jacoco-reports
           path: .
 
+      - name: Remove Maven plugin IT fixtures from gate workspace
+        run: rm -rf maven-plugin/src/it
+
       - name: Run crap-java gate for maven-plugin
         working-directory: maven-plugin
         run: mvn -B -ntp -P!quality-gates-all,quality-gate-crap -DskipTests verify
@@ -396,6 +399,9 @@ jobs:
         with:
           name: jacoco-reports
           path: .
+
+      - name: Remove Maven plugin IT fixtures from gate workspace
+        run: rm -rf maven-plugin/src/it
 
       - name: Run cognitive-java gate for maven-plugin
         working-directory: maven-plugin
