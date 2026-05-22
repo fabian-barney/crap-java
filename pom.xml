@@ -173,7 +173,7 @@
             <version>${project.version}</version>
             <configuration>
               <excludes>
-                <exclude>maven-plugin/src/it/**</exclude>
+                <exclude>**/src/it/**</exclude>
               </excludes>
             </configuration>
             <executions>
@@ -191,7 +191,7 @@
             <version>${cognitive-java.version}</version>
             <configuration>
               <excludes>
-                <exclude>maven-plugin/src/it/**</exclude>
+                <exclude>**/src/it/**</exclude>
               </excludes>
             </configuration>
             <executions>
@@ -216,7 +216,7 @@
             <version>${project.version}</version>
             <configuration>
               <excludes>
-                <exclude>maven-plugin/src/it/**</exclude>
+                <exclude>**/src/it/**</exclude>
               </excludes>
             </configuration>
             <executions>
@@ -241,7 +241,7 @@
             <version>${cognitive-java.version}</version>
             <configuration>
               <excludes>
-                <exclude>maven-plugin/src/it/**</exclude>
+                <exclude>**/src/it/**</exclude>
               </excludes>
             </configuration>
             <executions>
