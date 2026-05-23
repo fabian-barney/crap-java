@@ -34,17 +34,6 @@ jobs:
           path: ~/.m2/repository
           if-no-files-found: error
 
-      - name: Upload build outputs
-        uses: actions/upload-artifact@v7
-        with:
-          name: build-targets
-          path: |
-            core/target
-            cli/target
-            gradle-plugin/target
-            maven-plugin/target
-          if-no-files-found: error
-
   test-unit:
     name: test / unit
     runs-on: ubuntu-latest
@@ -67,12 +56,6 @@ jobs:
         with:
           name: maven-repository
           path: ~/.m2/repository
-
-      - name: Download build outputs
-        uses: actions/download-artifact@v8
-        with:
-          name: build-targets
-          path: .
 
       - name: Run unit tests
         run: mvn -B -ntp -P!quality-gates-all -o verify
@@ -112,12 +95,6 @@ jobs:
           name: maven-repository
           path: ~/.m2/repository
 
-      - name: Download build outputs
-        uses: actions/download-artifact@v8
-        with:
-          name: build-targets
-          path: .
-
       - name: Run package build
         run: mvn -B -ntp -P!quality-gates-all -o -DskipTests package
 
@@ -144,12 +121,6 @@ jobs:
         with:
           name: maven-repository
           path: ~/.m2/repository
-
-      - name: Download build outputs
-        uses: actions/download-artifact@v8
-        with:
-          name: build-targets
-          path: .
 
       - name: Download JaCoCo reports
         uses: actions/download-artifact@v8
@@ -185,12 +156,6 @@ jobs:
           name: maven-repository
           path: ~/.m2/repository
 
-      - name: Download build outputs
-        uses: actions/download-artifact@v8
-        with:
-          name: build-targets
-          path: .
-
       - name: Download JaCoCo reports
         uses: actions/download-artifact@v8
         with:
@@ -224,12 +189,6 @@ jobs:
         with:
           name: maven-repository
           path: ~/.m2/repository
-
-      - name: Download build outputs
-        uses: actions/download-artifact@v8
-        with:
-          name: build-targets
-          path: .
 
       - name: Download JaCoCo reports
         uses: actions/download-artifact@v8
@@ -268,12 +227,6 @@ jobs:
           name: maven-repository
           path: ~/.m2/repository
 
-      - name: Download build outputs
-        uses: actions/download-artifact@v8
-        with:
-          name: build-targets
-          path: .
-
       - name: Download JaCoCo reports
         uses: actions/download-artifact@v8
         with:
@@ -307,12 +260,6 @@ jobs:
         with:
           name: maven-repository
           path: ~/.m2/repository
-
-      - name: Download build outputs
-        uses: actions/download-artifact@v8
-        with:
-          name: build-targets
-          path: .
 
       - name: Download JaCoCo reports
         uses: actions/download-artifact@v8
@@ -348,12 +295,6 @@ jobs:
           name: maven-repository
           path: ~/.m2/repository
 
-      - name: Download build outputs
-        uses: actions/download-artifact@v8
-        with:
-          name: build-targets
-          path: .
-
       - name: Download JaCoCo reports
         uses: actions/download-artifact@v8
         with:
@@ -387,12 +328,6 @@ jobs:
         with:
           name: maven-repository
           path: ~/.m2/repository
-
-      - name: Download build outputs
-        uses: actions/download-artifact@v8
-        with:
-          name: build-targets
-          path: .
 
       - name: Download JaCoCo reports
         uses: actions/download-artifact@v8
