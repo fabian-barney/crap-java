@@ -1,4 +1,4 @@
-name: Build
+name: CI
 
 on:
   pull_request:
@@ -165,6 +165,64 @@ jobs:
       - name: Run crap-java gate for cli
         working-directory: cli
         run: mvn -B -ntp -P!quality-gates-all,quality-gate-crap -DskipTests verify
+
+  quality-crap-gradle-plugin:
+    name: verify / quality-crap-gradle-plugin
+    runs-on: ubuntu-latest
+    needs:
+      - build
+      - test-unit
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+
+      - name: Download Maven repository
+        uses: actions/download-artifact@v8
+        with:
+          name: maven-repository
+          path: ~/.m2/repository
+
+      - name: Build CLI for gradle-plugin gate
+        run: mvn -B -ntp -P!quality-gates-all -pl cli -am -DskipTests package
+
+      - name: Resolve CLI jar path
+        shell: bash
+        run: |
+          shopt -s nullglob
+          jars=(cli/target/crap-java-cli-*.jar)
+          filtered=()
+          for jar in "${jars[@]}"; do
+            case "$jar" in
+              *-sources.jar|*-javadoc.jar|*-shaded.jar|*original*.jar) ;;
+              *) filtered+=("$jar") ;;
+            esac
+          done
+          if [ "${#filtered[@]}" -ne 1 ]; then
+            echo "Expected exactly one built CLI jar, found ${#filtered[@]}" >&2
+            printf 'Candidates:\n%s\n' "${filtered[@]}" >&2
+            exit 1
+          fi
+          echo "CLI_JAR=${filtered[0]}" >> "$GITHUB_ENV"
+
+      - name: Set up Gradle wrapper permissions
+        run: chmod +x gradle-plugin/gradlew
+
+      - name: Run crap-java gate for gradle-plugin
+        run: |
+          mkdir -p target/crap-java
+          java -jar "$CLI_JAR" \
+            --format none \
+            --junit-report target/crap-java/TEST-crap-java-gradle-plugin.xml \
+            --build-tool gradle \
+            gradle-plugin/src/main/java
 
   quality-crap-maven-plugin:
     name: verify / quality-crap-maven-plugin
@@ -343,8 +401,18 @@ jobs:
         run: mvn -B -ntp -P!quality-gates-all,quality-gate-cognitive -DskipTests verify
 
   publishing-preflight:
-    name: Publishing Preflight
+    name: publish / preflight
     runs-on: ubuntu-latest
+    needs:
+      - package
+      - quality-crap-core
+      - quality-crap-cli
+      - quality-crap-gradle-plugin
+      - quality-crap-maven-plugin
+      - quality-cognitive-core
+      - quality-cognitive-cli
+      - quality-cognitive-gradle-plugin
+      - quality-cognitive-maven-plugin
     env:
       MAVEN_CENTRAL_TOKEN_USERNAME: preflight-token-user
       MAVEN_CENTRAL_TOKEN_PASSWORD: preflight-token-password
