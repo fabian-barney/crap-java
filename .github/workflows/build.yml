@@ -473,6 +473,11 @@ jobs:
           -Dcentral.skipPublishing=true
           -pl .,cli,maven-plugin -am deploy
 
+      - name: Clean Maven release workspace
+        if: always()
+        shell: bash
+        run: rm -rf "${PREFLIGHT_MAVEN_REPO_LOCAL}"
+
       - name: Set up Gradle wrapper permissions
         run: chmod +x gradle-plugin/gradlew
 

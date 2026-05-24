@@ -39,11 +39,22 @@ jobs:
         shell: bash
         run: bash ./.github/scripts/verify-version-alignment.sh --expected-version "${GITHUB_REF_NAME#v}"
 
-      - name: Remove Maven plugin IT fixtures from cognitive-java gate workspace
-        run: rm -rf maven-plugin/src/it
-
       - name: Run cognitive-java gate
-        run: mvn -B -ntp -P!quality-gates-all,quality-gate-cognitive -DskipTests verify
+        shell: bash
+        run: |
+          temp_workspace="$(mktemp -d)"
+          restore_it_fixtures() {
+            if [ -d "${temp_workspace}/it" ]; then
+              mkdir -p maven-plugin/src
+              mv "${temp_workspace}/it" maven-plugin/src/it
+            fi
+            rm -rf "${temp_workspace}"
+          }
+          trap restore_it_fixtures EXIT
+          if [ -d maven-plugin/src/it ]; then
+            mv maven-plugin/src/it "${temp_workspace}/it"
+          fi
+          mvn -B -ntp -P!quality-gates-all,quality-gate-cognitive -DskipTests verify
 
       - name: Build CLI for crap-java gate
         run: mvn -B -ntp -P!quality-gates-all -pl cli -am package
