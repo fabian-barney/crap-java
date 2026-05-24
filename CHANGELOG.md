@@ -2,6 +2,29 @@
 
 ## Unreleased
 
+## 0.6.0 - 2026-05-24
+
+### Added
+
+- Added configurable source exclusions across the CLI, Maven plugin, and Gradle plugin, including path globs, class-name regexes, annotation names, and conservative generated-code defaults.
+- Added source-root overrides across the CLI and build-tool integrations, plus richer report-path, JUnit sidecar, and machine-readable primary-report controls.
+- Added broader self-hosting quality coverage for JDK `21` and `25`, Windows path-sensitive validation, and release-quality checks for shaded CLI packaging and publication preflight.
+
+### Changed
+
+- Hardened Java parsing and JaCoCo attribution around constructors, malformed counter values, source-position edge cases, deterministic metric ordering, and package-comment handling.
+- Expanded CLI and plugin documentation to cover report outputs, source roots, exclusion configuration, threshold guidance, exit-code behavior, and current published coordinates.
+- Tightened CI and release automation so Javadoc failures, publication preflight, cross-platform wrapper behavior, and sibling quality gates fail early before publication.
+
+### Fixed
+
+- Fixed Gradle and Maven module-path handling, Windows process cleanup and wrapper execution fallbacks, symlink and case-sensitive path handling, and Git-status timeout reporting.
+- Fixed GitLab-visible JUnit metadata and report path collision handling for both primary output and sidecar generation.
+
+### Dependencies
+
+- Updated stable Maven plugins, GitHub Actions, and supporting build dependencies used by the Java release and verification workflow.
+
 ## 0.5.0 - 2026-05-10
 
 ### Added
