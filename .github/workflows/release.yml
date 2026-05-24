@@ -48,7 +48,35 @@ jobs:
           echo "GNUPGHOME=${GNUPGHOME}" >> "$GITHUB_ENV"
           printf '%s' "$MAVEN_GPG_PRIVATE_KEY" | gpg --batch --import
 
+      - name: Check whether Maven artifacts are already published
+        id: maven-publication-status
+        shell: bash
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          base_url="https://repo1.maven.org/maven2/media/barney"
+          artifacts=(
+            "crap-java-parent/${version}/crap-java-parent-${version}.pom"
+            "crap-java-core/${version}/crap-java-core-${version}.pom"
+            "crap-java-cli/${version}/crap-java-cli-${version}.pom"
+            "crap-java-maven-plugin/${version}/crap-java-maven-plugin-${version}.pom"
+          )
+          missing=0
+          for artifact in "${artifacts[@]}"; do
+            url="${base_url}/${artifact}"
+            if ! curl --silent --show-error --fail --head "${url}" >/dev/null; then
+              missing=1
+              echo "Missing Maven artifact: ${url}"
+            fi
+          done
+          if [ "${missing}" -eq 0 ]; then
+            echo "already_published=true" >> "$GITHUB_OUTPUT"
+            echo "All Maven artifacts for ${version} are already published; skipping Maven deploy."
+          else
+            echo "already_published=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Publish Maven artifacts
+        if: steps.maven-publication-status.outputs.already_published != 'true'
         env:
           MAVEN_CENTRAL_TOKEN_USERNAME: ${{ secrets.MAVEN_CENTRAL_TOKEN_USERNAME }}
           MAVEN_CENTRAL_TOKEN_PASSWORD: ${{ secrets.MAVEN_CENTRAL_TOKEN_PASSWORD }}
