@@ -453,6 +453,10 @@ jobs:
             echo "EOF"
           } >> "$GITHUB_ENV"
 
+      - name: Verify release version parity
+        shell: bash
+        run: bash ./.github/scripts/verify-version-alignment.sh
+
       - name: Run Maven publishing preflight
         run: mvn -B -Prelease -Dcentral.skipPublishing=true -pl .,cli,maven-plugin -am deploy
 
