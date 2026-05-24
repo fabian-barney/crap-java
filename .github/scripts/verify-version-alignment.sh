@@ -5,12 +5,13 @@ usage() {
   cat <<'EOF'
 Usage: verify-version-alignment.sh [--expected-version <version>]
 
-Validates that Maven and Gradle resolve to the same single-line version after
-stripping formatting noise. When --expected-version is provided, the sanitized
-version must also match it exactly.
+Validates that the root Maven POM version and Gradle plugin version resolve to
+the same single-line value after stripping formatting noise. When
+--expected-version is provided, the sanitized version must also match it
+exactly.
 
-Set MAVEN_VERSION_OUTPUT or GRADLE_VERSION_OUTPUT to inject raw command output
-for local dry-runs of malformed version scenarios.
+Set MAVEN_VERSION_OUTPUT or GRADLE_VERSION_OUTPUT to override the default file-
+based version sources for local dry-runs of malformed version scenarios.
 EOF
 }
 
@@ -116,6 +117,7 @@ read_gradle_version_output() {
 
 main() {
   local expected_version=""
+  local expected_version_requested=false
   local maven_version
   local gradle_version
 
@@ -127,6 +129,7 @@ main() {
           usage >&2
           exit 1
         fi
+        expected_version_requested=true
         expected_version="$2"
         shift 2
         ;;
@@ -150,7 +153,7 @@ main() {
     exit 1
   fi
 
-  if [ -n "$expected_version" ]; then
+  if [ "$expected_version_requested" = true ]; then
     expected_version="$(normalize_single_line "Expected version" "$expected_version")"
     if [ "$maven_version" != "$expected_version" ]; then
       echo "::error::Resolved project version ${maven_version} does not match expected version ${expected_version}." >&2
