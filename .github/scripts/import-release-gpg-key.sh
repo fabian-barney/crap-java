@@ -69,6 +69,7 @@ for decode_depth in 0 1 2 3; do
   fi
 
   if [ "$decode_depth" -eq 3 ]; then
+    rm -rf "$candidate_home"
     break
   fi
 
