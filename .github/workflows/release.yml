@@ -124,6 +124,8 @@ jobs:
         shell: bash
         run: |
           if [ -n "${IMPORTED_GNUPGHOME:-}" ] && [ -d "${IMPORTED_GNUPGHOME}" ] \
-            && [ -f "${IMPORTED_GNUPGHOME}/.imported-release-gpg-home" ]; then
+            && [ -n "${IMPORTED_GNUPGHOME_MARKER_PATH:-}" ] \
+            && [[ "${IMPORTED_GNUPGHOME_MARKER_PATH}" == "${IMPORTED_GNUPGHOME}/"* ]] \
+            && [ -f "${IMPORTED_GNUPGHOME_MARKER_PATH}" ]; then
             rm -rf "${IMPORTED_GNUPGHOME}"
           fi

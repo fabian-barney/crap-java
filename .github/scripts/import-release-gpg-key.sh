@@ -72,6 +72,7 @@ for decode_depth in 0 1 2 3; do
     export GNUPGHOME="$candidate_home"
     echo "GNUPGHOME=${GNUPGHOME}" >> "$GITHUB_ENV"
     echo "IMPORTED_GNUPGHOME=${candidate_home}" >> "$GITHUB_ENV"
+    echo "IMPORTED_GNUPGHOME_MARKER_PATH=${candidate_home}/${imported_gnupghome_marker}" >> "$GITHUB_ENV"
     rm -f "$candidate_key"
     candidate_key=""
     import_succeeded=1
