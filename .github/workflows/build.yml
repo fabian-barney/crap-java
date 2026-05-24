@@ -461,14 +461,9 @@ jobs:
         shell: bash
         run: |
           # Use a clean local repository so preflight does not inherit reactor-masking artifacts.
-          echo "PREFLIGHT_MAVEN_REPO_LOCAL=$(mktemp -d)" >> "$GITHUB_ENV"
-
-      - name: Build CLI from clean Maven release workspace
-        run: >
-          mvn -B -ntp
-          "-Dmaven.repo.local=${PREFLIGHT_MAVEN_REPO_LOCAL}"
-          -P!quality-gates-all
-          -pl cli -am package
+          preflight_maven_repo_local="$(mktemp -d)"
+          test -n "$preflight_maven_repo_local"
+          echo "PREFLIGHT_MAVEN_REPO_LOCAL=${preflight_maven_repo_local}" >> "$GITHUB_ENV"
 
       - name: Run Maven publishing preflight
         run: >

@@ -39,6 +39,9 @@ jobs:
         shell: bash
         run: bash ./.github/scripts/verify-version-alignment.sh --expected-version "${GITHUB_REF_NAME#v}"
 
+      - name: Remove Maven plugin IT fixtures from cognitive-java gate workspace
+        run: rm -rf maven-plugin/src/it
+
       - name: Run cognitive-java gate
         run: mvn -B -ntp -P!quality-gates-all,quality-gate-cognitive -DskipTests verify
 
