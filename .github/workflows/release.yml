@@ -118,3 +118,11 @@ jobs:
           else
             gh release create "${GITHUB_REF_NAME}" --title "${GITHUB_REF_NAME}" --notes-file release-notes.md
           fi
+
+      - name: Clean up imported GPG home
+        if: always()
+        shell: bash
+        run: |
+          if [ -n "${GNUPGHOME:-}" ] && [ -d "${GNUPGHOME}" ]; then
+            rm -rf "${GNUPGHOME}"
+          fi

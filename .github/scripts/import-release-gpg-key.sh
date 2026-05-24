@@ -42,14 +42,20 @@ PY
 normalized_key="$(mktemp)"
 candidate_key="$(mktemp)"
 temp_files=("$normalized_key" "$candidate_key")
+persisted_gnupghome=""
 
 cleanup() {
+  local status="$?"
   local path
   for path in "${temp_files[@]}"; do
     if [ -n "$path" ] && [ -e "$path" ]; then
       rm -f "$path"
     fi
   done
+
+  if [ "$status" -ne 0 ] && [ -n "$persisted_gnupghome" ] && [ -d "$persisted_gnupghome" ]; then
+    rm -rf "$persisted_gnupghome"
+  fi
 }
 
 trap cleanup EXIT
@@ -60,6 +66,7 @@ import_succeeded=0
 for decode_depth in 0 1 2 3; do
   candidate_home="$(mktemp -d)"
   if GNUPGHOME="$candidate_home" gpg --batch --import "$candidate_key" >/dev/null 2>&1; then
+    persisted_gnupghome="$candidate_home"
     export GNUPGHOME="$candidate_home"
     echo "GNUPGHOME=${GNUPGHOME}" >> "$GITHUB_ENV"
     rm -f "$candidate_key"
@@ -85,11 +92,11 @@ for decode_depth in 0 1 2 3; do
 done
 
 if [ "$import_succeeded" -ne 1 ]; then
-  echo "::error::MAVEN_GPG_PRIVATE_KEY is not importable as raw or repeatedly base64-decoded OpenPGP private key material after three decode attempts. Ensure the secret contains the private key itself or a base64-wrapped copy of it." >&2
+  echo "::error::MAVEN_GPG_PRIVATE_KEY is not importable as raw or repeatedly base64-decoded OpenPGP private key material after up to three decode attempts. Ensure the secret contains the private key itself or a base64-wrapped copy of it." >&2
   exit 1
 fi
 
-gpg --batch --pinentry-mode loopback --passphrase "$MAVEN_GPG_PASSPHRASE" \
+printf '%s' "$MAVEN_GPG_PASSPHRASE" | gpg --batch --pinentry-mode loopback --passphrase-fd 0 \
   --armor --export-secret-keys > "$normalized_key"
 
 if [ ! -s "$normalized_key" ]; then
