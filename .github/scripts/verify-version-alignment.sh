@@ -75,19 +75,43 @@ read_maven_version_output() {
     printf '%s' "$MAVEN_VERSION_OUTPUT"
     return
   fi
-  mvn help:evaluate -Dexpression=project.version -q -DforceStdout
+  if [ ! -f pom.xml ]; then
+    echo "::error::Missing root pom.xml." >&2
+    exit 1
+  fi
+  perl -0ne '
+    if (m{<project\b.*?<artifactId>\s*[^<]+?\s*</artifactId>\s*<version>\s*([^<]+?)\s*</version>}s) {
+      print $1;
+      exit 0;
+    }
+    exit 1;
+  ' pom.xml || {
+    echo "::error::Unable to locate the root Maven project.version in pom.xml." >&2
+    exit 1
+  }
 }
 
 read_gradle_version_output() {
-  chmod +x gradle-plugin/gradlew
   if [ "${GRADLE_VERSION_OUTPUT+x}" = x ]; then
     printf '%s' "$GRADLE_VERSION_OUTPUT"
     return
   fi
-  (
-    cd gradle-plugin
-    ./gradlew -q properties | awk -F': ' '/^version:/ {print $2; exit}'
-  )
+  perl -0ne '
+    if (m{^\s*version\s*=\s*["'\'']([^"'\''\r\n]+)["'\'']\s*$}m) {
+      print $1;
+      exit 0;
+    }
+    exit 1;
+  ' gradle-plugin/build.gradle.kts 2>/dev/null || perl -0ne '
+    if (m{^\s*version\s*=\s*["'\'']([^"'\''\r\n]+)["'\'']\s*$}m) {
+      print $1;
+      exit 0;
+    }
+    exit 1;
+  ' gradle-plugin/build.gradle 2>/dev/null || {
+    echo "::error::Unable to locate the Gradle project.version assignment in gradle-plugin/build.gradle.kts or gradle-plugin/build.gradle." >&2
+    exit 1
+  }
 }
 
 main() {
