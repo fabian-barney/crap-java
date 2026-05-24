@@ -457,8 +457,26 @@ jobs:
         shell: bash
         run: bash ./.github/scripts/verify-version-alignment.sh
 
+      - name: Prepare clean Maven release workspace
+        shell: bash
+        run: |
+          # Use a clean local repository so preflight does not inherit reactor-masking artifacts.
+          preflight_maven_repo_local="$(mktemp -d)"
+          test -n "$preflight_maven_repo_local"
+          echo "PREFLIGHT_MAVEN_REPO_LOCAL=${preflight_maven_repo_local}" >> "$GITHUB_ENV"
+
       - name: Run Maven publishing preflight
-        run: mvn -B -Prelease -Dcentral.skipPublishing=true -pl .,cli,maven-plugin -am deploy
+        run: >
+          mvn -B -ntp
+          "-Dmaven.repo.local=${PREFLIGHT_MAVEN_REPO_LOCAL}"
+          -P!quality-gates-all,release
+          -Dcentral.skipPublishing=true
+          -pl .,cli,maven-plugin -am deploy
+
+      - name: Clean Maven release workspace
+        if: always()
+        shell: bash
+        run: rm -rf "${PREFLIGHT_MAVEN_REPO_LOCAL}"
 
       - name: Set up Gradle wrapper permissions
         run: chmod +x gradle-plugin/gradlew

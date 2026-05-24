@@ -40,10 +40,24 @@ jobs:
         run: bash ./.github/scripts/verify-version-alignment.sh --expected-version "${GITHUB_REF_NAME#v}"
 
       - name: Run cognitive-java gate
-        run: mvn -B cognitive-java:check
+        shell: bash
+        run: |
+          temp_workspace="$(mktemp -d)"
+          restore_it_fixtures() {
+            if [ -d "${temp_workspace}/it" ]; then
+              mkdir -p maven-plugin/src
+              mv "${temp_workspace}/it" maven-plugin/src/it
+            fi
+            rm -rf "${temp_workspace}"
+          }
+          trap restore_it_fixtures EXIT
+          if [ -d maven-plugin/src/it ]; then
+            mv maven-plugin/src/it "${temp_workspace}/it"
+          fi
+          mvn -B -ntp -P!quality-gates-all,quality-gate-cognitive -DskipTests verify
 
       - name: Build CLI for crap-java gate
-        run: mvn -B -pl cli -am package
+        run: mvn -B -ntp -P!quality-gates-all -pl cli -am package
 
       - name: Resolve CLI jar path
         shell: bash
@@ -96,7 +110,7 @@ jobs:
           MAVEN_CENTRAL_TOKEN_USERNAME: ${{ secrets.MAVEN_CENTRAL_TOKEN_USERNAME }}
           MAVEN_CENTRAL_TOKEN_PASSWORD: ${{ secrets.MAVEN_CENTRAL_TOKEN_PASSWORD }}
           MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
-        run: mvn -B -Prelease -pl .,cli,maven-plugin -am deploy
+        run: mvn -B -ntp -P!quality-gates-all,release -pl .,cli,maven-plugin -am deploy
 
       - name: Publish Gradle plugin artifacts to Maven Central
         env:
