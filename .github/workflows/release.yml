@@ -123,6 +123,7 @@ jobs:
         if: always()
         shell: bash
         run: |
-          if [ -n "${GNUPGHOME:-}" ] && [ -d "${GNUPGHOME}" ]; then
-            rm -rf "${GNUPGHOME}"
+          if [ -n "${IMPORTED_GNUPGHOME:-}" ] && [ -d "${IMPORTED_GNUPGHOME}" ] \
+            && [ -f "${IMPORTED_GNUPGHOME}/.imported-release-gpg-home" ]; then
+            rm -rf "${IMPORTED_GNUPGHOME}"
           fi

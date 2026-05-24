@@ -43,6 +43,7 @@ normalized_key="$(mktemp)"
 candidate_key="$(mktemp)"
 temp_files=("$normalized_key" "$candidate_key")
 persisted_gnupghome=""
+imported_gnupghome_marker=".imported-release-gpg-home"
 
 cleanup() {
   local status="$?"
@@ -66,9 +67,11 @@ import_succeeded=0
 for decode_depth in 0 1 2 3; do
   candidate_home="$(mktemp -d)"
   if GNUPGHOME="$candidate_home" gpg --batch --import "$candidate_key" >/dev/null 2>&1; then
+    touch "${candidate_home}/${imported_gnupghome_marker}"
     persisted_gnupghome="$candidate_home"
     export GNUPGHOME="$candidate_home"
     echo "GNUPGHOME=${GNUPGHOME}" >> "$GITHUB_ENV"
+    echo "IMPORTED_GNUPGHOME=${candidate_home}" >> "$GITHUB_ENV"
     rm -f "$candidate_key"
     candidate_key=""
     import_succeeded=1
