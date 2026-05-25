@@ -47,7 +47,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <cognitive-java.version>0.5.1</cognitive-java.version>
     <jacoco.version>0.8.14</jacoco.version>
-    <junit.version>6.1.0</junit.version>
+    <junit.version>6.0.3</junit.version>
     <jspecify.version>1.0.0</jspecify.version>
     <jtoon.version>1.0.9</jtoon.version>
     <jackson.version>2.21.3</jackson.version>
