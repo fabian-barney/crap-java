@@ -426,7 +426,7 @@ jobs:
 
       - name: Run NullAway gate for core
         working-directory: core
-        run: mvn -B -ntp -P!quality-gates-all -o -DskipTests verify
+        run: mvn -B -ntp -P!quality-gates-all -DskipTests verify
 
   quality-nullaway-cli:
     name: verify / quality-nullaway-cli
@@ -454,7 +454,7 @@ jobs:
 
       - name: Run NullAway gate for cli
         working-directory: cli
-        run: mvn -B -ntp -P!quality-gates-all -o -DskipTests verify
+        run: mvn -B -ntp -P!quality-gates-all -DskipTests verify
 
   quality-nullaway-gradle-plugin:
     name: verify / quality-nullaway-gradle-plugin
@@ -481,7 +481,7 @@ jobs:
           path: ~/.m2/repository
 
       - name: Build core jar for NullAway gate
-        run: mvn -B -ntp -P!quality-gates-all -pl core -am -o -DskipTests package
+        run: mvn -B -ntp -P!quality-gates-all -pl core -am -DskipTests package
 
       - name: Set up Gradle wrapper permissions
         run: chmod +x gradle-plugin/gradlew
@@ -519,7 +519,7 @@ jobs:
 
       - name: Run NullAway gate for maven-plugin
         working-directory: maven-plugin
-        run: mvn -B -ntp -P!quality-gates-all -o -DskipTests verify
+        run: mvn -B -ntp -P!quality-gates-all -DskipTests verify
 
   publishing-preflight:
     name: publish / preflight
