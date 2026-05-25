@@ -82,7 +82,7 @@ record ReportOptions(
 
     private static boolean sameParent(@Nullable Path firstParent, @Nullable Path secondParent) throws IOException {
         return (firstParent == null || secondParent == null)
-                ? firstParent == secondParent
+                ? Objects.equals(firstParent, secondParent)
                 : sameNonNullParent(firstParent, secondParent);
     }
 
@@ -92,9 +92,13 @@ record ReportOptions(
     }
 
     private static boolean sameAliasedParent(Path firstParent, Path secondParent) throws IOException {
-        return sameExistingFile(firstParent, secondParent)
-                || sameRealPath(firstParent, secondParent)
+        return sameFilesystemTarget(firstParent, secondParent)
                 || sameCaseInsensitivePath(firstParent, secondParent);
+    }
+
+    private static boolean sameFilesystemTarget(Path firstParent, Path secondParent) throws IOException {
+        return sameExistingFile(firstParent, secondParent)
+                || sameRealPath(firstParent, secondParent);
     }
 
     private static boolean sameRealPath(Path first, Path second) {
@@ -113,20 +117,40 @@ record ReportOptions(
         }
         Path normalized = path.toAbsolutePath().normalize();
         try {
-            if (Files.isSymbolicLink(normalized)) {
-                return symbolicLinkTargetForComparison(normalized, symlinkDepth);
-            }
-            if (Files.exists(normalized)) {
-                return normalized.toRealPath();
-            }
-            Path existing = nearestExistingPath(normalized);
-            if (existing != null) {
-                return existing.toRealPath().resolve(existing.relativize(normalized)).normalize();
-            }
+            return resolvedRealPath(normalized, symlinkDepth);
         } catch (IOException | SecurityException exception) {
             return null;
         }
-        return null;
+    }
+
+    private static @Nullable Path resolvedRealPath(Path normalized, int symlinkDepth) throws IOException {
+        Path symbolicLinkTarget = symbolicLinkTarget(normalized, symlinkDepth);
+        if (symbolicLinkTarget != null) {
+            return symbolicLinkTarget;
+        }
+        return existingOrDerivedRealPath(normalized);
+    }
+
+    private static @Nullable Path symbolicLinkTarget(Path normalized, int symlinkDepth) throws IOException {
+        if (!Files.isSymbolicLink(normalized)) {
+            return null;
+        }
+        return symbolicLinkTargetForComparison(normalized, symlinkDepth);
+    }
+
+    private static @Nullable Path existingOrDerivedRealPath(Path normalized) throws IOException {
+        if (Files.exists(normalized)) {
+            return normalized.toRealPath();
+        }
+        return realPathFromNearestExisting(normalized);
+    }
+
+    private static @Nullable Path realPathFromNearestExisting(Path normalized) throws IOException {
+        Path existing = nearestExistingPath(normalized);
+        if (existing == null) {
+            return null;
+        }
+        return existing.toRealPath().resolve(existing.relativize(normalized)).normalize();
     }
 
     private static @Nullable Path symbolicLinkTargetForComparison(Path link, int symlinkDepth) throws IOException {
@@ -140,10 +164,24 @@ record ReportOptions(
     }
 
     private static boolean sameFileName(Path first, Path second, @Nullable Path parent) {
-        String firstName = first.getFileName().toString();
-        String secondName = second.getFileName().toString();
-        return firstName.equals(secondName)
-                || (firstName.equalsIgnoreCase(secondName) && isCaseInsensitive(parent));
+        Path firstFileName = first.getFileName();
+        Path secondFileName = second.getFileName();
+        return sameNamedPaths(firstFileName, secondFileName, parent);
+    }
+
+    private static boolean sameNamedPaths(@Nullable Path firstFileName,
+                                          @Nullable Path secondFileName,
+                                          @Nullable Path parent) {
+        if (firstFileName == null || secondFileName == null) {
+            return false;
+        }
+        return sameFileNames(firstFileName.toString(), secondFileName.toString(), parent);
+    }
+
+    private static boolean sameFileNames(String firstName,
+                                         String secondName,
+                                         @Nullable Path parent) {
+        return firstName.equals(secondName) || sameCaseInsensitiveFileName(firstName, secondName, parent);
     }
 
     private static boolean isCaseInsensitive(@Nullable Path path) {
@@ -174,8 +212,24 @@ record ReportOptions(
     }
 
     private static boolean caseVariantExists(Path probe) {
-        Path variant = probe.resolveSibling(probe.getFileName().toString().toUpperCase(Locale.ROOT));
-        return !probe.getFileName().toString().equals(variant.getFileName().toString()) && Files.exists(variant);
+        Path fileName = probe.getFileName();
+        if (fileName == null) {
+            return false;
+        }
+        return caseVariantExists(probe, fileName.toString());
+    }
+
+    private static boolean caseVariantExists(Path probe, String name) {
+        Path variant = probe.resolveSibling(name.toUpperCase(Locale.ROOT));
+        Path variantFileName = variant.getFileName();
+        if (variantFileName == null) {
+            return false;
+        }
+        return differentExistingVariant(name, variantFileName.toString(), variant);
+    }
+
+    private static boolean differentExistingVariant(String name, String variantName, Path variant) {
+        return !name.equals(variantName) && Files.exists(variant);
     }
 
     static boolean isLikelyCaseInsensitiveOs() {
@@ -185,5 +239,11 @@ record ReportOptions(
 
     private static boolean sameCaseInsensitivePath(Path first, Path second) {
         return first.toString().equalsIgnoreCase(second.toString()) && isCaseInsensitive(first);
+    }
+
+    private static boolean sameCaseInsensitiveFileName(String firstName,
+                                                       String secondName,
+                                                       @Nullable Path parent) {
+        return firstName.equalsIgnoreCase(secondName) && isCaseInsensitive(parent);
     }
 }

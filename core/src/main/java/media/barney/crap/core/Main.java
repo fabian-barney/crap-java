@@ -285,10 +285,15 @@ public final class Main {
         public ResolvedCoverageModule {
             moduleRoot = moduleRoot.toAbsolutePath().normalize();
             coverageReport = coverageReport.toAbsolutePath().normalize();
-            sourceFiles = sourceFiles.stream()
+            sourceFiles = List.copyOf(sourceFiles.stream()
                     .map(path -> path.toAbsolutePath().normalize())
                     .sorted()
-                    .toList();
+                    .toList());
+        }
+
+        @Override
+        public List<Path> sourceFiles() {
+            return List.copyOf(sourceFiles);
         }
     }
 }
