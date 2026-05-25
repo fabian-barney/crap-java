@@ -179,8 +179,8 @@ public abstract class CrapJavaCheckTask extends DefaultTask {
                 .sorted()
                 .toList();
         Path analysisRoot = getAnalysisRoot().get().getAsFile().toPath().toAbsolutePath().normalize();
-        Path configuredOutputPath = outputPath();
-        Path configuredJunitReportPath = junitReportPath();
+        @Nullable Path configuredOutputPath = outputPath();
+        @Nullable Path configuredJunitReportPath = junitReportPath();
         validateReportOptions(configuredOutputPath, configuredJunitReportPath);
         List<Main.ResolvedCoverageModule> modules = sourceFiles.isEmpty() ? List.of() : resolvedModules(sourceFiles);
         int exit = runWithReportStateLock(
