@@ -516,7 +516,7 @@ public abstract class CrapJavaCheckTask extends DefaultTask {
         if (isCurrentRememberedPath(rememberedReport, reportPath)) {
             return;
         }
-        if (reportChanged(reportPath, before)) {
+        if (reportPath != null && reportChanged(reportPath, before)) {
             Files.deleteIfExists(reportPath);
         }
     }
