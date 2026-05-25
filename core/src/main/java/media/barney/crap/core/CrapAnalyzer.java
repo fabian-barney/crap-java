@@ -70,7 +70,8 @@ final class CrapAnalyzer {
         }
         Path normalizedFile = file.toAbsolutePath().normalize();
         String source = Files.readString(file);
-        String sourceName = file.getFileName().toString();
+        Path fileName = file.getFileName();
+        String sourceName = fileName == null ? normalizedFile.toString() : fileName.toString();
         for (MethodDescriptor method : JavaMethodParser.parse(sourceName, source)) {
             addMetricIfIncluded(method, projectRoot, normalizedFile, coverageMap, exclusions, audit, excludedClasses, metrics);
         }

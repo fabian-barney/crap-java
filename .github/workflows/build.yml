@@ -27,6 +27,9 @@ jobs:
       - name: Build
         run: mvn -B -ntp -P!quality-gates-all -DskipTests install
 
+      - name: Prime SpotBugs Maven cache
+        run: mvn -B -ntp -P!quality-gates-all,quality-gate-spotbugs -DskipTests org.apache.maven.plugins:maven-dependency-plugin:3.7.0:go-offline
+
       - name: Upload Maven repository
         uses: actions/upload-artifact@v7
         with:
@@ -521,6 +524,127 @@ jobs:
         working-directory: maven-plugin
         run: mvn -B -ntp -P!quality-gates-all -DskipTests verify
 
+  quality-spotbugs-core:
+    name: verify / quality-spotbugs-core
+    runs-on: ubuntu-latest
+    needs:
+      - build
+      - test-unit
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+
+      - name: Download Maven repository
+        uses: actions/download-artifact@v8
+        with:
+          name: maven-repository
+          path: ~/.m2/repository
+
+      - name: Run SpotBugs gate for core
+        working-directory: core
+        run: mvn -B -ntp -P!quality-gates-all,quality-gate-spotbugs -o -DskipTests verify
+
+  quality-spotbugs-cli:
+    name: verify / quality-spotbugs-cli
+    runs-on: ubuntu-latest
+    needs:
+      - build
+      - test-unit
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+
+      - name: Download Maven repository
+        uses: actions/download-artifact@v8
+        with:
+          name: maven-repository
+          path: ~/.m2/repository
+
+      - name: Run SpotBugs gate for cli
+        working-directory: cli
+        run: mvn -B -ntp -P!quality-gates-all,quality-gate-spotbugs -o -DskipTests verify
+
+  quality-spotbugs-gradle-plugin:
+    name: verify / quality-spotbugs-gradle-plugin
+    runs-on: ubuntu-latest
+    needs:
+      - build
+      - test-unit
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+
+      - name: Download Maven repository
+        uses: actions/download-artifact@v8
+        with:
+          name: maven-repository
+          path: ~/.m2/repository
+
+      - name: Build core jar for SpotBugs gate
+        run: mvn -B -ntp -P!quality-gates-all -pl core -am -o -DskipTests package
+
+      - name: Set up Gradle wrapper permissions
+        run: chmod +x gradle-plugin/gradlew
+
+      - name: Run SpotBugs gate for gradle-plugin
+        working-directory: gradle-plugin
+        run: ./gradlew spotbugsMain
+
+  quality-spotbugs-maven-plugin:
+    name: verify / quality-spotbugs-maven-plugin
+    runs-on: ubuntu-latest
+    needs:
+      - build
+      - test-unit
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+
+      - name: Download Maven repository
+        uses: actions/download-artifact@v8
+        with:
+          name: maven-repository
+          path: ~/.m2/repository
+
+      - name: Remove Maven plugin IT fixtures from gate workspace
+        run: rm -rf maven-plugin/src/it
+
+      - name: Run SpotBugs gate for maven-plugin
+        working-directory: maven-plugin
+        run: mvn -B -ntp -P!quality-gates-all,quality-gate-spotbugs -o -DskipTests verify
+
   publishing-preflight:
     name: publish / preflight
     runs-on: ubuntu-latest
@@ -538,6 +662,10 @@ jobs:
       - quality-nullaway-cli
       - quality-nullaway-gradle-plugin
       - quality-nullaway-maven-plugin
+      - quality-spotbugs-core
+      - quality-spotbugs-cli
+      - quality-spotbugs-gradle-plugin
+      - quality-spotbugs-maven-plugin
     env:
       MAVEN_CENTRAL_TOKEN_USERNAME: preflight-token-user
       MAVEN_CENTRAL_TOKEN_PASSWORD: preflight-token-password

@@ -54,9 +54,9 @@ public abstract class CrapJavaCheckTask extends DefaultTask {
 
     private final Provider<RegularFile> defaultJunitReport;
     private final Provider<RegularFile> executionMarker;
-    private final RegularFileProperty junitReportState;
-    private final RegularFileProperty outputState;
-    private final RegularFileProperty stateLock;
+    private final Provider<RegularFile> junitReportState;
+    private final Provider<RegularFile> outputState;
+    private final Provider<RegularFile> stateLock;
     private final List<Provider<Directory>> internalExecutionMarkerRootProviders;
     private final List<Path> internalRememberedStateRootPaths;
     private final Provider<String> absentString;
@@ -70,12 +70,9 @@ public abstract class CrapJavaCheckTask extends DefaultTask {
                 .flatMap(path -> getProject().getLayout().getBuildDirectory().file(path));
         executionMarker = getProject().getLayout().getBuildDirectory()
                 .file("tmp/crap-java/" + getName() + "/execution.marker");
-        junitReportState = getProject().getObjects().fileProperty();
-        junitReportState.fileValue(localStateFile("junit-report.path"));
-        outputState = getProject().getObjects().fileProperty();
-        outputState.fileValue(localStateFile("primary-output.path"));
-        stateLock = getProject().getObjects().fileProperty();
-        stateLock.fileValue(globalStateFile("state.lock"));
+        junitReportState = localStateFileProvider("junit-report.path");
+        outputState = localStateFileProvider("primary-output.path");
+        stateLock = globalStateFileProvider("state.lock");
         internalExecutionMarkerRootProviders = getProject().getRootProject().getAllprojects().stream()
                 .map(project -> project.getLayout().getBuildDirectory().dir("tmp/crap-java"))
                 .toList();
@@ -202,7 +199,7 @@ public abstract class CrapJavaCheckTask extends DefaultTask {
             @Nullable Path configuredJunitReportPath
     ) throws Exception {
         Path lockPath = stateLockPath();
-        Files.createDirectories(lockPath.getParent());
+        Files.createDirectories(Objects.requireNonNull(lockPath.getParent()));
         try (FileChannel channel = FileChannel.open(lockPath, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
              FileLock ignored = channel.lock()) {
             return runAndRememberReports(
@@ -465,8 +462,16 @@ public abstract class CrapJavaCheckTask extends DefaultTask {
     }
 
     private boolean caseVariantExists(Path probe) {
-        Path variant = probe.resolveSibling(probe.getFileName().toString().toUpperCase(Locale.ROOT));
-        return !probe.getFileName().toString().equals(variant.getFileName().toString()) && Files.exists(variant);
+        Path fileName = probe.getFileName();
+        if (fileName == null) {
+            return false;
+        }
+        String name = fileName.toString();
+        Path variant = probe.resolveSibling(name.toUpperCase(Locale.ROOT));
+        Path variantFileName = variant.getFileName();
+        return variantFileName != null
+                && !name.equals(variantFileName.toString())
+                && Files.exists(variant);
     }
 
     static boolean isLikelyCaseInsensitiveOs() {
@@ -555,7 +560,7 @@ public abstract class CrapJavaCheckTask extends DefaultTask {
 
     private void writeExecutionMarker() throws Exception {
         Path markerPath = executionMarkerPath();
-        Files.createDirectories(markerPath.getParent());
+        Files.createDirectories(Objects.requireNonNull(markerPath.getParent()));
         Files.writeString(markerPath, "ok\n");
     }
 
@@ -740,7 +745,7 @@ public abstract class CrapJavaCheckTask extends DefaultTask {
     }
 
     private void rememberReportPath(Path statePath, Path reportPath) throws Exception {
-        Files.createDirectories(statePath.getParent());
+        Files.createDirectories(Objects.requireNonNull(statePath.getParent()));
         Path ownerLink = ownerLinkPath(statePath);
         Files.deleteIfExists(ownerLink);
         String ownership = ownership(reportPath, ownerLink);
@@ -782,7 +787,7 @@ public abstract class CrapJavaCheckTask extends DefaultTask {
     }
 
     private Path ownerLinkPath(Path statePath) {
-        String fileName = statePath.getFileName().toString();
+        String fileName = Objects.requireNonNull(statePath.getFileName()).toString();
         String ownerFileName = fileName.endsWith(".path")
                 ? fileName.substring(0, fileName.length() - ".path".length()) + ".owner"
                 : fileName + ".owner";
@@ -844,6 +849,14 @@ public abstract class CrapJavaCheckTask extends DefaultTask {
                 .toPath()
                 .toAbsolutePath()
                 .normalize();
+    }
+
+    private Provider<RegularFile> localStateFileProvider(String fileName) {
+        return getProject().getLayout().file(getProject().getProviders().provider(() -> localStateFile(fileName)));
+    }
+
+    private Provider<RegularFile> globalStateFileProvider(String fileName) {
+        return getProject().getLayout().file(getProject().getProviders().provider(() -> globalStateFile(fileName)));
     }
 
     private File localStateFile(String fileName) {
@@ -948,8 +961,13 @@ public abstract class CrapJavaCheckTask extends DefaultTask {
     }
 
     private boolean sameFileName(Path first, Path second, @Nullable Path parent) {
-        String firstName = first.getFileName().toString();
-        String secondName = second.getFileName().toString();
+        Path firstFileName = first.getFileName();
+        Path secondFileName = second.getFileName();
+        if (firstFileName == null || secondFileName == null) {
+            return false;
+        }
+        String firstName = firstFileName.toString();
+        String secondName = secondFileName.toString();
         return firstName.equals(secondName) || sameCaseInsensitiveFileName(firstName, secondName, parent);
     }
 

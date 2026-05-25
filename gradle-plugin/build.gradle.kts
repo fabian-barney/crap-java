@@ -1,3 +1,6 @@
+import com.github.spotbugs.snom.Confidence
+import com.github.spotbugs.snom.Effort
+import com.github.spotbugs.snom.SpotBugsTask
 import net.ltgt.gradle.errorprone.CheckSeverity
 import net.ltgt.gradle.errorprone.errorprone
 import org.gradle.plugin.compatibility.compatibility
@@ -11,6 +14,7 @@ import javax.xml.parsers.DocumentBuilderFactory
 plugins {
     `java-gradle-plugin`
     id("com.gradle.plugin-publish") version "2.1.1"
+    id("com.github.spotbugs") version "6.5.5"
     id("net.ltgt.errorprone") version "5.1.0" apply false
     jacoco
     signing
@@ -27,6 +31,13 @@ jacoco {
     toolVersion = "0.8.13"
 }
 
+spotbugs {
+    toolVersion.set(spotbugsVersion)
+    effort.set(Effort.MAX)
+    reportLevel.set(Confidence.MEDIUM)
+    ignoreFailures.set(false)
+}
+
 val projectVersion = version.toString()
 val jtoonVersion = parentPomProperty("jtoon.version")
 val jacksonVersion = parentPomProperty("jackson.version")
@@ -35,6 +46,7 @@ val jspecifyVersion = parentPomProperty("jspecify.version")
 val errorproneVersion = parentPomProperty("errorprone.version")
 val nullawayVersion = parentPomProperty("nullaway.version")
 val nullawayAnnotatedPackages = parentPomProperty("nullaway.annotated.packages")
+val spotbugsVersion = parentPomProperty("spotbugs.version")
 val qualityNullaway = providers.gradleProperty("qualityNullaway").map(String::toBoolean).getOrElse(false)
 val coreJar = layout.projectDirectory.file("../core/target/crap-java-core-${projectVersion}.jar")
 val gpgPrivateKey = providers.environmentVariable("MAVEN_GPG_PRIVATE_KEY")
@@ -135,6 +147,10 @@ tasks.named<JacocoReport>("jacocoTestReport") {
         csv.required.set(false)
         html.required.set(false)
     }
+}
+
+tasks.named<SpotBugsTask>("spotbugsMain") {
+    dependsOn(verifyCoreJar)
 }
 
 tasks.named("pluginUnderTestMetadata") {

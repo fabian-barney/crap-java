@@ -82,7 +82,7 @@ record ReportOptions(
 
     private static boolean sameParent(@Nullable Path firstParent, @Nullable Path secondParent) throws IOException {
         return (firstParent == null || secondParent == null)
-                ? firstParent == secondParent
+                ? Objects.equals(firstParent, secondParent)
                 : sameNonNullParent(firstParent, secondParent);
     }
 
@@ -140,8 +140,13 @@ record ReportOptions(
     }
 
     private static boolean sameFileName(Path first, Path second, @Nullable Path parent) {
-        String firstName = first.getFileName().toString();
-        String secondName = second.getFileName().toString();
+        Path firstFileName = first.getFileName();
+        Path secondFileName = second.getFileName();
+        if (firstFileName == null || secondFileName == null) {
+            return false;
+        }
+        String firstName = firstFileName.toString();
+        String secondName = secondFileName.toString();
         return firstName.equals(secondName)
                 || (firstName.equalsIgnoreCase(secondName) && isCaseInsensitive(parent));
     }
@@ -174,8 +179,16 @@ record ReportOptions(
     }
 
     private static boolean caseVariantExists(Path probe) {
-        Path variant = probe.resolveSibling(probe.getFileName().toString().toUpperCase(Locale.ROOT));
-        return !probe.getFileName().toString().equals(variant.getFileName().toString()) && Files.exists(variant);
+        Path fileName = probe.getFileName();
+        if (fileName == null) {
+            return false;
+        }
+        String name = fileName.toString();
+        Path variant = probe.resolveSibling(name.toUpperCase(Locale.ROOT));
+        Path variantFileName = variant.getFileName();
+        return variantFileName != null
+                && !name.equals(variantFileName.toString())
+                && Files.exists(variant);
     }
 
     static boolean isLikelyCaseInsensitiveOs() {

@@ -19,14 +19,29 @@ public record SourceExclusionOptions(
         return new SourceExclusionOptions(List.of(), List.of(), List.of(), true);
     }
 
+    @Override
+    public List<String> excludes() {
+        return List.copyOf(excludes);
+    }
+
+    @Override
+    public List<String> excludeClasses() {
+        return List.copyOf(excludeClasses);
+    }
+
+    @Override
+    public List<String> excludeAnnotations() {
+        return List.copyOf(excludeAnnotations);
+    }
+
     private static List<String> normalized(List<String> values) {
         if (values == null) {
             return List.of();
         }
-        return values.stream()
+        return List.copyOf(values.stream()
                 .filter(Objects::nonNull)
                 .map(String::trim)
                 .filter(value -> !value.isEmpty())
-                .toList();
+                .toList());
     }
 }
