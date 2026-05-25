@@ -1,3 +1,5 @@
+import net.ltgt.gradle.errorprone.CheckSeverity
+import net.ltgt.gradle.errorprone.errorprone
 import org.gradle.plugin.compatibility.compatibility
 import org.gradle.api.tasks.testing.Test
 import org.gradle.api.tasks.compile.JavaCompile
@@ -9,6 +11,7 @@ import javax.xml.parsers.DocumentBuilderFactory
 plugins {
     `java-gradle-plugin`
     id("com.gradle.plugin-publish") version "2.1.1"
+    id("net.ltgt.errorprone") version "5.1.0" apply false
     jacoco
     signing
 }
@@ -28,6 +31,11 @@ val projectVersion = version.toString()
 val jtoonVersion = parentPomProperty("jtoon.version")
 val jacksonVersion = parentPomProperty("jackson.version")
 val junitVersion = parentPomProperty("junit.version")
+val jspecifyVersion = parentPomProperty("jspecify.version")
+val errorproneVersion = parentPomProperty("errorprone.version")
+val nullawayVersion = parentPomProperty("nullaway.version")
+val nullawayAnnotatedPackages = parentPomProperty("nullaway.annotated.packages")
+val qualityNullaway = providers.gradleProperty("qualityNullaway").map(String::toBoolean).getOrElse(false)
 val coreJar = layout.projectDirectory.file("../core/target/crap-java-core-${projectVersion}.jar")
 val gpgPrivateKey = providers.environmentVariable("MAVEN_GPG_PRIVATE_KEY")
 val gpgPassphrase = providers.environmentVariable("MAVEN_GPG_PASSPHRASE")
@@ -35,6 +43,10 @@ val mavenCentralTokenUsername = providers.gradleProperty("mavenCentralTokenUsern
     .orElse(providers.environmentVariable("MAVEN_CENTRAL_TOKEN_USERNAME"))
 val mavenCentralTokenPassword = providers.gradleProperty("mavenCentralTokenPassword")
     .orElse(providers.environmentVariable("MAVEN_CENTRAL_TOKEN_PASSWORD"))
+
+if (qualityNullaway) {
+    apply(plugin = "net.ltgt.errorprone")
+}
 
 val verifyCoreJar = tasks.register("verifyCoreJar") {
     doLast {
@@ -57,10 +69,50 @@ dependencies {
     implementation(platform("com.fasterxml.jackson:jackson-bom:$jacksonVersion"))
     implementation("com.fasterxml.jackson.core:jackson-databind")
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-xml")
+    compileOnly("org.jspecify:jspecify:$jspecifyVersion")
+    if (qualityNullaway) {
+        add("errorprone", "com.google.errorprone:error_prone_core:$errorproneVersion")
+        add("errorprone", "com.uber.nullaway:nullaway:$nullawayVersion")
+    }
     testImplementation(platform("org.junit:junit-bom:$junitVersion"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testImplementation(gradleTestKit())
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+}
+
+if (qualityNullaway) {
+    tasks.withType<JavaCompile>().configureEach {
+        val nullawayEnabled = name == "compileJava"
+        options.errorprone {
+            isEnabled = nullawayEnabled
+            if (nullawayEnabled) {
+                disableAllChecks.set(true)
+                check("NullAway", CheckSeverity.ERROR)
+                option("NullAway:AnnotatedPackages", nullawayAnnotatedPackages)
+            }
+        }
+        if (!nullawayEnabled) {
+            return@configureEach
+        }
+        options.isFork = true
+        options.forkOptions.jvmArgs = (options.forkOptions.jvmArgs ?: mutableListOf()) + listOf(
+            "--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED",
+            "--add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED",
+            "--add-exports=jdk.compiler/com.sun.tools.javac.main=ALL-UNNAMED",
+            "--add-exports=jdk.compiler/com.sun.tools.javac.model=ALL-UNNAMED",
+            "--add-exports=jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED",
+            "--add-exports=jdk.compiler/com.sun.tools.javac.processing=ALL-UNNAMED",
+            "--add-exports=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED",
+            "--add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED",
+            "--add-opens=jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED",
+            "--add-opens=jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED"
+        )
+        options.compilerArgs.addAll(listOf(
+            "-XDcompilePolicy=simple",
+            "--should-stop=ifError=FLOW",
+            "-XDaddTypeAnnotationsToSymbol=true"
+        ))
+    }
 }
 
 fun parentPomProperty(name: String): String {

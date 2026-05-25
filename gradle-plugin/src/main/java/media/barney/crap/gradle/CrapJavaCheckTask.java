@@ -2,6 +2,7 @@ package media.barney.crap.gradle;
 
 import media.barney.crap.core.Main;
 import media.barney.crap.core.SourceExclusionOptions;
+import org.jspecify.annotations.Nullable;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
 import org.gradle.api.Project;
@@ -178,8 +179,8 @@ public abstract class CrapJavaCheckTask extends DefaultTask {
                 .sorted()
                 .toList();
         Path analysisRoot = getAnalysisRoot().get().getAsFile().toPath().toAbsolutePath().normalize();
-        Path configuredOutputPath = outputPath();
-        Path configuredJunitReportPath = junitReportPath();
+        @Nullable Path configuredOutputPath = outputPath();
+        @Nullable Path configuredJunitReportPath = junitReportPath();
         validateReportOptions(configuredOutputPath, configuredJunitReportPath);
         List<Main.ResolvedCoverageModule> modules = sourceFiles.isEmpty() ? List.of() : resolvedModules(sourceFiles);
         int exit = runWithReportStateLock(
@@ -197,8 +198,8 @@ public abstract class CrapJavaCheckTask extends DefaultTask {
     private int runWithReportStateLock(
             List<Main.ResolvedCoverageModule> modules,
             Path analysisRoot,
-            Path configuredOutputPath,
-            Path configuredJunitReportPath
+            @Nullable Path configuredOutputPath,
+            @Nullable Path configuredJunitReportPath
     ) throws Exception {
         Path lockPath = stateLockPath();
         Files.createDirectories(lockPath.getParent());
@@ -216,8 +217,8 @@ public abstract class CrapJavaCheckTask extends DefaultTask {
     private int runAndRememberReports(
             List<Main.ResolvedCoverageModule> modules,
             Path analysisRoot,
-            Path configuredOutputPath,
-            Path configuredJunitReportPath
+            @Nullable Path configuredOutputPath,
+            @Nullable Path configuredJunitReportPath
     ) throws Exception {
         ReportSnapshot outputBefore = reportSnapshot(configuredOutputPath);
         ReportSnapshot junitBefore = reportSnapshot(configuredJunitReportPath);
@@ -259,7 +260,7 @@ public abstract class CrapJavaCheckTask extends DefaultTask {
         }
     }
 
-    private void validateReportOptions(Path outputPath, Path junitReportPath) throws IOException {
+    private void validateReportOptions(@Nullable Path outputPath, @Nullable Path junitReportPath) throws IOException {
         validateReportFormat(getFormat().get());
         validateThreshold(getThreshold().get());
         validateReportPaths(outputPath, junitReportPath);
@@ -281,7 +282,7 @@ public abstract class CrapJavaCheckTask extends DefaultTask {
         }
     }
 
-    private void validateReportPaths(Path outputPath, Path junitReportPath) throws IOException {
+    private void validateReportPaths(@Nullable Path outputPath, @Nullable Path junitReportPath) throws IOException {
         if (outputPath != null && junitReportPath != null && sameReportTarget(outputPath, junitReportPath)) {
             throw new GradleException("output and junitReport must not point to the same file");
         }
@@ -289,7 +290,7 @@ public abstract class CrapJavaCheckTask extends DefaultTask {
         validateReportPathDoesNotUseInternalFile("junitReport", junitReportPath);
     }
 
-    private void validateReportPathDoesNotUseInternalFile(String propertyName, Path reportPath) {
+    private void validateReportPathDoesNotUseInternalFile(String propertyName, @Nullable Path reportPath) {
         if (reportPath == null) {
             return;
         }
@@ -384,16 +385,16 @@ public abstract class CrapJavaCheckTask extends DefaultTask {
     }
 
     private boolean realPathStartsWith(Path reportPath, Path internalRoot) {
-        Path realReportPath = realPathForComparison(reportPath);
-        Path realInternalRoot = realPathForComparison(internalRoot);
+        @Nullable Path realReportPath = realPathForComparison(reportPath);
+        @Nullable Path realInternalRoot = realPathForComparison(internalRoot);
         return realReportPath != null && realInternalRoot != null && realReportPath.startsWith(realInternalRoot);
     }
 
-    private Path realPathForComparison(Path path) {
+    private @Nullable Path realPathForComparison(Path path) {
         return realPathForComparison(path, 0);
     }
 
-    private Path realPathForComparison(Path path, int symlinkDepth) {
+    private @Nullable Path realPathForComparison(Path path, int symlinkDepth) {
         if (symlinkDepth > 8) {
             return null;
         }
@@ -415,13 +416,13 @@ public abstract class CrapJavaCheckTask extends DefaultTask {
         return null;
     }
 
-    private Path symbolicLinkTargetForComparison(Path link, int symlinkDepth) throws IOException {
+    private @Nullable Path symbolicLinkTargetForComparison(Path link, int symlinkDepth) throws IOException {
         Path target = Files.readSymbolicLink(link);
         Path resolved = link.resolveSibling(target);
         return realPathForComparison(resolved, symlinkDepth + 1);
     }
 
-    private Path nearestExistingPath(Path path) {
+    private @Nullable Path nearestExistingPath(Path path) {
         Path current = path;
         while (current != null) {
             if (Files.exists(current)) {
@@ -432,11 +433,11 @@ public abstract class CrapJavaCheckTask extends DefaultTask {
         return null;
     }
 
-    private boolean sameCaseInsensitiveFileName(String fileName, String internalFileName, Path parent) {
+    private boolean sameCaseInsensitiveFileName(String fileName, String internalFileName, @Nullable Path parent) {
         return fileName.equalsIgnoreCase(internalFileName) && isCaseInsensitive(parent);
     }
 
-    private boolean isCaseInsensitive(Path path) {
+    private boolean isCaseInsensitive(@Nullable Path path) {
         Path directory = nearestExistingDirectory(path);
         return directory == null ? isLikelyCaseInsensitiveOs() : directoryIsCaseInsensitive(directory);
     }
@@ -454,7 +455,7 @@ public abstract class CrapJavaCheckTask extends DefaultTask {
         }
     }
 
-    private Path nearestExistingDirectory(Path path) {
+    private @Nullable Path nearestExistingDirectory(@Nullable Path path) {
         Path start = path == null ? Path.of(".").toAbsolutePath().normalize() : path.toAbsolutePath().normalize();
         return ancestors(start).filter(Files::isDirectory).findFirst().orElse(null);
     }
@@ -473,25 +474,27 @@ public abstract class CrapJavaCheckTask extends DefaultTask {
         return os.startsWith("windows");
     }
 
-    private void cleanupStaleReports(Path currentOutputPath, Path currentJunitReportPath) throws Exception {
+    private void cleanupStaleReports(@Nullable Path currentOutputPath, @Nullable Path currentJunitReportPath)
+            throws Exception {
         deleteMovedOutput(currentOutputPath, currentJunitReportPath);
         deleteMovedJunitReport(currentJunitReportPath, currentOutputPath);
         deleteDisabledJunitReport(currentOutputPath);
     }
 
-    private void rememberReportState(Path currentOutputPath, Path currentJunitReportPath) throws Exception {
+    private void rememberReportState(@Nullable Path currentOutputPath, @Nullable Path currentJunitReportPath)
+            throws Exception {
         rememberOutputPath(currentOutputPath);
         rememberJunitReportPath(currentJunitReportPath);
     }
 
     private void rememberChangedReportState(
-            Path currentOutputPath,
-            Path currentJunitReportPath,
+            @Nullable Path currentOutputPath,
+            @Nullable Path currentJunitReportPath,
             ReportSnapshot outputBefore,
             ReportSnapshot junitBefore
     ) throws Exception {
-        RememberedReport rememberedOutput = rememberedOutputPath();
-        RememberedReport rememberedJunitReport = rememberedJunitReportPath();
+        @Nullable RememberedReport rememberedOutput = rememberedOutputPath();
+        @Nullable RememberedReport rememberedJunitReport = rememberedJunitReportPath();
         deleteNewUnrememberedChangedReport(currentOutputPath, outputBefore, rememberedOutput);
         deleteNewUnrememberedChangedReport(currentJunitReportPath, junitBefore, rememberedJunitReport);
         if (shouldRememberChangedReport(currentOutputPath, outputBefore, rememberedOutput)) {
@@ -503,9 +506,9 @@ public abstract class CrapJavaCheckTask extends DefaultTask {
     }
 
     private void deleteNewUnrememberedChangedReport(
-            Path reportPath,
+            @Nullable Path reportPath,
             ReportSnapshot before,
-            RememberedReport rememberedReport
+            @Nullable RememberedReport rememberedReport
     ) throws IOException {
         if (rememberedReport == null || before.exists()) {
             return;
@@ -513,25 +516,25 @@ public abstract class CrapJavaCheckTask extends DefaultTask {
         if (isCurrentRememberedPath(rememberedReport, reportPath)) {
             return;
         }
-        if (reportChanged(reportPath, before)) {
+        if (reportPath != null && reportChanged(reportPath, before)) {
             Files.deleteIfExists(reportPath);
         }
     }
 
     private boolean shouldRememberChangedReport(
-            Path reportPath,
+            @Nullable Path reportPath,
             ReportSnapshot before,
-            RememberedReport rememberedReport
+            @Nullable RememberedReport rememberedReport
     ) throws IOException {
         return reportChanged(reportPath, before)
                 && (rememberedReport == null || isCurrentRememberedPath(rememberedReport, reportPath));
     }
 
-    private boolean reportChanged(Path reportPath, ReportSnapshot before) throws IOException {
+    private boolean reportChanged(@Nullable Path reportPath, ReportSnapshot before) throws IOException {
         return reportPath != null && !reportSnapshot(reportPath).equals(before);
     }
 
-    private ReportSnapshot reportSnapshot(Path reportPath) throws IOException {
+    private ReportSnapshot reportSnapshot(@Nullable Path reportPath) throws IOException {
         if (reportPath == null || !Files.isRegularFile(reportPath)) {
             return ReportSnapshot.missing();
         }
@@ -560,16 +563,16 @@ public abstract class CrapJavaCheckTask extends DefaultTask {
         return getExecutionMarkerOutput().get().getAsFile().toPath().toAbsolutePath().normalize();
     }
 
-    private void deleteMovedOutput(Path currentPath, Path otherCurrentPath) throws Exception {
-        RememberedReport rememberedReport = rememberedOutputPath();
+    private void deleteMovedOutput(@Nullable Path currentPath, @Nullable Path otherCurrentPath) throws Exception {
+        @Nullable RememberedReport rememberedReport = rememberedOutputPath();
         deleteRememberedOutputIfMoved(rememberedReport, currentPath, otherCurrentPath);
         deleteOutputStateIfUnset(currentPath);
     }
 
     private void deleteRememberedOutputIfMoved(
-            RememberedReport rememberedReport,
-            Path currentPath,
-            Path otherCurrentPath
+            @Nullable RememberedReport rememberedReport,
+            @Nullable Path currentPath,
+            @Nullable Path otherCurrentPath
     ) throws Exception {
         if (shouldKeepRememberedReport(rememberedReport, currentPath, otherCurrentPath)) {
             return;
@@ -578,68 +581,73 @@ public abstract class CrapJavaCheckTask extends DefaultTask {
     }
 
     private boolean shouldKeepRememberedReport(
-            RememberedReport rememberedReport,
-            Path currentPath,
-            Path otherCurrentPath
+            @Nullable RememberedReport rememberedReport,
+            @Nullable Path currentPath,
+            @Nullable Path otherCurrentPath
     ) throws IOException {
         return rememberedReport == null
                 || isCurrentRememberedPath(rememberedReport, currentPath)
                 || isCurrentRememberedPath(rememberedReport, otherCurrentPath);
     }
 
-    private boolean isCurrentRememberedPath(RememberedReport rememberedReport, Path currentPath) throws IOException {
+    private boolean isCurrentRememberedPath(RememberedReport rememberedReport, @Nullable Path currentPath)
+            throws IOException {
         return currentPath != null && sameReportTarget(rememberedReport.path(), currentPath);
     }
 
-    private void deleteOutputStateIfUnset(Path currentPath) throws Exception {
+    private void deleteOutputStateIfUnset(@Nullable Path currentPath) throws Exception {
         if (currentPath == null) {
             deleteReportState(outputStatePath());
         }
     }
 
-    private void deleteMovedJunitReport(Path currentPath, Path otherCurrentPath) throws Exception {
+    private void deleteMovedJunitReport(@Nullable Path currentPath, @Nullable Path otherCurrentPath)
+            throws Exception {
         if (currentPath == null) {
             return;
         }
-        RememberedReport rememberedReport = rememberedJunitReportPath();
+        @Nullable RememberedReport rememberedReport = rememberedJunitReportPath();
         if (!shouldKeepRememberedReport(rememberedReport, currentPath, otherCurrentPath)) {
             deleteRememberedReport(rememberedReport);
         }
     }
 
-    private Path outputPath() {
+    private @Nullable Path outputPath() {
         if (!getOutput().isPresent()) {
             return null;
         }
         return getOutput().get().getAsFile().toPath().toAbsolutePath().normalize();
     }
 
-    private Path junitReportPath() {
+    private @Nullable Path junitReportPath() {
         if (!getJunit().get()) {
             return null;
         }
         return getJunitReport().get().getAsFile().toPath().toAbsolutePath().normalize();
     }
 
-    private void deleteDisabledJunitReport(Path currentOutputPath) throws Exception {
+    private void deleteDisabledJunitReport(@Nullable Path currentOutputPath) throws Exception {
         if (getJunit().get()) {
             return;
         }
-        RememberedReport rememberedReport = rememberedJunitReportPath();
+        @Nullable RememberedReport rememberedReport = rememberedJunitReportPath();
         if (!shouldKeepRememberedReport(rememberedReport, currentOutputPath, null)) {
             deleteRememberedReport(rememberedReport);
         }
         deleteReportState(junitReportStatePath());
     }
 
-    private void deleteRememberedReport(RememberedReport rememberedReport) throws Exception {
+    private void deleteRememberedReport(@Nullable RememberedReport rememberedReport) throws Exception {
+        if (rememberedReport == null) {
+            return;
+        }
         if (!isOwnedRememberedReport(rememberedReport)) {
             return;
         }
         Files.deleteIfExists(rememberedReport.path());
     }
 
-    private boolean isOwnedRememberedReport(RememberedReport rememberedReport) throws Exception {
+    private boolean isOwnedRememberedReport(@Nullable RememberedReport rememberedReport) throws Exception {
         if (!hasRegularRememberedReport(rememberedReport)) {
             return false;
         }
@@ -652,11 +660,14 @@ public abstract class CrapJavaCheckTask extends DefaultTask {
         return hasCurrentOwnership(rememberedReport);
     }
 
-    private boolean hasRegularRememberedReport(RememberedReport rememberedReport) {
+    private boolean hasRegularRememberedReport(@Nullable RememberedReport rememberedReport) {
         return rememberedReport != null && Files.isRegularFile(rememberedReport.path());
     }
 
-    private boolean hasCurrentOwnerLink(RememberedReport rememberedReport) throws IOException {
+    private boolean hasCurrentOwnerLink(@Nullable RememberedReport rememberedReport) throws IOException {
+        if (rememberedReport == null) {
+            return false;
+        }
         if (!rememberedReport.ownership().startsWith(LINK_OWNERSHIP + "\t")) {
             return false;
         }
@@ -666,11 +677,17 @@ public abstract class CrapJavaCheckTask extends DefaultTask {
         return Files.isSameFile(rememberedReport.path(), rememberedReport.ownerLink());
     }
 
-    private boolean hasCurrentOwnership(RememberedReport rememberedReport) throws Exception {
+    private boolean hasCurrentOwnership(@Nullable RememberedReport rememberedReport) throws Exception {
+        if (rememberedReport == null) {
+            return false;
+        }
         return rememberedReport.ownership().equals(ownership(rememberedReport.path()));
     }
 
-    private boolean hasOtherOwnerLink(RememberedReport rememberedReport) throws IOException {
+    private boolean hasOtherOwnerLink(@Nullable RememberedReport rememberedReport) throws IOException {
+        if (rememberedReport == null) {
+            return false;
+        }
         Path stateRoot = projectCacheRoot(getProject()).resolve("crap-java");
         if (!Files.isDirectory(stateRoot)) {
             return false;
@@ -696,7 +713,7 @@ public abstract class CrapJavaCheckTask extends DefaultTask {
         return "reports/crap-java/" + getName() + "/TEST-crap-java.xml";
     }
 
-    private void rememberOutputPath(Path path) throws Exception {
+    private void rememberOutputPath(@Nullable Path path) throws Exception {
         if (path == null) {
             Files.deleteIfExists(outputStatePath());
             return;
@@ -704,7 +721,7 @@ public abstract class CrapJavaCheckTask extends DefaultTask {
         rememberReportPath(outputStatePath(), path);
     }
 
-    private RememberedReport rememberedOutputPath() throws Exception {
+    private @Nullable RememberedReport rememberedOutputPath() throws Exception {
         return rememberedReportPath(outputStatePath());
     }
 
@@ -715,7 +732,7 @@ public abstract class CrapJavaCheckTask extends DefaultTask {
                 .normalize();
     }
 
-    private void rememberJunitReportPath(Path path) throws Exception {
+    private void rememberJunitReportPath(@Nullable Path path) throws Exception {
         if (path == null) {
             return;
         }
@@ -772,18 +789,18 @@ public abstract class CrapJavaCheckTask extends DefaultTask {
         return statePath.resolveSibling(ownerFileName);
     }
 
-    private RememberedReport rememberedJunitReportPath() throws Exception {
+    private @Nullable RememberedReport rememberedJunitReportPath() throws Exception {
         return rememberedReportPath(junitReportStatePath());
     }
 
-    private RememberedReport rememberedReportPath(Path statePath) throws Exception {
+    private @Nullable RememberedReport rememberedReportPath(Path statePath) throws Exception {
         if (!Files.isRegularFile(statePath)) {
             return null;
         }
         return parseRememberedReport(statePath, Files.readAllLines(statePath));
     }
 
-    private RememberedReport parseRememberedReport(Path statePath, List<String> lines) {
+    private @Nullable RememberedReport parseRememberedReport(Path statePath, List<String> lines) {
         if (!hasRememberedReport(lines)) {
             return null;
         }
@@ -798,7 +815,7 @@ public abstract class CrapJavaCheckTask extends DefaultTask {
         );
     }
 
-    private Path parseRememberedReportPath(String line) {
+    private @Nullable Path parseRememberedReportPath(String line) {
         try {
             String path = line.startsWith(ENCODED_PATH_PREFIX)
                     ? decodeRememberedReportPath(line.substring(ENCODED_PATH_PREFIX.length()))
@@ -809,7 +826,7 @@ public abstract class CrapJavaCheckTask extends DefaultTask {
         }
     }
 
-    private String decodeRememberedReportPath(String encoded) {
+    private @Nullable String decodeRememberedReportPath(String encoded) {
         try {
             byte[] decoded = Base64.getDecoder().decode(encoded);
             return new String(decoded, StandardCharsets.UTF_8);
@@ -903,7 +920,7 @@ public abstract class CrapJavaCheckTask extends DefaultTask {
         return sameParent(firstParent, secondParent) && sameFileName(first, second, firstParent);
     }
 
-    private boolean sameParent(Path firstParent, Path secondParent) throws IOException {
+    private boolean sameParent(@Nullable Path firstParent, @Nullable Path secondParent) throws IOException {
         return (firstParent == null || secondParent == null)
                 ? firstParent == secondParent
                 : sameNonNullParent(firstParent, secondParent);
@@ -921,8 +938,8 @@ public abstract class CrapJavaCheckTask extends DefaultTask {
     }
 
     private boolean sameRealPath(Path first, Path second) {
-        Path firstRealPath = realPathForComparison(first);
-        Path secondRealPath = realPathForComparison(second);
+        @Nullable Path firstRealPath = realPathForComparison(first);
+        @Nullable Path secondRealPath = realPathForComparison(second);
         return firstRealPath != null && firstRealPath.equals(secondRealPath);
     }
 
@@ -930,7 +947,7 @@ public abstract class CrapJavaCheckTask extends DefaultTask {
         return first.toString().equalsIgnoreCase(second.toString()) && isCaseInsensitive(first);
     }
 
-    private boolean sameFileName(Path first, Path second, Path parent) {
+    private boolean sameFileName(Path first, Path second, @Nullable Path parent) {
         String firstName = first.getFileName().toString();
         String secondName = second.getFileName().toString();
         return firstName.equals(secondName) || sameCaseInsensitiveFileName(firstName, secondName, parent);
@@ -962,16 +979,26 @@ public abstract class CrapJavaCheckTask extends DefaultTask {
         }
         for (Path sourceFile : sourceFiles) {
             String modulePath = matchingModulePath(analysisRoot, sourceFile, matchingModulePaths);
-            sourceFilesByModule.get(modulePath).add(sourceFile);
+            List<Path> moduleSources = Objects.requireNonNull(
+                    sourceFilesByModule.get(modulePath),
+                    () -> "Missing source bucket for module " + modulePath
+            );
+            moduleSources.add(sourceFile);
         }
 
         List<Main.ResolvedCoverageModule> modules = new ArrayList<>();
         for (String modulePath : orderedModulePaths) {
-            List<Path> moduleSources = sourceFilesByModule.get(modulePath);
+            List<Path> moduleSources = Objects.requireNonNull(
+                    sourceFilesByModule.get(modulePath),
+                    () -> "Missing source bucket for module " + modulePath
+            );
             if (moduleSources.isEmpty()) {
                 continue;
             }
-            String coverageReport = configuredModules.get(modulePath);
+            String coverageReport = Objects.requireNonNull(
+                    configuredModules.get(modulePath),
+                    () -> "Missing coverage report for module " + modulePath
+            );
             modules.add(new Main.ResolvedCoverageModule(
                     resolveModuleRoot(analysisRoot, modulePath),
                     resolveRelativePath(analysisRoot, coverageReport),
