@@ -466,12 +466,20 @@ public abstract class CrapJavaCheckTask extends DefaultTask {
         if (fileName == null) {
             return false;
         }
-        String name = fileName.toString();
+        return caseVariantExists(probe, fileName.toString());
+    }
+
+    private boolean caseVariantExists(Path probe, String name) {
         Path variant = probe.resolveSibling(name.toUpperCase(Locale.ROOT));
         Path variantFileName = variant.getFileName();
-        return variantFileName != null
-                && !name.equals(variantFileName.toString())
-                && Files.exists(variant);
+        if (variantFileName == null) {
+            return false;
+        }
+        return differentExistingVariant(name, variantFileName.toString(), variant);
+    }
+
+    private boolean differentExistingVariant(String name, String variantName, Path variant) {
+        return !name.equals(variantName) && Files.exists(variant);
     }
 
     static boolean isLikelyCaseInsensitiveOs() {
