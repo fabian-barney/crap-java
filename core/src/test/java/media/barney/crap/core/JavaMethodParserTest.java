@@ -102,6 +102,34 @@ class JavaMethodParserTest {
     }
 
     @Test
+    void ignoresNestedAnonymousClassSubtrees() {
+        String source = """
+                class Sample {
+                    int outer() {
+                        Object value = new Object() {
+                            class Nested {
+                                int nested() {
+                                    if (true) {
+                                    }
+                                    return 1;
+                                }
+                            }
+
+                            int local() {
+                                return 2;
+                            }
+                        };
+                        return 1;
+                    }
+                }
+                """;
+
+        List<MethodDescriptor> methods = JavaMethodParser.parse("Sample", source);
+
+        assertEquals(List.of(new MethodDescriptor("Sample", "outer", 2, 17, 1)), methods);
+    }
+
+    @Test
     void excludesLambdaBodyComplexityFromEnclosingMethod() {
         String source = """
                 class Sample {
