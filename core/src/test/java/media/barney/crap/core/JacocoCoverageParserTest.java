@@ -6,7 +6,6 @@ import org.junit.jupiter.api.io.TempDir;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Map;
 import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -38,12 +37,36 @@ class JacocoCoverageParserTest {
                 </report>
                 """);
 
-        Map<String, CoverageData> result = JacocoCoverageParser.parse(xml);
+        CoverageIndex result = JacocoCoverageParser.parse(xml);
 
-        assertEquals(90.0, Objects.requireNonNull(result.get("demo.Sample#alpha:10")).coveragePercent(), 0.001);
-        assertEquals("instruction", Objects.requireNonNull(result.get("demo.Sample#alpha:10")).coverageKind());
-        assertEquals(0.0, Objects.requireNonNull(result.get("demo.Sample#beta:20")).coveragePercent(), 0.001);
-        assertEquals("instruction", Objects.requireNonNull(result.get("demo.Sample#beta:20")).coverageKind());
+        assertEquals(90.0, coverage(result, "demo.Sample", "alpha", 10).percent(), 0.001);
+        assertEquals("instruction", coverage(result, "demo.Sample", "alpha", 10).kind());
+        assertEquals(0.0, coverage(result, "demo.Sample", "beta", 20).percent(), 0.001);
+        assertEquals("instruction", coverage(result, "demo.Sample", "beta", 20).kind());
+    }
+
+    @Test
+    void recordsDuplicateSourceCoordinateAsAmbiguous() throws IOException {
+        Path xml = tempDir.resolve("jacoco-duplicate-source-coordinate.xml");
+        Files.writeString(xml, """
+                <report name="demo">
+                  <package name="demo">
+                    <class name="demo/Sample" sourcefilename="Sample.java">
+                      <method name="sum" desc="(II)I" line="10">
+                        <counter type="INSTRUCTION" missed="1" covered="9"/>
+                      </method>
+                      <method name="sum" desc="(DD)I" line="10">
+                        <counter type="INSTRUCTION" missed="9" covered="1"/>
+                      </method>
+                    </class>
+                  </package>
+                </report>
+                """);
+
+        CoverageIndex result = JacocoCoverageParser.parse(xml);
+
+        assertEquals(2, result.entryCount("demo.Sample", "sum", 10));
+        assertNull(result.lookupCoverage("demo.Sample", "sum", 10));
     }
 
     @Test
@@ -62,10 +85,10 @@ class JacocoCoverageParserTest {
                 </report>
                 """);
 
-        CoverageData result = Objects.requireNonNull(JacocoCoverageParser.parse(xml).get("demo.Sample#alpha:10"));
+        EffectiveCoverage result = coverage(JacocoCoverageParser.parse(xml), "demo.Sample", "alpha", 10);
 
-        assertEquals(50.0, result.coveragePercent(), 0.001);
-        assertEquals("branch", result.coverageKind());
+        assertEquals(50.0, result.percent(), 0.001);
+        assertEquals("branch", result.kind());
     }
 
     @Test
@@ -84,10 +107,10 @@ class JacocoCoverageParserTest {
                 </report>
                 """);
 
-        CoverageData result = Objects.requireNonNull(JacocoCoverageParser.parse(xml).get("demo.Sample#alpha:10"));
+        EffectiveCoverage result = coverage(JacocoCoverageParser.parse(xml), "demo.Sample", "alpha", 10);
 
-        assertEquals(75.0, result.coveragePercent(), 0.001);
-        assertEquals("instruction", result.coverageKind());
+        assertEquals(75.0, result.percent(), 0.001);
+        assertEquals("instruction", result.kind());
     }
 
     @Test
@@ -106,10 +129,10 @@ class JacocoCoverageParserTest {
                 </report>
                 """);
 
-        CoverageData result = Objects.requireNonNull(JacocoCoverageParser.parse(xml).get("demo.Sample#alpha:10"));
+        EffectiveCoverage result = coverage(JacocoCoverageParser.parse(xml), "demo.Sample", "alpha", 10);
 
-        assertEquals(50.0, result.coveragePercent(), 0.001);
-        assertEquals("instruction", result.coverageKind());
+        assertEquals(50.0, result.percent(), 0.001);
+        assertEquals("instruction", result.kind());
     }
 
     @Test
@@ -128,10 +151,10 @@ class JacocoCoverageParserTest {
                 </report>
                 """);
 
-        CoverageData result = Objects.requireNonNull(JacocoCoverageParser.parse(xml).get("demo.Sample#alpha:10"));
+        EffectiveCoverage result = coverage(JacocoCoverageParser.parse(xml), "demo.Sample", "alpha", 10);
 
-        assertEquals(0.0, result.coveragePercent(), 0.001);
-        assertEquals("instruction", result.coverageKind());
+        assertEquals(0.0, result.percent(), 0.001);
+        assertEquals("instruction", result.kind());
     }
 
     @Test
@@ -149,9 +172,9 @@ class JacocoCoverageParserTest {
                 </report>
                 """);
 
-        Map<String, CoverageData> result = JacocoCoverageParser.parse(xml);
+        CoverageIndex result = JacocoCoverageParser.parse(xml);
 
-        assertNull(result.get("demo.Sample#alpha:10"));
+        assertNull(result.lookupCoverage("demo.Sample", "alpha", 10));
     }
 
     @Test
@@ -170,9 +193,9 @@ class JacocoCoverageParserTest {
                 </report>
                 """);
 
-        Map<String, CoverageData> result = JacocoCoverageParser.parse(xml);
+        CoverageIndex result = JacocoCoverageParser.parse(xml);
 
-        assertEquals(90.0, Objects.requireNonNull(result.get("demo.Sample#alpha:10")).coveragePercent(), 0.001);
+        assertEquals(90.0, coverage(result, "demo.Sample", "alpha", 10).percent(), 0.001);
     }
 
     @Test
@@ -232,6 +255,10 @@ class JacocoCoverageParserTest {
         assertEquals("", factory.getAttribute(javax.xml.XMLConstants.ACCESS_EXTERNAL_SCHEMA));
         assertFalse(factory.isXIncludeAware());
         assertFalse(factory.isExpandEntityReferences());
+    }
+
+    private static EffectiveCoverage coverage(CoverageIndex index, String className, String methodName, int line) {
+        return Objects.requireNonNull(index.lookupCoverage(className, methodName, line));
     }
 }
 
