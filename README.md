@@ -35,6 +35,11 @@ Their internal decision nodes are excluded from the enclosing source method's
 complexity, and javac synthetic JaCoCo methods named like `lambda$...$<digits>`
 are ignored during coverage attribution.
 
+Anonymous-class bodies are also outside the supported source-method scope.
+`crap-java` does not synthesize `$N` owners from source, does not report methods
+or nested declarations inside anonymous classes, and does not fold anonymous-body
+complexity into the enclosing source method.
+
 ## Coverage Pipeline
 
 For each resolved module today:
