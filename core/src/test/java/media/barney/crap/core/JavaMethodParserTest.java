@@ -102,7 +102,7 @@ class JavaMethodParserTest {
     }
 
     @Test
-    void ignoresNestedAnonymousClassSubtrees() {
+    void ignoresDeclarationsInsideAnonymousClassBodies() {
         String source = """
                 class Sample {
                     int outer() {
