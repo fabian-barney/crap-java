@@ -11,9 +11,11 @@ import javax.xml.XMLConstants;
 import java.io.StringReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.regex.Pattern;
 import org.jspecify.annotations.Nullable;
 
 final class JacocoCoverageParser {
+    private static final Pattern JAVAC_LAMBDA_METHOD = Pattern.compile("^lambda\\$.*\\$\\d+$");
 
     private JacocoCoverageParser() {
     }
@@ -64,11 +66,14 @@ final class JacocoCoverageParser {
             if (!(node instanceof Element method) || !"method".equals(method.getTagName())) {
                 continue;
             }
+            String methodName = method.getAttribute("name");
+            if (JAVAC_LAMBDA_METHOD.matcher(methodName).matches()) {
+                continue;
+            }
             CoverageData data = readCoverage(method);
             if (data == null) {
                 continue;
             }
-            String methodName = method.getAttribute("name");
             int line = parseInt("line", method.getAttribute("line"));
             coverage.add(className, methodName, line, data);
         }

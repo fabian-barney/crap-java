@@ -102,6 +102,29 @@ class JavaMethodParserTest {
     }
 
     @Test
+    void excludesLambdaBodyComplexityFromEnclosingMethod() {
+        String source = """
+                class Sample {
+                    int outer(boolean flag) {
+                        if (flag) {
+                        }
+                        java.util.function.Predicate<String> predicate = value -> {
+                            if (value.isEmpty()) {
+                                return flag;
+                            }
+                            return value.length() > 1 && flag;
+                        };
+                        return flag ? 1 : 0;
+                    }
+                }
+                """;
+
+        List<MethodDescriptor> methods = JavaMethodParser.parse("Sample", source);
+
+        assertEquals(List.of(new MethodDescriptor("Sample", "outer", 2, 12, 3)), methods);
+    }
+
+    @Test
     void parsesMethodsWithoutResolvingSiblingTypes() {
         String source = """
                 package demo;
