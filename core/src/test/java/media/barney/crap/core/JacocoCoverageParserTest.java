@@ -70,6 +70,30 @@ class JacocoCoverageParserTest {
     }
 
     @Test
+    void skipsSyntheticLambdaImplementationMethods() throws IOException {
+        Path xml = tempDir.resolve("jacoco-lambda.xml");
+        Files.writeString(xml, """
+                <report name="demo">
+                  <package name="demo">
+                    <class name="demo/Sample" sourcefilename="Sample.java">
+                      <method name="alpha" desc="()V" line="10">
+                        <counter type="INSTRUCTION" missed="1" covered="9"/>
+                      </method>
+                      <method name="lambda$alpha$0" desc="()V" line="11">
+                        <counter type="INSTRUCTION" missed="0" covered="10"/>
+                      </method>
+                    </class>
+                  </package>
+                </report>
+                """);
+
+        CoverageIndex result = JacocoCoverageParser.parse(xml);
+
+        assertEquals(90.0, coverage(result, "demo.Sample", "alpha", 10).percent(), 0.001);
+        assertNull(result.lookupCoverage("demo.Sample", "lambda$alpha$0", 11));
+    }
+
+    @Test
     void usesBranchCoverageWhenBranchCoverageIsWorse() throws IOException {
         Path xml = tempDir.resolve("jacoco-branch-worse.xml");
         Files.writeString(xml, """

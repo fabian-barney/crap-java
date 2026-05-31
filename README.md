@@ -30,6 +30,11 @@ and switch case clauses. Switch handling follows the javac AST: each
 in that clause. For example, `case A, B, C ->` contributes `1`, not `3`, and
 `default` also contributes `1`.
 
+Lambda bodies are not first-class report rows in the current source-first model.
+Their internal decision nodes are excluded from the enclosing source method's
+complexity, and javac synthetic JaCoCo methods named like `lambda$...$<digits>`
+are ignored during coverage attribution.
+
 ## Coverage Pipeline
 
 For each resolved module today:

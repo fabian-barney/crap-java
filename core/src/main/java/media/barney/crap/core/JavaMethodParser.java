@@ -10,6 +10,7 @@ import com.sun.source.tree.DoWhileLoopTree;
 import com.sun.source.tree.EnhancedForLoopTree;
 import com.sun.source.tree.ForLoopTree;
 import com.sun.source.tree.IfTree;
+import com.sun.source.tree.LambdaExpressionTree;
 import com.sun.source.tree.MethodTree;
 import com.sun.source.tree.Tree;
 import com.sun.source.tree.WhileLoopTree;
@@ -220,6 +221,11 @@ final class JavaMethodParser {
 
         @Override
         public Void visitClass(ClassTree node, Void unused) {
+            return null;
+        }
+
+        @Override
+        public Void visitLambdaExpression(LambdaExpressionTree node, Void unused) {
             return null;
         }
 
