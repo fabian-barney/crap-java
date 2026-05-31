@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+## 0.6.1 - 2026-06-01
+
+### Fixed
+
+- Stopped lambda-body decision nodes from inflating the enclosing source method's complexity and ignored javac synthetic lambda coverage methods during attribution.
+- Treated ambiguous same-line overload coverage collisions as unavailable instead of assigning coverage to the wrong source method.
+
+### Changed
+
+- Documented the current anonymous-class scope explicitly: anonymous-class methods are not reported as first-class rows and their body complexity is not folded into the enclosing method.
+- Expanded CI with granular NullAway and SpotBugs gates across modules, plus release-preflight cache priming for SpotBugs.
+
+### Dependencies
+
+- Updated compatible Java test and analysis tooling while keeping the JUnit version aligned with current CI compatibility.
+
 ## 0.6.0 - 2026-05-24
 
 ### Added

@@ -56,6 +56,40 @@ jobs:
           -Dcentral.skipPublishing=true
           -pl .,cli,maven-plugin -am deploy
 
+      - name: Create GitHub release draft
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          awk -v version="${version}" '
+            $1 == "##" && $2 == version {
+              found = 1
+            }
+            found {
+              if ($1 == "##" && $2 != version) {
+                exit
+              }
+              print
+            }
+            END {
+              if (!found) {
+                exit 1
+              }
+            }
+          ' CHANGELOG.md > release-notes.md
+          test -s release-notes.md
+          if gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1; then
+            is_draft="$(gh release view "${GITHUB_REF_NAME}" --json isDraft --jq .isDraft)"
+            if [ "${is_draft}" != "true" ]; then
+              echo "GitHub release ${GITHUB_REF_NAME} already exists and is not a draft." >&2
+              exit 1
+            fi
+            gh release edit "${GITHUB_REF_NAME}" --title "${GITHUB_REF_NAME}" --notes-file release-notes.md --draft
+          else
+            gh release create "${GITHUB_REF_NAME}" --verify-tag --draft --title "${GITHUB_REF_NAME}" --notes-file release-notes.md
+          fi
+
       - name: Publish Maven artifacts
         env:
           MAVEN_CENTRAL_TOKEN_USERNAME: ${{ secrets.MAVEN_CENTRAL_TOKEN_USERNAME }}
@@ -90,34 +124,11 @@ jobs:
         working-directory: gradle-plugin
         run: ./gradlew publishPlugins -Pgradle.publish.key="${GRADLE_PUBLISH_KEY}" -Pgradle.publish.secret="${GRADLE_PUBLISH_SECRET}"
 
-      - name: Create GitHub release
+      - name: Publish GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
-        run: |
-          version="${GITHUB_REF_NAME#v}"
-          awk -v version="${version}" '
-            $1 == "##" && $2 == version {
-              found = 1
-            }
-            found {
-              if ($1 == "##" && $2 != version) {
-                exit
-              }
-              print
-            }
-            END {
-              if (!found) {
-                exit 1
-              }
-            }
-          ' CHANGELOG.md > release-notes.md
-          test -s release-notes.md
-          if gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1; then
-            gh release edit "${GITHUB_REF_NAME}" --title "${GITHUB_REF_NAME}" --notes-file release-notes.md
-          else
-            gh release create "${GITHUB_REF_NAME}" --title "${GITHUB_REF_NAME}" --notes-file release-notes.md
-          fi
+        run: gh release edit "${GITHUB_REF_NAME}" --draft=false --latest
 
       - name: Clean up imported GPG home
         if: always()
