@@ -6,7 +6,6 @@ import org.junit.jupiter.api.io.TempDir;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -368,13 +367,100 @@ class CrapAnalyzerTest {
     }
 
     @Test
+    void sameLineOverloadCoverageCollisionsAreSkippedAsUnavailable() throws IOException {
+        Path sourceRoot = tempDir.resolve("src/main/java/demo");
+        Files.createDirectories(sourceRoot);
+        Path source = sourceRoot.resolve("Sample.java");
+        Files.writeString(source, """
+                package demo;
+                class Sample {
+                    int sum(int a, int b) { return a + b; } int sum(double a, double b) { return (int) (a + b); }
+                }
+                """);
+
+        Path jacoco = tempDir.resolve("jacoco.xml");
+        Files.writeString(jacoco, """
+                <report>
+                  <package name="demo">
+                    <class name="demo/Sample" sourcefilename="Sample.java">
+                      <method name="sum" desc="(II)I" line="3">
+                        <counter type="INSTRUCTION" missed="1" covered="3"/>
+                      </method>
+                      <method name="sum" desc="(DD)I" line="3">
+                        <counter type="INSTRUCTION" missed="0" covered="8"/>
+                      </method>
+                    </class>
+                  </package>
+                </report>
+                """);
+
+        List<MethodMetrics> result = CrapAnalyzer.analyze(tempDir, List.of(source), jacoco);
+
+        assertEquals(2, result.size());
+        for (MethodMetrics metric : result) {
+            assertEquals("sum", metric.methodName());
+            assertEquals(3, metric.startLine());
+            assertNull(metric.coveragePercent());
+            assertEquals("N/A", metric.coverageKind());
+            assertNull(metric.crapScore());
+        }
+    }
+
+    @Test
+    void overloadsOnDifferentLinesKeepUniqueCoverage() throws IOException {
+        Path sourceRoot = tempDir.resolve("src/main/java/demo");
+        Files.createDirectories(sourceRoot);
+        Path source = sourceRoot.resolve("Sample.java");
+        Files.writeString(source, """
+                package demo;
+
+                class Sample {
+                    int sum(int a, int b) {
+                        return a + b;
+                    }
+
+                    int sum(double a, double b) {
+                        return (int) (a + b);
+                    }
+                }
+                """);
+
+        Path jacoco = tempDir.resolve("jacoco.xml");
+        Files.writeString(jacoco, """
+                <report>
+                  <package name="demo">
+                    <class name="demo/Sample" sourcefilename="Sample.java">
+                      <method name="sum" desc="(II)I" line="4">
+                        <counter type="INSTRUCTION" missed="1" covered="3"/>
+                      </method>
+                      <method name="sum" desc="(DD)I" line="8">
+                        <counter type="INSTRUCTION" missed="1" covered="9"/>
+                        <counter type="BRANCH" missed="1" covered="1"/>
+                      </method>
+                    </class>
+                  </package>
+                </report>
+                """);
+
+        Map<Integer, MethodMetrics> metricsByLine = CrapAnalyzer.analyze(tempDir, List.of(source), jacoco).stream()
+                .collect(java.util.stream.Collectors.toMap(MethodMetrics::startLine, Function.identity()));
+
+        MethodMetrics intOverload = Objects.requireNonNull(metricsByLine.get(4));
+        assertEquals(75.0, Objects.requireNonNull(intOverload.coveragePercent()), 0.001);
+        assertEquals("instruction", intOverload.coverageKind());
+        MethodMetrics doubleOverload = Objects.requireNonNull(metricsByLine.get(8));
+        assertEquals(50.0, Objects.requireNonNull(doubleOverload.coveragePercent()), 0.001);
+        assertEquals("branch", doubleOverload.coverageKind());
+    }
+
+    @Test
     void lookupCoveragePrefersExactLineBeforeNearestMatch() {
-        Map<String, CoverageData> coverageMap = Map.of(
-                "demo.Sample#alpha:10", new CoverageData(1, 3),
-                "demo.Sample#alpha:12", new CoverageData(0, 8)
+        CoverageIndex coverageIndex = coverageIndex(
+                entry("alpha", 10, new CoverageData(1, 3)),
+                entry("alpha", 12, new CoverageData(0, 8))
         );
 
-        EffectiveCoverage coverage = CrapAnalyzer.lookupCoverage(coverageMap, "demo.Sample", "alpha", 10);
+        EffectiveCoverage coverage = coverageIndex.lookupCoverage("demo.Sample", "alpha", 10);
 
         assertEquals(75.0, Objects.requireNonNull(coverage).percent(), 0.001);
         assertEquals("instruction", coverage.kind());
@@ -382,12 +468,12 @@ class CrapAnalyzerTest {
 
     @Test
     void lookupCoverageFallsBackToNearestLineWithinMethod() {
-        Map<String, CoverageData> coverageMap = Map.of(
-                "demo.Sample#alpha:10", new CoverageData(1, 3),
-                "demo.Sample#alpha:15", new CoverageData(0, 8)
+        CoverageIndex coverageIndex = coverageIndex(
+                entry("alpha", 10, new CoverageData(1, 3)),
+                entry("alpha", 15, new CoverageData(0, 8))
         );
 
-        EffectiveCoverage coverage = CrapAnalyzer.lookupCoverage(coverageMap, "demo.Sample", "alpha", 13);
+        EffectiveCoverage coverage = coverageIndex.lookupCoverage("demo.Sample", "alpha", 13);
 
         assertEquals(100.0, Objects.requireNonNull(coverage).percent(), 0.001);
         assertEquals("instruction", coverage.kind());
@@ -395,11 +481,9 @@ class CrapAnalyzerTest {
 
     @Test
     void lookupCoverageReturnsBranchKindWhenBranchCoverageIsWorse() {
-        Map<String, CoverageData> coverageMap = Map.of(
-                "demo.Sample#alpha:10", new CoverageData(1, 9, 1, 1)
-        );
+        CoverageIndex coverageIndex = coverageIndex(entry("alpha", 10, new CoverageData(1, 9, 1, 1)));
 
-        EffectiveCoverage coverage = CrapAnalyzer.lookupCoverage(coverageMap, "demo.Sample", "alpha", 10);
+        EffectiveCoverage coverage = coverageIndex.lookupCoverage("demo.Sample", "alpha", 10);
 
         assertEquals(50.0, Objects.requireNonNull(coverage).percent(), 0.001);
         assertEquals("branch", coverage.kind());
@@ -407,37 +491,38 @@ class CrapAnalyzerTest {
 
     @Test
     void nearestCoverageKeepsFirstEntryWhenDistancesTie() {
-        Map<String, CoverageData> coverageMap = new LinkedHashMap<>();
-        coverageMap.put("demo.Sample#alpha:10", new CoverageData(1, 3));
-        coverageMap.put("demo.Sample#alpha:14", new CoverageData(0, 8));
+        CoverageIndex coverageIndex = coverageIndex(
+                entry("alpha", 10, new CoverageData(1, 3)),
+                entry("alpha", 14, new CoverageData(0, 8))
+        );
 
-        CoverageData nearest = Objects.requireNonNull(CrapAnalyzer.nearestCoverage(coverageMap, "demo.Sample", "alpha", 12));
+        EffectiveCoverage nearest = Objects.requireNonNull(coverageIndex.nearestCoverage("demo.Sample", "alpha", 12));
 
-        assertEquals(75.0, nearest.coveragePercent(), 0.001);
+        assertEquals(75.0, nearest.percent(), 0.001);
     }
 
     @Test
     void lookupCoverageReturnsNullWhenMethodHasNoCoverageEntries() {
-        EffectiveCoverage coverage = CrapAnalyzer.lookupCoverage(Map.of(), "demo.Sample", "alpha", 10);
+        EffectiveCoverage coverage = CoverageIndex.empty().lookupCoverage("demo.Sample", "alpha", 10);
 
         assertNull(coverage);
     }
 
     @Test
     void parseTrailingLineReturnsMaxValueForMalformedKeys() {
-        assertEquals(Integer.MAX_VALUE, CrapAnalyzer.parseTrailingLine("demo.Sample#alpha"));
-        assertEquals(Integer.MAX_VALUE, CrapAnalyzer.parseTrailingLine("demo.Sample#alpha:"));
-        assertEquals(Integer.MAX_VALUE, CrapAnalyzer.parseTrailingLine("demo.Sample#alpha:oops"));
+        assertEquals(Integer.MAX_VALUE, CoverageIndex.parseTrailingLine("demo.Sample#alpha"));
+        assertEquals(Integer.MAX_VALUE, CoverageIndex.parseTrailingLine("demo.Sample#alpha:"));
+        assertEquals(Integer.MAX_VALUE, CoverageIndex.parseTrailingLine("demo.Sample#alpha:oops"));
     }
 
     @Test
     void parseTrailingLineReturnsParsedLineNumberForValidKey() {
-        assertEquals(10, CrapAnalyzer.parseTrailingLine("demo.Sample#alpha:10"));
+        assertEquals(10, CoverageIndex.parseTrailingLine("demo.Sample#alpha:10"));
     }
 
     @Test
     void parseTrailingLineAcceptsLeadingSeparator() {
-        assertEquals(10, CrapAnalyzer.parseTrailingLine(":10"));
+        assertEquals(10, CoverageIndex.parseTrailingLine(":10"));
     }
 
     @Test
@@ -542,6 +627,21 @@ class CrapAnalyzerTest {
 
         assertEquals(List.of("zeta", "omega", "beta"),
                 result.stream().map(MethodMetrics::methodName).toList());
+    }
+
+    private static CoverageEntry entry(String methodName, int line, CoverageData coverage) {
+        return new CoverageEntry(methodName, line, coverage);
+    }
+
+    private static CoverageIndex coverageIndex(CoverageEntry... entries) {
+        CoverageIndex.Builder builder = CoverageIndex.builder();
+        for (CoverageEntry entry : entries) {
+            builder.add("demo.Sample", entry.methodName(), entry.line(), entry.coverage());
+        }
+        return builder.build();
+    }
+
+    private record CoverageEntry(String methodName, int line, CoverageData coverage) {
     }
 }
 

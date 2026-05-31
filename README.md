@@ -189,6 +189,8 @@ Machine-readable primary reports include top-level `status` (`passed` or
 `crap`, `cc`, `cov`, `covKind`, `method`, `src`, `lineStart`, and `lineEnd`.
 `src` is the project-relative source file path. `coverageKind` identifies the
 coverage input used for each CRAP score (`instruction`, `branch`, or `N/A`).
+`N/A` also covers methods whose JaCoCo coverage cannot be attributed
+unambiguously to one source method.
 Full primary reports also include exclusion audit counts when any source was
 considered; optimized primary reports produced through `--agent` omit that audit
 detail by default to stay focused on actionable failures. The JUnit sidecar

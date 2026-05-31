@@ -8,11 +8,9 @@ import org.xml.sax.InputSource;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.XMLConstants;
+import java.io.StringReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.Map;
-import java.io.StringReader;
 import org.jspecify.annotations.Nullable;
 
 final class JacocoCoverageParser {
@@ -20,9 +18,9 @@ final class JacocoCoverageParser {
     private JacocoCoverageParser() {
     }
 
-    static Map<String, CoverageData> parse(@Nullable Path jacocoXmlPath) {
+    static CoverageIndex parse(@Nullable Path jacocoXmlPath) {
         if (jacocoXmlPath == null || !Files.exists(jacocoXmlPath)) {
-            return Map.of();
+            return CoverageIndex.empty();
         }
 
         try {
@@ -33,7 +31,7 @@ final class JacocoCoverageParser {
 
             Document document = builder.parse(jacocoXmlPath.toFile());
             NodeList classes = document.getElementsByTagName("class");
-            Map<String, CoverageData> coverage = new HashMap<>();
+            CoverageIndex.Builder coverage = CoverageIndex.builder();
 
             for (int i = 0; i < classes.getLength(); i++) {
                 Element classNode = (Element) classes.item(i);
@@ -41,7 +39,7 @@ final class JacocoCoverageParser {
                 readClassMethods(classNode, className, coverage);
             }
 
-            return coverage;
+            return coverage.build();
         } catch (Exception ex) {
             throw new IllegalStateException("Unable to parse JaCoCo XML: " + jacocoXmlPath, ex);
         }
@@ -61,7 +59,7 @@ final class JacocoCoverageParser {
         return factory;
     }
 
-    private static void readClassMethods(Element classNode, String className, Map<String, CoverageData> coverage) {
+    private static void readClassMethods(Element classNode, String className, CoverageIndex.Builder coverage) {
         for (Node node = classNode.getFirstChild(); node != null; node = node.getNextSibling()) {
             if (!(node instanceof Element method) || !"method".equals(method.getTagName())) {
                 continue;
@@ -72,8 +70,7 @@ final class JacocoCoverageParser {
             }
             String methodName = method.getAttribute("name");
             int line = parseInt("line", method.getAttribute("line"));
-            String key = className + "#" + methodName + ":" + line;
-            coverage.put(key, data);
+            coverage.add(className, methodName, line, data);
         }
     }
 
