@@ -16,6 +16,7 @@ import java.nio.file.attribute.FileTime;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -236,7 +237,7 @@ class CrapJavaGradlePluginTest {
         Project project = ProjectBuilder.builder().withProjectDir(projectRoot.toFile()).build();
         Files.writeString(projectRoot.resolve("build.gradle"), "plugins { id 'java' }");
         Path source = projectRoot.resolve("src/main/java/demo/Sample.java");
-        Files.createDirectories(source.getParent());
+        Files.createDirectories(parentOf(source));
         Files.writeString(source, """
                 package demo;
 
@@ -247,7 +248,7 @@ class CrapJavaGradlePluginTest {
                 }
                 """);
         Path jacocoXml = projectRoot.resolve("build/reports/jacoco/test/jacocoTestReport.xml");
-        Files.createDirectories(jacocoXml.getParent());
+        Files.createDirectories(parentOf(jacocoXml));
         Files.writeString(jacocoXml, """
                 <report name="demo">
                   <package name="demo">
@@ -286,7 +287,7 @@ class CrapJavaGradlePluginTest {
         Path projectRoot = tempDir.toRealPath();
         Project project = ProjectBuilder.builder().withProjectDir(projectRoot.toFile()).build();
         Path source = projectRoot.resolve("src/main/java/demo/Sample.java");
-        Files.createDirectories(source.getParent());
+        Files.createDirectories(parentOf(source));
         Files.writeString(source, """
                 package demo;
 
@@ -300,7 +301,7 @@ class CrapJavaGradlePluginTest {
                 }
                 """);
         Path jacocoXml = projectRoot.resolve("build/reports/jacoco/test/jacocoTestReport.xml");
-        Files.createDirectories(jacocoXml.getParent());
+        Files.createDirectories(parentOf(jacocoXml));
         Files.writeString(jacocoXml, """
                 <report name="demo">
                   <package name="demo">
@@ -340,7 +341,7 @@ class CrapJavaGradlePluginTest {
         Project project = ProjectBuilder.builder().withProjectDir(projectRoot.toFile()).build();
         Path defaultJunitReport = projectRoot.resolve("build/reports/crap-java/TEST-crap-java.xml");
         Path customJunitReport = projectRoot.resolve("custom-junit.xml");
-        Files.createDirectories(defaultJunitReport.getParent());
+        Files.createDirectories(parentOf(defaultJunitReport));
         Files.writeString(defaultJunitReport, "user-managed");
         CrapJavaCheckTask task = project.getTasks().register("crap-java-check", CrapJavaCheckTask.class).get();
         task.getAnalysisRoot().fileValue(projectRoot.toFile());
@@ -358,7 +359,7 @@ class CrapJavaGradlePluginTest {
         Path projectRoot = tempDir.toRealPath();
         Project project = ProjectBuilder.builder().withProjectDir(projectRoot.toFile()).build();
         Path defaultJunitReport = projectRoot.resolve("build/reports/crap-java/TEST-crap-java.xml");
-        Files.createDirectories(defaultJunitReport.getParent());
+        Files.createDirectories(parentOf(defaultJunitReport));
         Files.writeString(defaultJunitReport, "user-managed");
         CrapJavaCheckTask task = project.getTasks().register("crap-java-check", CrapJavaCheckTask.class).get();
         task.getAnalysisRoot().fileValue(projectRoot.toFile());
@@ -672,7 +673,7 @@ class CrapJavaGradlePluginTest {
     void runCheckRejectsDanglingSymlinkedPrimaryAndJunitReportPath() throws Exception {
         Path projectRoot = tempDir.toRealPath();
         Path report = projectRoot.resolve("reports/collision.xml");
-        Files.createDirectories(report.getParent());
+        Files.createDirectories(parentOf(report));
         Path outputLink = createFileSymlinkOrSkip(projectRoot.resolve("output-report.xml"), report);
         Path junitLink = createFileSymlinkOrSkip(projectRoot.resolve("junit-report.xml"), report);
         CrapJavaCheckTask task = newCheckTask(projectRoot);
@@ -744,8 +745,7 @@ class CrapJavaGradlePluginTest {
     void runCheckRejectsRootReportPath() throws Exception {
         Path projectRoot = tempDir.toRealPath();
         Project project = ProjectBuilder.builder().withProjectDir(projectRoot.toFile()).build();
-        Path root = projectRoot.getRoot();
-        assumeTrue(root != null, "Filesystem root is unavailable");
+        Path root = rootOf(projectRoot);
         CrapJavaCheckTask task = project.getTasks().register("crap-java-check", CrapJavaCheckTask.class).get();
         task.getAnalysisRoot().fileValue(projectRoot.toFile());
         task.getModuleCoverageReports().set(Map.of());
@@ -850,7 +850,7 @@ class CrapJavaGradlePluginTest {
     void runCheckRejectsFileSymlinkAliasToInternalStatePath() throws Exception {
         Path projectRoot = tempDir.toRealPath();
         Path statePath = projectRoot.resolve(".gradle/crap-java/root/other-task/primary-output.path");
-        Files.createDirectories(statePath.getParent());
+        Files.createDirectories(parentOf(statePath));
         Files.writeString(statePath, "state");
         Path stateAlias = createFileSymlinkOrSkip(projectRoot.resolve("state-report.xml"), statePath);
         Project project = ProjectBuilder.builder().withProjectDir(projectRoot.toFile()).build();
@@ -868,7 +868,7 @@ class CrapJavaGradlePluginTest {
     void runCheckRejectsDanglingFileSymlinkAliasToInternalStatePath() throws Exception {
         Path projectRoot = tempDir.toRealPath();
         Path statePath = projectRoot.resolve(".gradle/crap-java/root/other-task/primary-output.path");
-        Files.createDirectories(statePath.getParent());
+        Files.createDirectories(parentOf(statePath));
         Path stateAlias = createFileSymlinkOrSkip(projectRoot.resolve("state-report.xml"), statePath);
         CrapJavaCheckTask task = newCheckTask(projectRoot);
         task.getOutput().fileValue(stateAlias.toFile());
@@ -882,7 +882,7 @@ class CrapJavaGradlePluginTest {
     void runCheckRejectsFileSymlinkAliasToInternalExecutionMarkerPath() throws Exception {
         Path projectRoot = tempDir.toRealPath();
         Path markerPath = projectRoot.resolve("build/tmp/crap-java/crap-java-check/execution.marker");
-        Files.createDirectories(markerPath.getParent());
+        Files.createDirectories(parentOf(markerPath));
         Files.writeString(markerPath, "ok");
         Path markerAlias = createFileSymlinkOrSkip(projectRoot.resolve("marker-report.xml"), markerPath);
         Project project = ProjectBuilder.builder().withProjectDir(projectRoot.toFile()).build();
@@ -900,7 +900,7 @@ class CrapJavaGradlePluginTest {
     void runCheckRejectsDanglingFileSymlinkAliasToInternalExecutionMarkerPath() throws Exception {
         Path projectRoot = tempDir.toRealPath();
         Path markerPath = projectRoot.resolve("build/tmp/crap-java/crap-java-check/execution.marker");
-        Files.createDirectories(markerPath.getParent());
+        Files.createDirectories(parentOf(markerPath));
         Path markerAlias = createFileSymlinkOrSkip(projectRoot.resolve("marker-report.xml"), markerPath);
         CrapJavaCheckTask task = newCheckTask(projectRoot);
         task.getOutput().fileValue(markerAlias.toFile());
@@ -914,7 +914,7 @@ class CrapJavaGradlePluginTest {
     void runCheckRejectsHardLinkAliasToInternalStatePath() throws Exception {
         Path projectRoot = tempDir.toRealPath();
         Path statePath = projectRoot.resolve(".gradle/crap-java/root/other-task/primary-output.path");
-        Files.createDirectories(statePath.getParent());
+        Files.createDirectories(parentOf(statePath));
         Files.writeString(statePath, "state");
         Path stateAlias = createHardLinkOrSkip(projectRoot.resolve("state-report.xml"), statePath);
         Project project = ProjectBuilder.builder().withProjectDir(projectRoot.toFile()).build();
@@ -1002,7 +1002,7 @@ class CrapJavaGradlePluginTest {
         Path statePath = junitReportStatePath(task);
         assertTrue(Files.exists(statePath));
         assertTrue(statePath.startsWith(projectCacheDir.resolve("crap-java")));
-        assertTrue(statePath.getParent().getParent().getParent().getFileName().toString().startsWith("workspace-"));
+        assertTrue(fileNameOf(parentOf(parentOf(parentOf(statePath)))).toString().startsWith("workspace-"));
         assertFalse(Files.exists(projectRoot.resolve(".gradle/crap-java/root/crap-java-check/junit-report.path")));
     }
 
@@ -1026,8 +1026,8 @@ class CrapJavaGradlePluginTest {
         assertTrue(Files.exists(firstStatePath));
         assertTrue(Files.exists(secondStatePath));
         assertFalse(firstStatePath.equals(secondStatePath));
-        assertFalse(firstStatePath.getParent().getParent().getParent()
-                .equals(secondStatePath.getParent().getParent().getParent()));
+        assertFalse(parentOf(parentOf(parentOf(firstStatePath)))
+                .equals(parentOf(parentOf(parentOf(secondStatePath)))));
     }
 
     @Test
@@ -1109,9 +1109,9 @@ class CrapJavaGradlePluginTest {
         nestedTask.runCheck();
         rootNamedTask.runCheck();
 
-        Path stateNamespace = junitReportStatePath(dashTask).getParent().getParent().getParent();
+        Path stateNamespace = parentOf(parentOf(parentOf(junitReportStatePath(dashTask))));
         assertTrue(stateNamespace.startsWith(projectCacheDir.resolve("crap-java")));
-        assertTrue(stateNamespace.getFileName().toString().startsWith("workspace-"));
+        assertTrue(fileNameOf(stateNamespace).toString().startsWith("workspace-"));
         assertTrue(Files.exists(stateNamespace.resolve("%3Aa-b/crap-java-check/junit-report.path")));
         assertTrue(Files.exists(stateNamespace.resolve("%3Aa%3Ab/crap-java-check/junit-report.path")));
         assertTrue(Files.exists(stateNamespace.resolve("%3Aroot/crap-java-check/junit-report.path")));
@@ -1124,7 +1124,7 @@ class CrapJavaGradlePluginTest {
         Path projectRoot = tempDir.toRealPath();
         Path statePath = projectRoot.resolve(".gradle/crap-java/root/crap-java-check/primary-output.path");
         Path storedPath = projectRoot.resolve("report.json ");
-        Files.createDirectories(statePath.getParent());
+        Files.createDirectories(parentOf(statePath));
         Files.writeString(statePath, storedPath + "\nlink\t1\t2\n");
         CrapJavaCheckTask task = newCheckTask(projectRoot);
 
@@ -1155,7 +1155,7 @@ class CrapJavaGradlePluginTest {
     void rememberedStateIgnoresMalformedStoredPath() throws Exception {
         Path projectRoot = tempDir.toRealPath();
         Path statePath = projectRoot.resolve(".gradle/crap-java/root/crap-java-check/primary-output.path");
-        Files.createDirectories(statePath.getParent());
+        Files.createDirectories(parentOf(statePath));
         Files.writeString(statePath, "\u0000\nlink\t1\t2\n");
         CrapJavaCheckTask task = newCheckTask(projectRoot);
 
@@ -1168,8 +1168,8 @@ class CrapJavaGradlePluginTest {
         Project project = ProjectBuilder.builder().withProjectDir(projectRoot.toFile()).build();
         Path builtInJunit = projectRoot.resolve("build/reports/crap-java/TEST-crap-java.xml");
         Path customJunit = projectRoot.resolve("build/reports/crap-java/custom-crap-java-check/TEST-crap-java.xml");
-        Files.createDirectories(builtInJunit.getParent());
-        Files.createDirectories(customJunit.getParent());
+        Files.createDirectories(parentOf(builtInJunit));
+        Files.createDirectories(parentOf(customJunit));
         Files.writeString(builtInJunit, "<testsuites tests=\"1\"/>");
         Files.writeString(customJunit, "<testsuites tests=\"2\"/>");
 
@@ -1191,7 +1191,7 @@ class CrapJavaGradlePluginTest {
         Project project = ProjectBuilder.builder().withProjectDir(projectRoot.toFile()).build();
         Path builtInJunit = projectRoot.resolve("build/reports/crap-java/TEST-crap-java.xml");
         Path customJunit = projectRoot.resolve("build/reports/crap-java/custom-crap-java-check/TEST-crap-java.xml");
-        Files.createDirectories(builtInJunit.getParent());
+        Files.createDirectories(parentOf(builtInJunit));
         Files.writeString(builtInJunit, "<testsuites tests=\"1\"/>");
         CrapJavaCheckTask firstTask = project.getTasks().register("custom-crap-java-check", CrapJavaCheckTask.class).get();
         firstTask.getAnalysisRoot().fileValue(projectRoot.toFile());
@@ -1274,7 +1274,7 @@ class CrapJavaGradlePluginTest {
     }
 
     private void rememberOwnedReport(Path statePath, Path reportPath) throws Exception {
-        Files.createDirectories(statePath.getParent());
+        Files.createDirectories(parentOf(statePath));
         Path ownerPath = statePath.resolveSibling("primary-output.owner");
         createHardLinkOrSkip(ownerPath, reportPath);
         Files.writeString(statePath, reportPath + "\n" + ownership(reportPath) + "\n");
@@ -1282,7 +1282,7 @@ class CrapJavaGradlePluginTest {
 
     private void assumeHardLinksAvailable(Path directory) throws Exception {
         Path target = Files.createTempFile(directory, ".crap-java-hard-link-target-", ".tmp");
-        Path link = target.resolveSibling(target.getFileName() + ".link");
+        Path link = target.resolveSibling(fileNameOf(target) + ".link");
         try {
             createHardLinkOrSkip(link, target);
         } finally {
@@ -1349,6 +1349,18 @@ class CrapJavaGradlePluginTest {
 
     private boolean isWindows() {
         return System.getProperty("os.name", "").toLowerCase(Locale.ROOT).contains("win");
+    }
+
+    private Path parentOf(Path path) {
+        return Objects.requireNonNull(path.getParent(), () -> "Expected parent path for " + path);
+    }
+
+    private Path fileNameOf(Path path) {
+        return Objects.requireNonNull(path.getFileName(), () -> "Expected file name for " + path);
+    }
+
+    private Path rootOf(Path path) {
+        return Objects.requireNonNull(path.getRoot(), () -> "Expected filesystem root for " + path);
     }
 }
 

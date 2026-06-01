@@ -48,6 +48,7 @@
     <cognitive-java.version>0.6.0</cognitive-java.version>
     <jacoco.version>0.8.14</jacoco.version>
     <junit.version>6.1.0</junit.version>
+    <maven.surefire.plugin.version>3.5.6</maven.surefire.plugin.version>
     <jspecify.version>1.0.0</jspecify.version>
     <jtoon.version>1.0.9</jtoon.version>
     <jackson.version>2.21.3</jackson.version>
@@ -131,7 +132,24 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
-          <version>3.5.6</version>
+          <version>${maven.surefire.plugin.version}</version>
+          <dependencies>
+            <dependency>
+              <groupId>org.apache.maven.surefire</groupId>
+              <artifactId>surefire-junit-platform</artifactId>
+              <version>${maven.surefire.plugin.version}</version>
+            </dependency>
+            <dependency>
+              <groupId>org.junit.platform</groupId>
+              <artifactId>junit-platform-engine</artifactId>
+              <version>${junit.version}</version>
+            </dependency>
+            <dependency>
+              <groupId>org.junit.platform</groupId>
+              <artifactId>junit-platform-launcher</artifactId>
+              <version>${junit.version}</version>
+            </dependency>
+          </dependencies>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
