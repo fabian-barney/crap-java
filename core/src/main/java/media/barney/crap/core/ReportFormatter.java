@@ -358,6 +358,7 @@ final class ReportFormatter {
 
     private static String testcaseName(CrapReport.MethodReport method) {
         return String.format(
+                Locale.ROOT,
                 "%s:%d [CRAP=%s, CC=%d, Cov=%s (%s)]",
                 method.methodName(),
                 method.startLine(),
