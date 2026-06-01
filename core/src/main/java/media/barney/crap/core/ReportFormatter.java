@@ -263,6 +263,7 @@ final class ReportFormatter {
                                                double threshold,
                                                boolean omitRedundancy,
                                                String time) {
+        String diagnosticText = junitDiagnosticText(method, threshold);
         return new JunitTestCase(
                 method.sourcePath(),
                 testcaseName(method),
@@ -270,8 +271,9 @@ final class ReportFormatter {
                 method.startLine(),
                 time,
                 junitProperties(method, omitRedundancy),
-                junitFailure(method, threshold),
-                junitSkipped(method, threshold)
+                diagnosticText,
+                junitFailure(method, threshold, diagnosticText),
+                junitSkipped(method, diagnosticText)
         );
     }
 
@@ -317,22 +319,24 @@ final class ReportFormatter {
         return new JunitProperties(properties);
     }
 
-    private static @Nullable JunitFailure junitFailure(CrapReport.MethodReport method, double threshold) {
+    private static @Nullable JunitFailure junitFailure(CrapReport.MethodReport method,
+                                                       double threshold,
+                                                       String diagnosticText) {
         if (method.status() != MethodStatus.FAILED) {
             return null;
         }
         String message = "CRAP threshold exceeded: "
                 + formatDisplayNumber(method.crapScore()) + " > " + formatDisplayNumber(threshold);
-        return new JunitFailure(message, "crap-java.threshold", junitDiagnosticText(method, threshold));
+        return new JunitFailure(message, "crap-java.threshold", diagnosticText);
     }
 
-    private static @Nullable JunitSkipped junitSkipped(CrapReport.MethodReport method, double threshold) {
+    private static @Nullable JunitSkipped junitSkipped(CrapReport.MethodReport method, String diagnosticText) {
         if (method.status() != MethodStatus.SKIPPED) {
             return null;
         }
         return new JunitSkipped(
                 "CRAP score unavailable",
-                junitDiagnosticText(method, threshold)
+                diagnosticText
         );
     }
 
@@ -353,7 +357,16 @@ final class ReportFormatter {
     }
 
     private static String testcaseName(CrapReport.MethodReport method) {
-        return method.methodName() + ":" + method.startLine();
+        return String.format(
+                Locale.ROOT,
+                "%s:%d [CRAP=%s, CC=%d, Cov=%s (%s)]",
+                method.methodName(),
+                method.startLine(),
+                formatDisplayNumber(method.crapScore()),
+                method.complexity(),
+                formatCoverage(method.coveragePercent()),
+                method.coverageKind()
+        );
     }
 
     private static String junitDiagnosticText(CrapReport.MethodReport method, double threshold) {
@@ -489,6 +502,7 @@ final class ReportFormatter {
             @JacksonXmlProperty(isAttribute = true) int line,
             @JacksonXmlProperty(isAttribute = true) String time,
             @JacksonXmlProperty(localName = "properties") JunitProperties properties,
+            @JacksonXmlProperty(localName = "system-out") String systemOut,
             @Nullable JunitFailure failure,
             @Nullable JunitSkipped skipped
     ) {
