@@ -292,9 +292,9 @@ class MainTest {
         assertEquals(2, exit);
         assertEquals("", utf8(out));
         assertTrue(junit.contains("<testsuites tests=\"3\" failures=\"1\" errors=\"0\" skipped=\"1\" time=\""));
-        assertTrue(junit.contains("name=\"danger:4\""));
-        assertTrue(junit.contains("name=\"safe:14\""));
-        assertTrue(junit.contains("name=\"unknown:18\""));
+        assertTrue(junit.contains("name=\"danger:4 [CRAP="));
+        assertTrue(junit.contains("name=\"safe:14 [CRAP="));
+        assertTrue(junit.contains("name=\"unknown:18 [CRAP="));
     }
 
     @Test
@@ -357,9 +357,9 @@ class MainTest {
         assertFalse(primary.contains("\"method\": \"safe\""));
         assertFalse(primary.contains("\"method\": \"unknown\""));
         assertTrue(junit.contains("<testsuites tests=\"3\" failures=\"1\" errors=\"0\" skipped=\"1\" time=\""));
-        assertTrue(junit.contains("name=\"danger:4\""));
-        assertTrue(junit.contains("name=\"safe:14\""));
-        assertTrue(junit.contains("name=\"unknown:18\""));
+        assertTrue(junit.contains("name=\"danger:4 [CRAP="));
+        assertTrue(junit.contains("name=\"safe:14 [CRAP="));
+        assertTrue(junit.contains("name=\"unknown:18 [CRAP="));
     }
 
     @Test
@@ -426,9 +426,9 @@ class MainTest {
         assertFalse(primary.contains("\"method\": \"safe\""));
         assertFalse(primary.contains("\"method\": \"unknown\""));
         assertTrue(junit.contains("<testsuites tests=\"3\" failures=\"1\" errors=\"0\" skipped=\"1\" time=\""));
-        assertTrue(junit.contains("name=\"danger:4\""));
-        assertTrue(junit.contains("name=\"safe:14\""));
-        assertTrue(junit.contains("name=\"unknown:18\""));
+        assertTrue(junit.contains("name=\"danger:4 [CRAP="));
+        assertTrue(junit.contains("name=\"safe:14 [CRAP="));
+        assertTrue(junit.contains("name=\"unknown:18 [CRAP="));
     }
 
     @Test
@@ -499,9 +499,9 @@ class MainTest {
         assertTrue(primary.contains("\"method\": \"danger\""));
         assertFalse(primary.contains("\"method\": \"safe\""));
         assertFalse(primary.contains("\"method\": \"unknown\""));
-        assertTrue(junit.contains("name=\"danger:4\""));
-        assertTrue(junit.contains("name=\"safe:14\""));
-        assertTrue(junit.contains("name=\"unknown:18\""));
+        assertTrue(junit.contains("name=\"danger:4 [CRAP="));
+        assertTrue(junit.contains("name=\"safe:14 [CRAP="));
+        assertTrue(junit.contains("name=\"unknown:18 [CRAP="));
     }
 
     @Test

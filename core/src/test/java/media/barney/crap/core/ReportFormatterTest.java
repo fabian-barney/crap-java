@@ -211,7 +211,7 @@ class ReportFormatterTest {
 
         Document document = parseXml(report);
         Element root = document.getDocumentElement();
-        Element danger = testcaseByName(document, "danger:4");
+        Element danger = testcaseByName(document, "danger:4 [CRAP=9.6, CC=5, Cov=10.0% (instruction)]");
 
         assertEquals("1", root.getAttribute("tests"));
         assertEquals("1", root.getAttribute("failures"));
@@ -220,8 +220,8 @@ class ReportFormatterTest {
         assertEquals("src/main/java/demo/Sample.java", danger.getAttribute("file"));
         assertEquals("0.0", danger.getAttribute("time"));
         assertTrue(report.contains("<property name=\"threshold\" value=\"8.0\"/>"));
-        assertFalse(hasTestcase(document, "safe:9"));
-        assertFalse(hasTestcase(document, "unknown:20"));
+        assertFalse(hasTestcaseNameStartingWith(document, "safe:9 "));
+        assertFalse(hasTestcaseNameStartingWith(document, "unknown:20 "));
     }
 
     @Test
@@ -370,8 +370,10 @@ class ReportFormatterTest {
         Element suite = (Element) document.getElementsByTagName("testsuite").item(0);
         Element failure = (Element) document.getElementsByTagName("failure").item(0);
         Element skipped = (Element) document.getElementsByTagName("skipped").item(0);
-        Element danger = testcaseByName(document, "danger:4");
-        Element unknown = testcaseByName(document, "unknown:20");
+        Element danger = testcaseByName(document, "danger:4 [CRAP=9.6, CC=5, Cov=10.0% (instruction)]");
+        Element unknown = testcaseByName(document, "unknown:20 [CRAP=N/A, CC=2, Cov=N/A (N/A)]");
+        String dangerSystemOut = childText(danger, "system-out");
+        String unknownSystemOut = childText(unknown, "system-out");
 
         assertEquals("testsuites", root.getNodeName());
         assertEquals("2", root.getAttribute("tests"));
@@ -395,11 +397,19 @@ class ReportFormatterTest {
         assertTrue(failure.getTextContent().contains("Threshold: 8.0"));
         assertTrue(failure.getTextContent().contains("Coverage: 10.0% (instruction)"));
         assertTrue(failure.getTextContent().contains("Source: src/main/java/demo/Sample.java:4-6"));
+        assertTrue(dangerSystemOut.contains("CRAP score: 9.6"));
+        assertTrue(dangerSystemOut.contains("Threshold: 8.0"));
+        assertTrue(dangerSystemOut.contains("Coverage: 10.0% (instruction)"));
+        assertTrue(dangerSystemOut.contains("Source: src/main/java/demo/Sample.java:4-6"));
         assertEquals("CRAP score unavailable", skipped.getAttribute("message"));
         assertTrue(skipped.getTextContent().contains("CRAP score: N/A"));
         assertTrue(skipped.getTextContent().contains("Threshold: 8.0"));
         assertTrue(skipped.getTextContent().contains("Coverage: N/A (N/A)"));
         assertTrue(skipped.getTextContent().contains("Source: src/main/java/demo/Sample.java:20-22"));
+        assertTrue(unknownSystemOut.contains("CRAP score: N/A"));
+        assertTrue(unknownSystemOut.contains("Threshold: 8.0"));
+        assertTrue(unknownSystemOut.contains("Coverage: N/A (N/A)"));
+        assertTrue(unknownSystemOut.contains("Source: src/main/java/demo/Sample.java:20-22"));
     }
 
     @Test
@@ -436,8 +446,10 @@ class ReportFormatterTest {
         );
 
         String junit = ReportFormatter.format(report(metric), ReportFormat.JUNIT);
+        String name = "amp&apos'quote\"lt<gt>:1 [CRAP=1.0, CC=1, Cov=100.0% (instruction)]";
 
         assertEquals("amp&apos'quote\"lt<gt>", propertyValue(parseXml(junit), "methodName"));
+        assertEquals(name, testcaseByName(parseXml(junit), name).getAttribute("name"));
     }
 
     @Test
@@ -525,15 +537,23 @@ class ReportFormatterTest {
         throw new AssertionError("Missing XML property: " + name);
     }
 
-    private static boolean hasTestcase(Document document, String name) {
+    private static boolean hasTestcaseNameStartingWith(Document document, String prefix) {
         NodeList testcases = document.getElementsByTagName("testcase");
         for (int index = 0; index < testcases.getLength(); index++) {
             Element testcase = (Element) testcases.item(index);
-            if (name.equals(testcase.getAttribute("name"))) {
+            if (testcase.getAttribute("name").startsWith(prefix)) {
                 return true;
             }
         }
         return false;
+    }
+
+    private static String childText(Element element, String tagName) {
+        NodeList children = element.getElementsByTagName(tagName);
+        if (children.getLength() == 0) {
+            throw new AssertionError("Missing XML child: " + tagName);
+        }
+        return children.item(0).getTextContent();
     }
 
     private static Element testcaseByName(Document document, String name) {
