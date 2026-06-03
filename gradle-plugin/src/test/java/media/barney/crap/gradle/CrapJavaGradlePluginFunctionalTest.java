@@ -13,6 +13,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -447,7 +448,7 @@ class CrapJavaGradlePluginFunctionalTest {
                 """);
         BuildResult firstResult = runBuild("crap-java-check");
         assertEquals(TaskOutcome.SUCCESS, firstResult.task(":crap-java-check").getOutcome());
-        Files.createDirectories(newJunit.getParent());
+        Files.createDirectories(parentOf(newJunit));
         Files.writeString(newJunit, "<testsuites tests=\"99\"/>");
         writeSingleModuleProject("""
 
@@ -682,17 +683,25 @@ class CrapJavaGradlePluginFunctionalTest {
 
     private void writeFile(String relativePath, String content) throws IOException {
         Path file = tempDir.resolve(relativePath);
-        Files.createDirectories(file.getParent());
+        Files.createDirectories(parentOf(file));
         Files.writeString(file, content);
     }
 
     private List<String> reportFileNames(String relativePath) throws IOException {
         try (var files = Files.list(tempDir.resolve(relativePath))) {
             return files
-                    .map(path -> path.getFileName().toString())
+                    .map(path -> fileNameOf(path).toString())
                     .sorted(Comparator.naturalOrder())
                     .toList();
         }
+    }
+
+    private Path parentOf(Path path) {
+        return Objects.requireNonNull(path.getParent(), () -> "Expected parent path for " + path);
+    }
+
+    private Path fileNameOf(Path path) {
+        return Objects.requireNonNull(path.getFileName(), () -> "Expected file name for " + path);
     }
 }
 

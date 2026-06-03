@@ -23,6 +23,7 @@ import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.PathSensitive;
 import org.gradle.api.tasks.PathSensitivity;
 import org.gradle.api.tasks.TaskAction;
+import org.gradle.work.DisableCachingByDefault;
 
 import java.io.File;
 import java.io.IOException;
@@ -47,6 +48,7 @@ import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
+@DisableCachingByDefault(because = "Runs analysis with local state and generated reports outside Gradle's cache model.")
 public abstract class CrapJavaCheckTask extends DefaultTask {
 
     private static final String LINK_OWNERSHIP = "link";
