@@ -193,6 +193,7 @@
             <artifactId>crap-java-maven-plugin</artifactId>
             <version>${project.version}</version>
             <configuration>
+              <threshold>8.0</threshold>
             </configuration>
             <executions>
               <execution>
@@ -230,6 +231,7 @@
             <artifactId>crap-java-maven-plugin</artifactId>
             <version>${project.version}</version>
             <configuration>
+              <threshold>8.0</threshold>
             </configuration>
             <executions>
               <execution>
