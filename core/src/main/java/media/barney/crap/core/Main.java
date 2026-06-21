@@ -197,7 +197,7 @@ public final class Main {
                   crap-java --source-root src/java       Override production source roots, repeatable
                   crap-java --output report.toon          Write the selected report format to a file
                   crap-java --junit-report report.xml     Also write a JUnit XML report for CI
-                  crap-java --threshold 6                 Override the CRAP threshold (default: 8.0)
+                  crap-java --threshold 6                 Override the CRAP threshold (default: 6.0)
                   crap-java <path...>                     Analyze files, or for directory args analyze nested source roots under each path
                   crap-java --help                        Print this help message
 

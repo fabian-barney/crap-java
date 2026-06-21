@@ -26,7 +26,7 @@ class ReportFormatterTest {
         ), ReportFormat.TEXT);
 
         assertTrue(report.contains("Status: passed"));
-        assertTrue(report.contains("Threshold: 8.0"));
+        assertTrue(report.contains("Threshold: 6.0"));
         assertTrue(report.contains("CovKind"));
         assertTrue(report.contains("passed"));
         assertTrue(report.contains("skipped"));
@@ -70,7 +70,7 @@ class ReportFormatterTest {
         String expected = """
                 {
                   "status": "failed",
-                  "threshold": 8.0,
+                  "threshold": 6.0,
                   "methods": [
                     {
                       "status": "failed",
@@ -109,7 +109,7 @@ class ReportFormatterTest {
         ), ReportFormat.TOON);
 
         assertTrue(report.contains("status: passed"));
-        assertTrue(report.contains("threshold: 8"));
+        assertTrue(report.contains("threshold: 6"));
         assertTrue(report.contains("methods[2]{status,crap,cc,cov,covKind,method,src,lineStart,lineEnd}:"));
         assertTrue(report.contains("passed,4.5,3,85,instruction,foo,src/main/java/demo/Sample.java,4,6"));
         assertTrue(report.contains("skipped,null,2,null,N/A,bar,src/main/java/demo/Sample.java,9,11"));
@@ -135,7 +135,7 @@ class ReportFormatterTest {
         String expected = """
                 {
                   "status": "failed",
-                  "threshold": 8.0,
+                  "threshold": 6.0,
                   "methods": [
                     {
                       "crap": 9.645,
@@ -165,7 +165,7 @@ class ReportFormatterTest {
         String expected = """
                 {
                   "status": "failed",
-                  "threshold": 8.0,
+                  "threshold": 6.0,
                   "methods": [
                     {
                       "status": "failed",
@@ -193,7 +193,7 @@ class ReportFormatterTest {
                 metric("unknown", "demo.Sample", 20, 2, null, null)
         ), ReportFormat.TEXT, true, false);
 
-        assertTrue(report.startsWith("CRAP Report\n===========\nStatus: failed\nThreshold: 8.0\n"));
+        assertTrue(report.startsWith("CRAP Report\n===========\nStatus: failed\nThreshold: 6.0\n"));
         assertTrue(report.contains("Status"));
         assertTrue(report.contains("failed"));
         assertTrue(report.contains("danger"));
@@ -219,7 +219,7 @@ class ReportFormatterTest {
         assertEquals("src/main/java/demo/Sample.java", danger.getAttribute("classname"));
         assertEquals("src/main/java/demo/Sample.java", danger.getAttribute("file"));
         assertEquals("0.0", danger.getAttribute("time"));
-        assertTrue(report.contains("<property name=\"threshold\" value=\"8.0\"/>"));
+        assertTrue(report.contains("<property name=\"threshold\" value=\"6.0\"/>"));
         assertFalse(hasTestcaseNameStartingWith(document, "safe:9 "));
         assertFalse(hasTestcaseNameStartingWith(document, "unknown:20 "));
     }
@@ -234,7 +234,7 @@ class ReportFormatterTest {
         String expected = """
                 {
                   "status": "failed",
-                  "threshold": 8.0,
+                  "threshold": 6.0,
                   "methods": [
                     {
                       "crap": 9.645,
@@ -271,7 +271,7 @@ class ReportFormatterTest {
         ), ReportFormat.TOON, false, true);
 
         assertTrue(report.contains("status: passed"));
-        assertTrue(report.contains("threshold: 8"));
+        assertTrue(report.contains("threshold: 6"));
         assertTrue(report.contains("methods[2]{crap,cc,cov,covKind,method,src,lineStart,lineEnd}:"));
         assertTrue(report.contains("4.5,3,85,instruction,foo,src/main/java/demo/Sample.java,4,6"));
         assertTrue(report.contains("null,2,null,N/A,bar,src/main/java/demo/Sample.java,9,11"));
@@ -288,7 +288,7 @@ class ReportFormatterTest {
         List<String> lines = report.lines().toList();
         int headerIndex = tableHeaderIndex(lines, "Method");
 
-        assertTrue(report.startsWith("CRAP Report\n===========\nStatus: failed\nThreshold: 8.0\n"));
+        assertTrue(report.startsWith("CRAP Report\n===========\nStatus: failed\nThreshold: 6.0\n"));
         assertTrue(lines.get(headerIndex).startsWith("Method"));
         assertFalse(lines.get(headerIndex).startsWith("Status"));
         assertTrue(report.contains("danger"));
@@ -305,7 +305,7 @@ class ReportFormatterTest {
         Element root = parseXml(report).getDocumentElement();
 
         assertEquals("2", root.getAttribute("tests"));
-        assertTrue(report.contains("<property name=\"threshold\" value=\"8.0\"/>"));
+        assertTrue(report.contains("<property name=\"threshold\" value=\"6.0\"/>"));
         assertTrue(report.contains("<property name=\"methodName\" value=\"danger\"/>"));
         assertFalse(report.contains("<property name=\"status\""));
     }
@@ -318,7 +318,7 @@ class ReportFormatterTest {
         ), ReportFormat.TOON, true, true);
 
         assertTrue(report.contains("status: failed"));
-        assertTrue(report.contains("threshold: 8"));
+        assertTrue(report.contains("threshold: 6"));
         assertTrue(report.contains("methods[1]{crap,cc,cov,covKind,method,src,lineStart,lineEnd}:"));
         assertTrue(report.contains("9.645,5,10,instruction,danger,src/main/java/demo/Sample.java,4,6"));
     }
@@ -331,7 +331,7 @@ class ReportFormatterTest {
                 metric("unknown", "demo.Sample", 20, 2, null, null)
         ), ReportFormat.TEXT, true, true);
 
-        assertTrue(report.startsWith("CRAP Report\n===========\nStatus: failed\nThreshold: 8.0\n"));
+        assertTrue(report.startsWith("CRAP Report\n===========\nStatus: failed\nThreshold: 6.0\n"));
         assertTrue(report.contains("Method"));
         assertTrue(report.contains("danger"));
         assertTrue(report.contains("9.6"));
@@ -352,7 +352,7 @@ class ReportFormatterTest {
                 metric("unknown", "demo.Sample", 20, 2, null, null)
         ), ReportFormat.TEXT, true, true);
 
-        assertTrue(report.startsWith("CRAP Report\n===========\nStatus: passed\nThreshold: 8.0\n"));
+        assertTrue(report.startsWith("CRAP Report\n===========\nStatus: passed\nThreshold: 6.0\n"));
         assertTrue(report.contains("Method"));
         assertFalse(report.contains("safe"));
         assertFalse(report.contains("unknown"));
@@ -382,7 +382,7 @@ class ReportFormatterTest {
         assertEquals("1", root.getAttribute("skipped"));
         assertEquals("1.2", root.getAttribute("time"));
         assertEquals("1.2", suite.getAttribute("time"));
-        assertTrue(report.contains("    <property name=\"threshold\" value=\"8.0\"/>"));
+        assertTrue(report.contains("    <property name=\"threshold\" value=\"6.0\"/>"));
         assertTrue(report.contains("<property name=\"coverageKind\" value=\"instruction\"/>"));
         assertTrue(report.contains("<property name=\"coverageKind\" value=\"N/A\"/>"));
         assertEquals("src/main/java/demo/Sample.java", danger.getAttribute("classname"));
@@ -391,23 +391,23 @@ class ReportFormatterTest {
         assertEquals("src/main/java/demo/Sample.java", unknown.getAttribute("classname"));
         assertEquals("src/main/java/demo/Sample.java", unknown.getAttribute("file"));
         assertEquals("0.6", unknown.getAttribute("time"));
-        assertEquals("CRAP threshold exceeded: 9.6 > 8.0", failure.getAttribute("message"));
+        assertEquals("CRAP threshold exceeded: 9.6 > 6.0", failure.getAttribute("message"));
         assertEquals("crap-java.threshold", failure.getAttribute("type"));
         assertTrue(failure.getTextContent().contains("CRAP score: 9.6"));
-        assertTrue(failure.getTextContent().contains("Threshold: 8.0"));
+        assertTrue(failure.getTextContent().contains("Threshold: 6.0"));
         assertTrue(failure.getTextContent().contains("Coverage: 10.0% (instruction)"));
         assertTrue(failure.getTextContent().contains("Source: src/main/java/demo/Sample.java:4-6"));
         assertTrue(dangerSystemOut.contains("CRAP score: 9.6"));
-        assertTrue(dangerSystemOut.contains("Threshold: 8.0"));
+        assertTrue(dangerSystemOut.contains("Threshold: 6.0"));
         assertTrue(dangerSystemOut.contains("Coverage: 10.0% (instruction)"));
         assertTrue(dangerSystemOut.contains("Source: src/main/java/demo/Sample.java:4-6"));
         assertEquals("CRAP score unavailable", skipped.getAttribute("message"));
         assertTrue(skipped.getTextContent().contains("CRAP score: N/A"));
-        assertTrue(skipped.getTextContent().contains("Threshold: 8.0"));
+        assertTrue(skipped.getTextContent().contains("Threshold: 6.0"));
         assertTrue(skipped.getTextContent().contains("Coverage: N/A (N/A)"));
         assertTrue(skipped.getTextContent().contains("Source: src/main/java/demo/Sample.java:20-22"));
         assertTrue(unknownSystemOut.contains("CRAP score: N/A"));
-        assertTrue(unknownSystemOut.contains("Threshold: 8.0"));
+        assertTrue(unknownSystemOut.contains("Threshold: 6.0"));
         assertTrue(unknownSystemOut.contains("Coverage: N/A (N/A)"));
         assertTrue(unknownSystemOut.contains("Source: src/main/java/demo/Sample.java:20-22"));
     }

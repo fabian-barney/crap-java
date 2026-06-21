@@ -334,7 +334,7 @@ class CliApplicationTest {
         assertTrue(utf8(noisyErr).contains("threshold below 4.0 is likely too noisy"));
         assertTrue(utf8(noisyErr).contains("Use 8.0 for hard gates, target 6.0 during implementation"));
         assertTrue(utf8(lenientErr).contains("threshold above 8.0 is too lenient even for hard gates"));
-        assertTrue(utf8(lenientErr).contains("8.0 default when in doubt"));
+        assertTrue(utf8(lenientErr).contains("6.0 default when in doubt"));
     }
 
     @Test

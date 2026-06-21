@@ -351,7 +351,7 @@ class MainTest {
         assertEquals(2, exit);
         assertEquals("", utf8(out));
         assertTrue(primary.contains("\"status\": \"failed\""));
-        assertTrue(primary.contains("\"threshold\": 8.0"));
+        assertTrue(primary.contains("\"threshold\": 6.0"));
         assertFalse(primary.contains("      \"status\":"));
         assertTrue(primary.contains("\"method\": \"danger\""));
         assertFalse(primary.contains("\"method\": \"safe\""));
@@ -421,7 +421,7 @@ class MainTest {
         assertEquals(2, exit);
         assertEquals("", utf8(out));
         assertTrue(primary.contains("\"status\": \"failed\""));
-        assertTrue(primary.contains("\"threshold\": 8.0"));
+        assertTrue(primary.contains("\"threshold\": 6.0"));
         assertTrue(primary.contains("\"method\": \"danger\""));
         assertFalse(primary.contains("\"method\": \"safe\""));
         assertFalse(primary.contains("\"method\": \"unknown\""));
@@ -457,7 +457,7 @@ class MainTest {
         assertEquals(2, exit);
         assertEquals("", utf8(out));
         assertTrue(primary.contains("\"status\": \"failed\""));
-        assertTrue(primary.contains("\"threshold\": 8.0"));
+        assertTrue(primary.contains("\"threshold\": 6.0"));
         assertFalse(primary.contains("      \"status\":"));
         assertTrue(primary.contains("\"method\": \"danger\""));
         assertTrue(primary.contains("\"method\": \"safe\""));

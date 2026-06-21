@@ -58,7 +58,7 @@ public class CrapJavaCheckMojo extends AbstractMojo {
     @Parameter(property = "crapJava.junitReport")
     private @Nullable File junitReport;
 
-    @Parameter(property = "crapJava.threshold", defaultValue = "8.0")
+    @Parameter(property = "crapJava.threshold", defaultValue = "6.0")
     private double threshold = Main.DEFAULT_THRESHOLD;
 
     @Parameter

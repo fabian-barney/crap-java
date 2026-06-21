@@ -46,7 +46,7 @@ class CrapJavaGradlePluginTest {
 
         assertEquals("verification", checkTask.getGroup());
         assertEquals("Runs the crap-java CRAP metric gate.", checkTask.getDescription());
-        assertEquals(8.0, extension.getThreshold().get());
+        assertEquals(6.0, extension.getThreshold().get());
         assertFalse(extension.getAgent().get());
         assertEquals("none", extension.getFormat().get());
         assertFalse(extension.getFailuresOnly().get());
@@ -60,7 +60,7 @@ class CrapJavaGradlePluginTest {
         assertEquals(List.of(), extension.getExcludeClasses().get());
         assertEquals(List.of(), extension.getExcludeAnnotations().get());
         assertTrue(extension.getUseDefaultExclusions().get());
-        assertEquals(8.0, checkTask.getThreshold().get());
+        assertEquals(6.0, checkTask.getThreshold().get());
         assertEquals("none", checkTask.getFormat().get());
         assertFalse(checkTask.getAgent().get());
         assertFalse(checkTask.getFailuresOnly().get());
@@ -89,11 +89,11 @@ class CrapJavaGradlePluginTest {
 
         project.getPluginManager().apply("java");
         project.getPluginManager().apply(CrapJavaGradlePlugin.class);
-        project.getExtensions().getByType(CrapJavaExtension.class).getThreshold().set(6.0);
+        project.getExtensions().getByType(CrapJavaExtension.class).getThreshold().set(8.0);
 
         CrapJavaCheckTask checkTask = (CrapJavaCheckTask) project.getTasks().getByName("crap-java-check");
 
-        assertEquals(6.0, checkTask.getThreshold().get());
+        assertEquals(8.0, checkTask.getThreshold().get());
     }
 
     @Test
@@ -139,7 +139,7 @@ class CrapJavaGradlePluginTest {
 
         CrapJavaCheckTask checkTask = project.getTasks().register("custom-crap-java-check", CrapJavaCheckTask.class).get();
 
-        assertEquals(8.0, checkTask.getThreshold().get());
+        assertEquals(6.0, checkTask.getThreshold().get());
         assertFalse(checkTask.getAgent().get());
         assertEquals("none", checkTask.getFormat().get());
         assertFalse(checkTask.getFailuresOnly().get());

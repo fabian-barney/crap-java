@@ -226,10 +226,10 @@ Assigned boolean CLI values must be lowercase `true` or `false`; bare boolean fl
 `--junit-report <path>` always writes the complete unfiltered JUnit XML sidecar,
 and it can be combined with any primary format, including `none`.
 
-The default threshold is `8.0`. Values below `4.0` print a warning because they
+The default threshold is `6.0`. Values below `4.0` print a warning because they
 are likely too noisy; values above `8.0` print a warning because they are too
 lenient even for hard gates. The warning recommends `8.0` for hard gates,
-targeting `6.0` during implementation, and using the `8.0` default when in
+targeting `6.0` during implementation, and using the `6.0` default when in
 doubt.
 
 The JUnit XML format exposes each analyzed method as a testcase and is shaped

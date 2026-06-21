@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Changed
+
+- Reduced the default CRAP threshold from `8.0` to `6.0` while keeping the recommended `4.0` to `8.0` range unchanged.
+
 ## 0.6.1 - 2026-06-01
 
 ### Fixed

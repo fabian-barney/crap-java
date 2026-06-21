@@ -307,7 +307,7 @@ class CrapJavaGradlePluginFunctionalTest {
         assertTrue(Files.exists(junit));
         assertFalse(Files.exists(tempDir.resolve("build/reports/crap-java/TEST-crap-java.xml")));
         assertTrue(primaryReport.contains("\"status\": \"passed\""));
-        assertTrue(primaryReport.contains("\"threshold\": 8.0"));
+        assertTrue(primaryReport.contains("\"threshold\": 6.0"));
         assertTrue(primaryReport.contains("\"method\": \"alpha\""));
         assertFalse(primaryReport.contains("      \"status\":"));
         assertTrue(junitReport.contains("<testsuites tests=\"1\" failures=\"0\" errors=\"0\" skipped=\"0\" time=\""));
