@@ -152,7 +152,7 @@ java -jar cli/target/crap-java-cli-0.6.1.jar
 --source-root <path>  Override production source roots; repeatable
 --output <path>       Write the selected output format to a file instead of stdout
 --junit-report <path> Also write a JUnit XML report for CI test-report UIs
---threshold <number>  Override the CRAP threshold (`8.0` by default)
+--threshold <number>  Override the CRAP threshold (`6.0` by default)
 <file ...>            Analyze only these files
 <directory ...>       Analyze all Java files under each directory's nested source roots
 ```
@@ -176,8 +176,8 @@ java -jar cli/target/crap-java-cli-0.6.1.jar --omit-redundancy=false --format js
 java -jar cli/target/crap-java-cli-0.6.1.jar --agent
 java -jar cli/target/crap-java-cli-0.6.1.jar --agent --format junit --output target/crap-java/TEST-crap-java-primary.xml
 java -jar cli/target/crap-java-cli-0.6.1.jar --junit-report target/crap-java/TEST-crap-java.xml
-java -jar cli/target/crap-java-cli-0.6.1.jar --threshold 6
-java -jar cli/target/crap-java-cli-0.6.1.jar --threshold=6
+java -jar cli/target/crap-java-cli-0.6.1.jar --threshold 8
+java -jar cli/target/crap-java-cli-0.6.1.jar --threshold=8
 java -jar cli/target/crap-java-cli-0.6.1.jar --exclude 'module-a/**' --exclude-class '.*MapperImpl$'
 java -jar cli/target/crap-java-cli-0.6.1.jar --exclude='module-a/**' --exclude-class='.*MapperImpl$'
 java -jar cli/target/crap-java-cli-0.6.1.jar --source-root src/java --source-root src/main/java17
@@ -277,7 +277,7 @@ Configure default report behavior in `build.gradle(.kts)`:
 
 ```kotlin
 crapJava {
-    threshold.set(6.0)
+    threshold.set(8.0)
     format.set("json")
     agent.set(false)
     failuresOnly.set(false)
@@ -388,7 +388,7 @@ mvn verify -DcrapJava.agent=true
 mvn verify -DcrapJava.failuresOnly=false -DcrapJava.omitRedundancy=true
 mvn verify -DcrapJava.junit=false
 mvn verify -DcrapJava.junitReport=target/custom-crap-java.xml
-mvn verify -DcrapJava.threshold=6.0
+mvn verify -DcrapJava.threshold=8.0
 mvn verify -DcrapJava.excludes='module-a/**,**/custom-generated/**'
 mvn verify -DcrapJava.excludeClasses='.*MapperImpl$' -DcrapJava.excludeAnnotations=Generated
 mvn verify -DcrapJava.useDefaultExclusions=false
@@ -415,7 +415,7 @@ mvn verify -DcrapJava.junitReport=target/custom-crap-java.xml
 Override the threshold with:
 
 ```bash
-mvn verify -DcrapJava.threshold=6.0
+mvn verify -DcrapJava.threshold=8.0
 ```
 
 In GitLab CI, upload the generated XML with `artifacts:reports:junit`. In
