@@ -277,7 +277,6 @@ Configure default report behavior in `build.gradle(.kts)`:
 
 ```kotlin
 crapJava {
-    threshold.set(8.0)
     format.set("json")
     agent.set(false)
     failuresOnly.set(false)
