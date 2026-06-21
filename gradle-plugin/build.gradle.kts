@@ -8,6 +8,7 @@ import org.gradle.api.tasks.testing.Test
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.jvm.tasks.Jar
 import org.gradle.api.publish.maven.MavenPublication
+import org.gradle.plugins.signing.Sign
 import org.gradle.testing.jacoco.tasks.JacocoReport
 import javax.xml.parsers.DocumentBuilderFactory
 
@@ -210,6 +211,10 @@ signing {
         useInMemoryPgpKeys(key, gpgPassphrase.orNull)
         sign(publishing.publications)
     }
+}
+
+tasks.withType<Sign>().configureEach {
+    onlyIf { !gpgPrivateKey.orNull.isNullOrBlank() }
 }
 
 gradlePlugin {

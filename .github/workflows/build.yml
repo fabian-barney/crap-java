@@ -224,6 +224,7 @@ jobs:
           java -jar "$CLI_JAR" \
             --format none \
             --junit-report target/crap-java/TEST-crap-java-gradle-plugin.xml \
+            --threshold 8.0 \
             --build-tool gradle \
             gradle-plugin/src/main/java
 

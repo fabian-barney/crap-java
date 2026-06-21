@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 
 final class Thresholds {
 
-    static final double DEFAULT = 8.0;
+    static final double DEFAULT = 6.0;
     // Keep the warning boundary independent from the recommended default.
     private static final double TOO_LENIENT_BOUNDARY = 8.0;
 
@@ -56,6 +56,6 @@ final class Thresholds {
 
     private static String recommendation() {
         return "Use 8.0 for hard gates, target 6.0 during implementation, "
-                + "and use the 8.0 default when in doubt.";
+                + "and use the 6.0 default when in doubt.";
     }
 }

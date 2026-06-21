@@ -65,7 +65,7 @@ class CrapJavaCheckMojoTest {
                 "--format",
                 "none",
                 "--threshold",
-                "8.0",
+                "6.0",
                 "--junit-report",
                 root.resolve("target/crap-java/TEST-crap-java.xml").toString()
         ), List.of(runner.args));
@@ -93,7 +93,7 @@ class CrapJavaCheckMojoTest {
                 "--source-root",
                 sourceRoot.toString(),
                 "--threshold",
-                "8.0",
+                "6.0",
                 "--junit-report",
                 root.resolve("target/crap-java/TEST-crap-java.xml").toString()
         ), List.of(runner.args));
@@ -122,7 +122,7 @@ class CrapJavaCheckMojoTest {
                 "--format",
                 "none",
                 "--threshold",
-                "8.0",
+                "6.0",
                 "--junit-report",
                 root.resolve("target/crap-java/TEST-crap-java.xml").toString()
         ), List.of(runner.args));
@@ -153,7 +153,7 @@ class CrapJavaCheckMojoTest {
                 "--source-root",
                 sourceRoot.toString(),
                 "--threshold",
-                "8.0",
+                "6.0",
                 "--junit-report",
                 root.resolve("target/crap-java/TEST-crap-java.xml").toString()
         ), List.of(runner.args));
@@ -187,7 +187,7 @@ class CrapJavaCheckMojoTest {
                 "--source-root",
                 sourceRoot.toString(),
                 "--threshold",
-                "8.0",
+                "6.0",
                 "--junit-report",
                 root.resolve("target/crap-java/TEST-crap-java.xml").toString()
         ), List.of(runner.args));
@@ -227,7 +227,7 @@ class CrapJavaCheckMojoTest {
 
         mojo.execute();
 
-        assertEquals(List.of("--format", "none", "--threshold", "8.0", "--junit-report", report.toString()), List.of(runner.args));
+        assertEquals(List.of("--format", "none", "--threshold", "6.0", "--junit-report", report.toString()), List.of(runner.args));
     }
 
     @Test
@@ -257,7 +257,7 @@ class CrapJavaCheckMojoTest {
                 "--output",
                 output.toString(),
                 "--threshold",
-                "8.0",
+                "6.0",
                 "--junit-report",
                 root.resolve("target/crap-java/TEST-crap-java.xml").toString()
         ), List.of(runner.args));
@@ -305,7 +305,7 @@ class CrapJavaCheckMojoTest {
                 "com.acme.Generated",
                 "--use-default-exclusions=false",
                 "--threshold",
-                "8.0",
+                "6.0",
                 "--junit-report",
                 root.resolve("target/crap-java/TEST-crap-java.xml").toString()
         ), List.of(runner.args));
@@ -324,7 +324,7 @@ class CrapJavaCheckMojoTest {
 
         mojo.execute();
 
-        assertEquals(List.of("--format", "none", "--threshold", "8.0"), List.of(runner.args));
+        assertEquals(List.of("--format", "none", "--threshold", "6.0"), List.of(runner.args));
     }
 
     @Test
@@ -347,7 +347,7 @@ class CrapJavaCheckMojoTest {
                 "--output",
                 root.resolve("target/crap-java/report.json").toString(),
                 "--threshold",
-                "8.0",
+                "6.0",
                 "--junit-report",
                 root.resolve("target/crap-java/custom-junit.xml").toString()
         ), List.of(runner.args));
@@ -362,7 +362,7 @@ class CrapJavaCheckMojoTest {
         CrapJavaCheckMojo mojo = mojo(runner);
         setField(mojo, "session", session(List.of(project(root, "root")), root));
         setField(mojo, "project", project(root, "root"));
-        setField(mojo, "threshold", 6.0);
+        setField(mojo, "threshold", 8.0);
 
         mojo.execute();
 
@@ -370,7 +370,7 @@ class CrapJavaCheckMojoTest {
                 "--format",
                 "none",
                 "--threshold",
-                "6.0",
+                "8.0",
                 "--junit-report",
                 root.resolve("target/crap-java/TEST-crap-java.xml").toString()
         ), List.of(runner.args));
@@ -479,7 +479,7 @@ class CrapJavaCheckMojoTest {
                 "--format",
                 "none",
                 "--threshold",
-                "8.0",
+                "6.0",
                 "--junit-report",
                 root.resolve("target/crap-java/TEST-crap-java.xml").toString()
         ), List.of(runner.args));
