@@ -176,8 +176,6 @@ java -jar cli/target/crap-java-cli-0.6.1.jar --omit-redundancy=false --format js
 java -jar cli/target/crap-java-cli-0.6.1.jar --agent
 java -jar cli/target/crap-java-cli-0.6.1.jar --agent --format junit --output target/crap-java/TEST-crap-java-primary.xml
 java -jar cli/target/crap-java-cli-0.6.1.jar --junit-report target/crap-java/TEST-crap-java.xml
-java -jar cli/target/crap-java-cli-0.6.1.jar --threshold 8
-java -jar cli/target/crap-java-cli-0.6.1.jar --threshold=8
 java -jar cli/target/crap-java-cli-0.6.1.jar --exclude 'module-a/**' --exclude-class '.*MapperImpl$'
 java -jar cli/target/crap-java-cli-0.6.1.jar --exclude='module-a/**' --exclude-class='.*MapperImpl$'
 java -jar cli/target/crap-java-cli-0.6.1.jar --source-root src/java --source-root src/main/java17
@@ -387,7 +385,6 @@ mvn verify -DcrapJava.agent=true
 mvn verify -DcrapJava.failuresOnly=false -DcrapJava.omitRedundancy=true
 mvn verify -DcrapJava.junit=false
 mvn verify -DcrapJava.junitReport=target/custom-crap-java.xml
-mvn verify -DcrapJava.threshold=8.0
 mvn verify -DcrapJava.excludes='module-a/**,**/custom-generated/**'
 mvn verify -DcrapJava.excludeClasses='.*MapperImpl$' -DcrapJava.excludeAnnotations=Generated
 mvn verify -DcrapJava.useDefaultExclusions=false
