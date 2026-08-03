@@ -14,15 +14,25 @@ final class ProjectModuleResolver {
     static ProjectModule resolve(Path workspaceRoot, Path file, BuildToolSelection selection) {
         Path normalizedWorkspaceRoot = workspaceRoot.normalize();
         Path candidate = Files.isDirectory(file) ? file.normalize() : file.normalize().getParent();
-        while (candidate != null && candidate.startsWith(normalizedWorkspaceRoot)) {
+        ProjectModule module = findModule(normalizedWorkspaceRoot, candidate, selection);
+        if (module != null) {
+            return module;
+        }
+        throw new IllegalArgumentException("No Maven or Gradle module found for " + file.normalize());
+    }
+
+    private static @Nullable ProjectModule findModule(Path workspaceRoot,
+                                                      @Nullable Path candidate,
+                                                      BuildToolSelection selection) {
+        while (candidate != null && candidate.startsWith(workspaceRoot)) {
             EnumSet<BuildTool> detected = BuildTool.detect(candidate);
             if (!detected.isEmpty()) {
                 BuildTool buildTool = selectBuildTool(candidate, detected, selection);
-                return new ProjectModule(candidate, executionRoot(normalizedWorkspaceRoot, candidate, buildTool), buildTool);
+                return new ProjectModule(candidate, executionRoot(workspaceRoot, candidate, buildTool), buildTool);
             }
             candidate = candidate.getParent();
         }
-        throw new IllegalArgumentException("No Maven or Gradle module found for " + file.normalize());
+        return null;
     }
 
     private static BuildTool selectBuildTool(Path moduleRoot,

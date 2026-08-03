@@ -111,19 +111,33 @@ final class CliArgumentsParser {
     }
 
     private static int parseOption(String[] args, int index, ParseStateBuilder state, String arg) {
+        if (parseFlagOption(state, arg)) {
+            return index;
+        }
+        return parseBooleanOrValuedOption(args, index, state, arg);
+    }
+
+    private static boolean parseFlagOption(ParseStateBuilder state, String arg) {
         if ("--help".equals(arg)) {
             state.help = true;
-            return index;
+            return true;
         }
         if ("--changed".equals(arg)) {
             state.changed = true;
-            return index;
+            return true;
         }
         if ("--agent".equals(arg)) {
             state.agent = parseAgent(state.agentSeen);
             state.agentSeen = true;
-            return index;
+            return true;
         }
+        return false;
+    }
+
+    private static int parseBooleanOrValuedOption(String[] args,
+                                                   int index,
+                                                   ParseStateBuilder state,
+                                                   String arg) {
         if (isBooleanOption(arg, "--failures-only")) {
             state.failuresOnly = parseBooleanOption(arg, "--failures-only", state.failuresOnlySeen);
             state.failuresOnlySeen = true;

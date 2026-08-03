@@ -9,10 +9,18 @@ enum BuildToolSelection {
     GRADLE;
 
     static BuildToolSelection parse(@Nullable String value) {
+        return parseValue(requiredValue(value).toLowerCase(Locale.ROOT));
+    }
+
+    private static String requiredValue(@Nullable String value) {
         if (value == null || value.isBlank()) {
             throw new IllegalArgumentException("--build-tool requires one of: auto, maven, gradle");
         }
-        return switch (value.toLowerCase(Locale.ROOT)) {
+        return value;
+    }
+
+    private static BuildToolSelection parseValue(String value) {
+        return switch (value) {
             case "auto" -> AUTO;
             case "maven" -> MAVEN;
             case "gradle" -> GRADLE;

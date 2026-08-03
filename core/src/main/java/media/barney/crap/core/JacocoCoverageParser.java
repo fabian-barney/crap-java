@@ -66,37 +66,43 @@ final class JacocoCoverageParser {
             if (!(node instanceof Element method) || !"method".equals(method.getTagName())) {
                 continue;
             }
-            String methodName = method.getAttribute("name");
-            if (JAVAC_LAMBDA_METHOD.matcher(methodName).matches()) {
-                continue;
-            }
-            CoverageData data = readCoverage(method);
-            if (data == null) {
-                continue;
-            }
-            int line = parseInt("line", method.getAttribute("line"));
-            coverage.add(className, methodName, line, data);
+            addMethodCoverage(method, className, coverage);
         }
     }
 
+    private static void addMethodCoverage(Element method,
+                                          String className,
+                                          CoverageIndex.Builder coverage) {
+        String methodName = method.getAttribute("name");
+        if (JAVAC_LAMBDA_METHOD.matcher(methodName).matches()) {
+            return;
+        }
+        CoverageData data = readCoverage(method);
+        if (data == null) {
+            return;
+        }
+        int line = parseInt("line", method.getAttribute("line"));
+        coverage.add(className, methodName, line, data);
+    }
+
     private static @Nullable CoverageData readCoverage(Element method) {
-        CoverageCounter instructionCoverage = null;
-        CoverageCounter branchCoverage = null;
+        CoverageCounter instructionCoverage = findCounter(method, "INSTRUCTION");
+        if (instructionCoverage == null) {
+            return null;
+        }
+        return new CoverageData(instructionCoverage, findCounter(method, "BRANCH"));
+    }
+
+    private static @Nullable CoverageCounter findCounter(Element method, String counterType) {
         for (Node node = method.getFirstChild(); node != null; node = node.getNextSibling()) {
             if (!(node instanceof Element counter) || !"counter".equals(counter.getTagName())) {
                 continue;
             }
-            String type = counter.getAttribute("type");
-            if ("INSTRUCTION".equals(type)) {
-                instructionCoverage = readCounter(counter);
-            } else if ("BRANCH".equals(type)) {
-                branchCoverage = readCounter(counter);
+            if (counterType.equals(counter.getAttribute("type"))) {
+                return readCounter(counter);
             }
         }
-        if (instructionCoverage == null) {
-            return null;
-        }
-        return new CoverageData(instructionCoverage, branchCoverage);
+        return null;
     }
 
     private static CoverageCounter readCounter(Element counter) {

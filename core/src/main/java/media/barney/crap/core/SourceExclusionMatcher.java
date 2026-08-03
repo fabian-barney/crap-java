@@ -50,12 +50,26 @@ final class SourceExclusionMatcher {
 
     Optional<String> pathExclusionReason(Path file) {
         String relativePath = normalizedRelativePath(file);
-        if (useDefaultExclusions && isUnderGeneratedDirectory(relativePath)) {
+        if (useDefaultExclusions) {
+            Optional<String> defaultReason = defaultPathExclusionReason(relativePath);
+            if (defaultReason.isPresent()) {
+                return defaultReason;
+            }
+        }
+        return userPathExclusionReason(relativePath);
+    }
+
+    private static Optional<String> defaultPathExclusionReason(String relativePath) {
+        if (isUnderGeneratedDirectory(relativePath)) {
             return Optional.of("default:path:generated-directory");
         }
-        if (useDefaultExclusions && isUnderSrcMainJavaGen(relativePath)) {
+        if (isUnderSrcMainJavaGen(relativePath)) {
             return Optional.of("default:path:src-main-java-gen");
         }
+        return Optional.empty();
+    }
+
+    private Optional<String> userPathExclusionReason(String relativePath) {
         for (GlobRule rule : userPathRules) {
             if (rule.pattern().matcher(relativePath).matches()) {
                 return Optional.of("user:path:" + rule.glob());
@@ -70,12 +84,12 @@ final class SourceExclusionMatcher {
     }
 
     private Optional<String> classRegexExclusionReason(String className) {
-        for (RegexRule rule : defaultClassRules) {
-            if (rule.pattern().matcher(className).matches()) {
-                return Optional.of(rule.reason());
-            }
-        }
-        for (RegexRule rule : userClassRules) {
+        return matchingClassRule(className, defaultClassRules)
+                .or(() -> matchingClassRule(className, userClassRules));
+    }
+
+    private static Optional<String> matchingClassRule(String className, List<RegexRule> rules) {
+        for (RegexRule rule : rules) {
             if (rule.pattern().matcher(className).matches()) {
                 return Optional.of(rule.reason());
             }
@@ -119,16 +133,11 @@ final class SourceExclusionMatcher {
         if (lastSeparator < 0) {
             return false;
         }
-        int segmentStart = 0;
-        while (segmentStart < lastSeparator) {
-            int segmentEnd = normalizedPath.indexOf('/', segmentStart);
-            if (segmentEnd < 0 || segmentEnd > lastSeparator) {
-                segmentEnd = lastSeparator;
-            }
-            if (normalizedPath.substring(segmentStart, segmentEnd).contains("generated")) {
+        String parentPath = normalizedPath.substring(0, lastSeparator);
+        for (String segment : parentPath.split("/", -1)) {
+            if (segment.contains("generated")) {
                 return true;
             }
-            segmentStart = segmentEnd + 1;
         }
         return false;
     }
