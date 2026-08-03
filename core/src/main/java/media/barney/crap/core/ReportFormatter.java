@@ -75,7 +75,7 @@ final class ReportFormatter {
         if (format == ReportFormat.JUNIT) {
             return formatJunit(report, omitRedundancy, includeExclusionAudit);
         }
-        return "";
+        throw new IllegalStateException("Unhandled report format: " + format);
     }
 
     private static String formatText(CrapReport report, boolean omitRedundancy, boolean includeExclusionAudit) {

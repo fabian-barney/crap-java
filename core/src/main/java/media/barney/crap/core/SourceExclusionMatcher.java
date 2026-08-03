@@ -18,6 +18,7 @@ final class SourceExclusionMatcher {
             "(^|.*\\.)AutoValue_[^.]*$"
     );
     private static final String DEFAULT_GENERATED_ANNOTATION = "Generated";
+    private static final String GENERATED_SEGMENT = "generated";
 
     private final Path projectRoot;
     private final boolean useDefaultExclusions;
@@ -133,11 +134,20 @@ final class SourceExclusionMatcher {
         if (lastSeparator < 0) {
             return false;
         }
-        String parentPath = normalizedPath.substring(0, lastSeparator);
-        for (String segment : parentPath.split("/", -1)) {
-            if (segment.contains("generated")) {
+        return hasGeneratedSegment(normalizedPath, lastSeparator);
+    }
+
+    private static boolean hasGeneratedSegment(String normalizedPath, int lastSeparator) {
+        int segmentStart = 0;
+        while (segmentStart < lastSeparator) {
+            int nextSeparator = normalizedPath.indexOf('/', segmentStart);
+            int segmentEnd = nextSeparator < 0 ? lastSeparator : Math.min(nextSeparator, lastSeparator);
+            int generatedStart = normalizedPath.indexOf(GENERATED_SEGMENT, segmentStart);
+            if (generatedStart >= segmentStart
+                    && generatedStart + GENERATED_SEGMENT.length() <= segmentEnd) {
                 return true;
             }
+            segmentStart = segmentEnd + 1;
         }
         return false;
     }
