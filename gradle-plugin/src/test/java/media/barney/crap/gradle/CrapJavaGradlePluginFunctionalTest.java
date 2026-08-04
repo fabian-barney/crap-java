@@ -1,6 +1,7 @@
 package media.barney.crap.gradle;
 
 import org.gradle.testkit.runner.BuildResult;
+import org.gradle.testkit.runner.BuildTask;
 import org.gradle.testkit.runner.GradleRunner;
 import org.gradle.testkit.runner.TaskOutcome;
 import org.junit.jupiter.api.Test;
@@ -12,8 +13,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.TreeSet;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -228,14 +233,75 @@ class CrapJavaGradlePluginFunctionalTest {
     }
 
     @Test
+    void customJacocoOutputLocationFeedsCrapJavaCheck() throws Exception {
+        writeSingleModuleProject("""
+
+                layout.buildDirectory.set(layout.projectDirectory.dir("custom-build"))
+
+                tasks.named<org.gradle.testing.jacoco.tasks.JacocoReport>("jacocoTestReport") {
+                    reports.xml.outputLocation.set(layout.buildDirectory.file("reports/custom/jacoco.xml"))
+                }
+                """);
+
+        BuildResult result = runBuild("crap-java-check");
+
+        Path jacocoReport = tempDir.resolve("custom-build/reports/custom/jacoco.xml");
+        Path junitReport = tempDir.resolve("custom-build/reports/crap-java/TEST-crap-java.xml");
+        assertEquals(TaskOutcome.SUCCESS, result.task(":crap-java-check").getOutcome());
+        assertEquals(TaskOutcome.SUCCESS, result.task(":jacocoTestReport").getOutcome());
+        assertTrue(Files.exists(jacocoReport));
+        assertTrue(Files.exists(junitReport));
+        assertFalse(Files.exists(tempDir.resolve("build/reports/jacoco/test/jacocoTestReport.xml")));
+        assertTrue(Files.readString(junitReport)
+                .contains("<testsuites tests=\"1\" failures=\"0\" errors=\"0\" skipped=\"0\" time=\""));
+    }
+
+    @Test
+    void centralPublishingTasksRemainVisibleAndSkipWithoutCredentials() {
+        Path pluginProject = pluginProjectDirectory();
+
+        BuildResult taskListing = runPluginBuild(pluginProject, "tasks", "--all");
+        assertTrue(taskListing.getOutput().contains("publishAllPublicationsToCentralPortalOssrhStagingRepository"));
+
+        BuildResult publish = runPluginBuild(
+                pluginProject,
+                "publishAllPublicationsToCentralPortalOssrhStagingRepository"
+        );
+        List<BuildTask> centralPublicationTasks = publish.getTasks().stream()
+                .filter(task -> task.getPath().contains("ToCentralPortalOssrhStagingRepository"))
+                .filter(task -> !task.getPath().endsWith("publishAllPublicationsToCentralPortalOssrhStagingRepository"))
+                .toList();
+        assertFalse(centralPublicationTasks.isEmpty());
+        assertTrue(centralPublicationTasks.stream()
+                .allMatch(task -> task.getOutcome() == TaskOutcome.SKIPPED));
+
+        BuildResult blankCredentials = runPluginBuild(
+                pluginProject,
+                "-PmavenCentralTokenUsername=",
+                "-PmavenCentralTokenPassword=",
+                "publishAllPublicationsToCentralPortalOssrhStagingRepository"
+        );
+        List<BuildTask> blankCredentialPublicationTasks = blankCredentials.getTasks().stream()
+                .filter(task -> task.getPath().contains("ToCentralPortalOssrhStagingRepository"))
+                .filter(task -> !task.getPath().endsWith("publishAllPublicationsToCentralPortalOssrhStagingRepository"))
+                .toList();
+        assertFalse(blankCredentialPublicationTasks.isEmpty());
+        assertTrue(blankCredentialPublicationTasks.stream()
+                .allMatch(task -> task.getOutcome() == TaskOutcome.SKIPPED));
+    }
+
+    @Test
     void singleModuleProjectReusesConfigurationCache() throws Exception {
         writeSingleModuleProject();
 
         BuildResult first = runBuild("--configuration-cache", "crap-java-check");
+        assertEquals(TaskOutcome.SUCCESS, first.task(":crap-java-check").getOutcome());
+        Set<String> firstConfigurationCacheState = configurationCacheState();
+        assertFalse(firstConfigurationCacheState.isEmpty());
+
         BuildResult second = runBuild("--configuration-cache", "crap-java-check");
 
-        assertTrue(first.getOutput().contains("Configuration cache entry stored."));
-        assertTrue(second.getOutput().contains("Configuration cache entry reused."));
+        assertEquals(firstConfigurationCacheState, configurationCacheState());
         TaskOutcome outcome = second.task(":crap-java-check").getOutcome();
         assertTrue(outcome == TaskOutcome.SUCCESS || outcome == TaskOutcome.UP_TO_DATE);
     }
@@ -254,10 +320,13 @@ class CrapJavaGradlePluginFunctionalTest {
                 """);
 
         BuildResult first = runBuild("--configuration-cache", "crap-java-check");
+        assertEquals(TaskOutcome.SUCCESS, first.task(":crap-java-check").getOutcome());
+        Set<String> firstConfigurationCacheState = configurationCacheState();
+        assertFalse(firstConfigurationCacheState.isEmpty());
+
         BuildResult second = runBuild("--configuration-cache", "crap-java-check");
 
-        assertTrue(first.getOutput().contains("Configuration cache entry stored."));
-        assertTrue(second.getOutput().contains("Configuration cache entry reused."));
+        assertEquals(firstConfigurationCacheState, configurationCacheState());
         TaskOutcome outcome = second.task(":crap-java-check").getOutcome();
         assertTrue(outcome == TaskOutcome.SUCCESS || outcome == TaskOutcome.UP_TO_DATE);
         assertTrue(Files.exists(tempDir.resolve("build/reports/crap-java/report.json")));
@@ -617,6 +686,21 @@ class CrapJavaGradlePluginFunctionalTest {
         return gradleRunner(arguments).buildAndFail();
     }
 
+    private BuildResult runPluginBuild(Path projectDir, String... arguments) {
+        List<String> gradleArguments = new ArrayList<>();
+        gradleArguments.add("-Dgradle.user.home=" + tempDir.resolve("publishing-gradle-user-home"));
+        gradleArguments.add("-Dorg.gradle.daemon=false");
+        gradleArguments.addAll(List.of(arguments));
+        Map<String, String> environment = new HashMap<>(System.getenv());
+        environment.remove("MAVEN_CENTRAL_TOKEN_USERNAME");
+        environment.remove("MAVEN_CENTRAL_TOKEN_PASSWORD");
+        return GradleRunner.create()
+                .withProjectDir(projectDir.toFile())
+                .withArguments(gradleArguments)
+                .withEnvironment(environment)
+                .build();
+    }
+
     private GradleRunner gradleRunner(String... arguments) {
         List<String> gradleArguments = new ArrayList<>();
         gradleArguments.add("-Dgradle.user.home=" + tempDir.resolve("gradle-user-home"));
@@ -626,6 +710,28 @@ class CrapJavaGradlePluginFunctionalTest {
                 .withProjectDir(tempDir.toFile())
                 .withArguments(gradleArguments)
                 .withPluginClasspath();
+    }
+
+    private Path pluginProjectDirectory() {
+        Path currentDirectory = Path.of("").toAbsolutePath().normalize();
+        if (Files.exists(currentDirectory.resolve("build.gradle.kts"))) {
+            return currentDirectory;
+        }
+        return currentDirectory.resolve("gradle-plugin");
+    }
+
+    private Set<String> configurationCacheState() throws IOException {
+        Path configurationCacheDir = tempDir.resolve(".gradle/configuration-cache");
+        if (!Files.isDirectory(configurationCacheDir)) {
+            return Set.of();
+        }
+        Set<String> state = new TreeSet<>();
+        try (var entries = Files.list(configurationCacheDir)) {
+            entries.map(configurationCacheDir::relativize)
+                    .map(Path::toString)
+                    .forEach(state::add);
+        }
+        return state;
     }
 
     private void writeSingleModuleProject() throws IOException {

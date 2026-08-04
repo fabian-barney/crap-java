@@ -8,6 +8,7 @@ import org.gradle.api.tasks.testing.Test
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.jvm.tasks.Jar
 import org.gradle.api.publish.maven.MavenPublication
+import org.gradle.api.publish.maven.tasks.PublishToMavenRepository
 import org.gradle.plugins.signing.Sign
 import org.gradle.testing.jacoco.tasks.JacocoReport
 import javax.xml.parsers.DocumentBuilderFactory
@@ -53,9 +54,17 @@ val coreJar = layout.projectDirectory.file("../core/target/crap-java-core-${proj
 val gpgPrivateKey = providers.environmentVariable("MAVEN_GPG_PRIVATE_KEY")
 val gpgPassphrase = providers.environmentVariable("MAVEN_GPG_PASSPHRASE")
 val mavenCentralTokenUsername = providers.gradleProperty("mavenCentralTokenUsername")
-    .orElse(providers.environmentVariable("MAVEN_CENTRAL_TOKEN_USERNAME"))
+    .map(String::trim)
+    .filter(String::isNotEmpty)
+    .orElse(providers.environmentVariable("MAVEN_CENTRAL_TOKEN_USERNAME")
+        .map(String::trim)
+        .filter(String::isNotEmpty))
 val mavenCentralTokenPassword = providers.gradleProperty("mavenCentralTokenPassword")
-    .orElse(providers.environmentVariable("MAVEN_CENTRAL_TOKEN_PASSWORD"))
+    .map(String::trim)
+    .filter(String::isNotEmpty)
+    .orElse(providers.environmentVariable("MAVEN_CENTRAL_TOKEN_PASSWORD")
+        .map(String::trim)
+        .filter(String::isNotEmpty))
 
 if (qualityNullaway) {
     apply(plugin = "net.ltgt.errorprone")
@@ -191,17 +200,26 @@ publishing {
             }
         }
     }
-    if (mavenCentralTokenUsername.isPresent && mavenCentralTokenPassword.isPresent) {
-        repositories {
-            maven {
-                name = "centralPortalOssrhStaging"
-                url = uri("https://ossrh-staging-api.central.sonatype.com/service/local/staging/deploy/maven2/")
-                credentials {
-                    username = mavenCentralTokenUsername.get()
-                    password = mavenCentralTokenPassword.get()
+    repositories {
+        maven {
+            name = "centralPortalOssrhStaging"
+            url = uri("https://ossrh-staging-api.central.sonatype.com/service/local/staging/deploy/maven2/")
+            credentials {
+                val usernameValue = mavenCentralTokenUsername.orNull
+                val passwordValue = mavenCentralTokenPassword.orNull
+                if (usernameValue != null && passwordValue != null) {
+                    username = usernameValue
+                    password = passwordValue
                 }
             }
         }
+    }
+}
+
+tasks.withType<PublishToMavenRepository>().configureEach {
+    onlyIf("Maven Central publishing requires both token credentials") {
+        repository.name != "centralPortalOssrhStaging"
+                || (mavenCentralTokenUsername.isPresent && mavenCentralTokenPassword.isPresent)
     }
 }
 

@@ -37,8 +37,8 @@ public class CrapJavaCheckMojo extends AbstractMojo {
     @Parameter(defaultValue = "${project}", readonly = true, required = true)
     private @Nullable MavenProject project;
 
-    @Parameter(property = "crapJava.format", defaultValue = "none")
-    private String format = "none";
+    @Parameter(property = "crapJava.format")
+    private @Nullable String format;
 
     @Parameter(property = "crapJava.agent", defaultValue = "false")
     private boolean agent;
@@ -134,7 +134,7 @@ public class CrapJavaCheckMojo extends AbstractMojo {
 
     private void addReportControls(List<String> args) {
         args.add("--format");
-        args.add(format);
+        args.add(format == null || format.isBlank() ? defaultFormat() : format);
         if (agent) {
             args.add("--agent");
         }
@@ -144,6 +144,10 @@ public class CrapJavaCheckMojo extends AbstractMojo {
         if (omitRedundancy != null) {
             args.add("--omit-redundancy=" + omitRedundancy);
         }
+    }
+
+    private String defaultFormat() {
+        return agent ? "toon" : "none";
     }
 
     private void addExclusionControls(List<String> args, Path executionRoot) {

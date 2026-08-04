@@ -3,6 +3,7 @@ package media.barney.crap.gradle;
 import media.barney.crap.core.Main;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
+import org.gradle.api.file.RegularFile;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.TaskProvider;
@@ -17,8 +18,6 @@ import java.util.Collection;
 import java.util.List;
 
 public class CrapJavaGradlePlugin implements Plugin<Project> {
-
-    private static final String JACOCO_XML_RELATIVE_PATH = "build/reports/jacoco/test/jacocoTestReport.xml";
 
     @Override
     public void apply(Project project) {
@@ -84,11 +83,17 @@ public class CrapJavaGradlePlugin implements Plugin<Project> {
         checkTask.configure(task -> {
             SourceSetContainer sourceSets = candidate.getExtensions().getByType(SourceSetContainer.class);
             SourceSet mainSourceSet = sourceSets.getByName(SourceSet.MAIN_SOURCE_SET_NAME);
+            Provider<RegularFile> xmlReport = jacocoReportTask.map(
+                    report -> report.getReports().getXml().getOutputLocation().get()
+            );
             task.dependsOn(testTask);
             task.dependsOn(jacocoReportTask);
             task.getAnalysisSources().from(mainSourceSet.getAllJava());
-            task.getCoverageReports().from(candidate.getLayout().getBuildDirectory().file("reports/jacoco/test/jacocoTestReport.xml"));
-            task.getModuleCoverageReports().put(modulePath, coverageReportPath(modulePath));
+            task.getCoverageReports().from(xmlReport);
+            task.getModuleCoverageReports().put(
+                    modulePath,
+                    xmlReport.map(report -> coverageReportPath(analysisProject, report.getAsFile().toPath()))
+            );
         });
     }
 
@@ -101,11 +106,17 @@ public class CrapJavaGradlePlugin implements Plugin<Project> {
         return analysisRoot.relativize(candidateRoot).toString().replace('\\', '/');
     }
 
-    private static String coverageReportPath(String modulePath) {
-        if (".".equals(modulePath)) {
-            return JACOCO_XML_RELATIVE_PATH;
+    private static String coverageReportPath(Project analysisProject, Path reportPath) {
+        Path analysisRoot = analysisProject.getProjectDir().toPath().toAbsolutePath().normalize();
+        Path normalizedReportPath = reportPath.toAbsolutePath().normalize();
+        if (normalizedReportPath.startsWith(analysisRoot)) {
+            return normalizeRelativePath(analysisRoot.relativize(normalizedReportPath));
         }
-        return modulePath + "/" + JACOCO_XML_RELATIVE_PATH;
+        return normalizedReportPath.toString().replace('\\', '/');
+    }
+
+    private static String normalizeRelativePath(Path path) {
+        return path.toString().replace('\\', '/');
     }
 
     private static Provider<String> taskFormatDefault(Project project,
