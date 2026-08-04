@@ -13,7 +13,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -671,9 +673,13 @@ class CrapJavaGradlePluginFunctionalTest {
         gradleArguments.add("-Dgradle.user.home=" + tempDir.resolve("publishing-gradle-user-home"));
         gradleArguments.add("-Dorg.gradle.daemon=false");
         gradleArguments.addAll(List.of(arguments));
+        Map<String, String> environment = new HashMap<>(System.getenv());
+        environment.remove("MAVEN_CENTRAL_TOKEN_USERNAME");
+        environment.remove("MAVEN_CENTRAL_TOKEN_PASSWORD");
         return GradleRunner.create()
                 .withProjectDir(projectDir.toFile())
                 .withArguments(gradleArguments)
+                .withEnvironment(environment)
                 .build();
     }
 
