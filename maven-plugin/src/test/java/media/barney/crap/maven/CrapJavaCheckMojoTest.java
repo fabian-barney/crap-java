@@ -96,6 +96,31 @@ class CrapJavaCheckMojoTest {
     }
 
     @Test
+    void defaultsToToonWhenAgentFormatIsBlank() throws Exception {
+        Path root = tempDir.resolve("root");
+        writeCoverageReport(root);
+
+        RecordingRunner runner = new RecordingRunner();
+        CrapJavaCheckMojo mojo = mojo(runner);
+        setField(mojo, "session", session(List.of(project(root, "root")), root));
+        setField(mojo, "project", project(root, "root"));
+        setField(mojo, "agent", true);
+        setField(mojo, "format", "  ");
+
+        mojo.execute();
+
+        assertEquals(List.of(
+                "--format",
+                "toon",
+                "--agent",
+                "--threshold",
+                "6.0",
+                "--junit-report",
+                root.resolve("target/crap-java/TEST-crap-java.xml").toString()
+        ), List.of(runner.args));
+    }
+
+    @Test
     void passesConfiguredCompileSourceRootsToCli() throws Exception {
         Path root = tempDir.resolve("root");
         Path sourceRoot = root.resolve("src/java");

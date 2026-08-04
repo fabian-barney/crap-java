@@ -134,7 +134,7 @@ public class CrapJavaCheckMojo extends AbstractMojo {
 
     private void addReportControls(List<String> args) {
         args.add("--format");
-        args.add(format == null ? defaultFormat() : format);
+        args.add(format == null || format.isBlank() ? defaultFormat() : format);
         if (agent) {
             args.add("--agent");
         }
