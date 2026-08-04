@@ -112,6 +112,7 @@ jobs:
         shell: bash
         run: |
           auth="$(printf '%s:%s' "${MAVEN_CENTRAL_TOKEN_USERNAME}" "${MAVEN_CENTRAL_TOKEN_PASSWORD}" | base64 -w 0)"
+          echo "::add-mask::${auth}"
           curl --fail --request POST \
             --header "Authorization: Bearer ${auth}" \
             "https://ossrh-staging-api.central.sonatype.com/manual/upload/defaultRepository/media.barney?publishing_type=automatic"
