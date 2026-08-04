@@ -38,10 +38,18 @@ final class ProductionSourceRoots {
                 }
                 continue;
             }
-            for (int index = 0; index <= normalized.getNameCount() - normalizedSourceRoot.getNameCount(); index++) {
-                if (matchesSourceRoot(normalized, normalizedSourceRoot, index)) {
-                    return true;
-                }
+            if (isUnderRelativeSourceRoot(normalized, normalizedSourceRoot)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean isUnderRelativeSourceRoot(Path normalized, Path sourceRoot) {
+        int lastStart = normalized.getNameCount() - sourceRoot.getNameCount();
+        for (int index = 0; index <= lastStart; index++) {
+            if (matchesSourceRoot(normalized, sourceRoot, index)) {
+                return true;
             }
         }
         return false;

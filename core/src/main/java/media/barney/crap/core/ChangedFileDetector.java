@@ -47,6 +47,12 @@ final class ChangedFileDetector {
                     "Changed-file detection command failed (" + String.join(" ", command) + "): " + output);
         }
 
+        List<Path> files = changedFiles(projectRoot, output);
+        files.sort(Path::compareTo);
+        return files;
+    }
+
+    private static List<Path> changedFiles(Path projectRoot, String output) {
         List<Path> files = new ArrayList<>();
         List<String> entries = nullDelimitedEntries(output);
         for (int index = 0; index < entries.size(); index++) {
@@ -57,13 +63,16 @@ final class ChangedFileDetector {
             if (entry.hasOriginalPathToken()) {
                 index++;
             }
-            Path file = entry.toPath(projectRoot);
-            if (file != null) {
-                files.add(file);
-            }
+            addPath(files, projectRoot, entry);
         }
-        files.sort(Path::compareTo);
         return files;
+    }
+
+    private static void addPath(List<Path> files, Path projectRoot, StatusEntry entry) {
+        Path file = entry.toPath(projectRoot);
+        if (file != null) {
+            files.add(file);
+        }
     }
 
     private static List<String> gitStatusCommand(Path projectRoot, List<String> gitCommand) {

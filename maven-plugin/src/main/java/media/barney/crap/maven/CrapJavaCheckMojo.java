@@ -124,6 +124,15 @@ public class CrapJavaCheckMojo extends AbstractMojo {
 
     private String[] reportArgs(Path executionRoot) {
         List<String> args = new ArrayList<>();
+        addReportControls(args);
+        addExclusionControls(args, executionRoot);
+        addOutputArgument(args, executionRoot);
+        addThresholdArgument(args);
+        addJunitReportArgument(args, executionRoot);
+        return args.toArray(String[]::new);
+    }
+
+    private void addReportControls(List<String> args) {
         args.add("--format");
         args.add(format);
         if (agent) {
@@ -135,6 +144,9 @@ public class CrapJavaCheckMojo extends AbstractMojo {
         if (omitRedundancy != null) {
             args.add("--omit-redundancy=" + omitRedundancy);
         }
+    }
+
+    private void addExclusionControls(List<String> args, Path executionRoot) {
         addRepeated(args, "--exclude", excludesProperty, excludes);
         addRepeated(args, "--exclude-class", excludeClassesProperty, excludeClasses);
         addRepeated(args, "--exclude-annotation", excludeAnnotationsProperty, excludeAnnotations);
@@ -142,17 +154,25 @@ public class CrapJavaCheckMojo extends AbstractMojo {
         if (!useDefaultExclusions) {
             args.add("--use-default-exclusions=false");
         }
+    }
+
+    private void addOutputArgument(List<String> args, Path executionRoot) {
         if (output != null) {
             args.add("--output");
             args.add(configuredPath(executionRoot, output).toString());
         }
+    }
+
+    private void addThresholdArgument(List<String> args) {
         args.add("--threshold");
         args.add(Double.toString(threshold));
+    }
+
+    private void addJunitReportArgument(List<String> args, Path executionRoot) {
         if (junit) {
             args.add("--junit-report");
             args.add(junitReportPath(executionRoot).toString());
         }
-        return args.toArray(String[]::new);
     }
 
     private static void addRepeated(List<String> args, String option, @Nullable String propertyValue, List<String> values) {
@@ -185,7 +205,7 @@ public class CrapJavaCheckMojo extends AbstractMojo {
         StringBuilder current = new StringBuilder();
         for (int index = 0; index < propertyValue.length(); index++) {
             char character = propertyValue.charAt(index);
-            if (character == '\\' && index + 1 < propertyValue.length() && propertyValue.charAt(index + 1) == ',') {
+            if (isEscapedComma(propertyValue, index, character)) {
                 current.append(',');
                 index++;
                 continue;
@@ -199,6 +219,10 @@ public class CrapJavaCheckMojo extends AbstractMojo {
         }
         values.add(current.toString());
         return values;
+    }
+
+    private static boolean isEscapedComma(String propertyValue, int index, char character) {
+        return character == '\\' && index + 1 < propertyValue.length() && propertyValue.charAt(index + 1) == ',';
     }
 
     private static List<String> configuredListValues(List<String> values) {

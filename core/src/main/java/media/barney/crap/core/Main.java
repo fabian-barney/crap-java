@@ -264,10 +264,21 @@ public final class Main {
         Path absoluteRight = right.toAbsolutePath().normalize();
         Path common = absoluteLeft.getRoot();
         int max = Math.min(absoluteLeft.getNameCount(), absoluteRight.getNameCount());
-        for (int index = 0; index < max && absoluteLeft.getName(index).equals(absoluteRight.getName(index)); index++) {
-            common = common == null ? absoluteLeft.getName(index) : common.resolve(absoluteLeft.getName(index));
+        for (int index = 0; index < max; index++) {
+            if (!sameName(absoluteLeft, absoluteRight, index)) {
+                break;
+            }
+            common = appendCommonName(common, absoluteLeft.getName(index));
         }
         return common == null ? absoluteLeft : common;
+    }
+
+    private static boolean sameName(Path left, Path right, int index) {
+        return left.getName(index).equals(right.getName(index));
+    }
+
+    private static Path appendCommonName(@Nullable Path common, Path name) {
+        return common == null ? name : common.resolve(name);
     }
 
     static double maxCrap(List<MethodMetrics> metrics) {

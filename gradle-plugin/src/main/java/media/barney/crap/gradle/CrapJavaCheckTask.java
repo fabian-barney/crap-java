@@ -399,20 +399,27 @@ public abstract class CrapJavaCheckTask extends DefaultTask {
         }
         Path normalized = path.toAbsolutePath().normalize();
         try {
-            if (Files.isSymbolicLink(normalized)) {
-                return symbolicLinkTargetForComparison(normalized, symlinkDepth);
-            }
-            if (Files.exists(normalized)) {
-                return normalized.toRealPath();
-            }
-            Path existing = nearestExistingPath(normalized);
-            if (existing != null) {
-                return existing.toRealPath().resolve(existing.relativize(normalized)).normalize();
-            }
+            return realPathForNormalizedPath(normalized, symlinkDepth);
         } catch (IOException | SecurityException exception) {
             return null;
         }
-        return null;
+    }
+
+    private @Nullable Path realPathForNormalizedPath(Path normalized, int symlinkDepth) throws IOException {
+        if (Files.isSymbolicLink(normalized)) {
+            return symbolicLinkTargetForComparison(normalized, symlinkDepth);
+        }
+        if (Files.exists(normalized)) {
+            return normalized.toRealPath();
+        }
+        return realPathForMissingPath(normalized);
+    }
+
+    private @Nullable Path realPathForMissingPath(Path normalized) throws IOException {
+        Path existing = nearestExistingPath(normalized);
+        return existing == null
+                ? null
+                : existing.toRealPath().resolve(existing.relativize(normalized)).normalize();
     }
 
     private @Nullable Path symbolicLinkTargetForComparison(Path link, int symlinkDepth) throws IOException {
@@ -525,15 +532,21 @@ public abstract class CrapJavaCheckTask extends DefaultTask {
             ReportSnapshot before,
             @Nullable RememberedReport rememberedReport
     ) throws IOException {
-        if (rememberedReport == null || before.exists()) {
-            return;
-        }
-        if (isCurrentRememberedPath(rememberedReport, reportPath)) {
-            return;
-        }
-        if (reportPath != null && reportChanged(reportPath, before)) {
+        if (isNewUnrememberedChangedReport(reportPath, before, rememberedReport)) {
             Files.deleteIfExists(reportPath);
         }
+    }
+
+    private boolean isNewUnrememberedChangedReport(
+            @Nullable Path reportPath,
+            ReportSnapshot before,
+            @Nullable RememberedReport rememberedReport
+    ) throws IOException {
+        return rememberedReport != null
+                && !before.exists()
+                && !isCurrentRememberedPath(rememberedReport, reportPath)
+                && reportPath != null
+                && reportChanged(reportPath, before);
     }
 
     private boolean shouldRememberChangedReport(
@@ -704,17 +717,26 @@ public abstract class CrapJavaCheckTask extends DefaultTask {
             return false;
         }
         Path stateRoot = projectCacheRoot(getProject()).resolve("crap-java");
+        return isOtherOwnerLinkPresent(stateRoot, rememberedReport);
+    }
+
+    private boolean isOtherOwnerLinkPresent(Path stateRoot, RememberedReport rememberedReport)
+            throws IOException {
         if (!Files.isDirectory(stateRoot)) {
             return false;
         }
         try (Stream<Path> paths = Files.walk(stateRoot)) {
             for (Path path : paths.filter(this::isOwnerLink).toList()) {
-                if (!path.equals(rememberedReport.ownerLink()) && sameExistingFile(path, rememberedReport.path())) {
+                if (isOtherOwnerLink(path, rememberedReport)) {
                     return true;
                 }
             }
         }
         return false;
+    }
+
+    private boolean isOtherOwnerLink(Path path, RememberedReport rememberedReport) throws IOException {
+        return !path.equals(rememberedReport.ownerLink()) && sameExistingFile(path, rememberedReport.path());
     }
 
     private boolean isOwnerLink(Path path) {

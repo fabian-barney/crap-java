@@ -56,13 +56,26 @@ final class ReportFormatter {
                                      ReportFormat format,
                                      boolean omitRedundancy,
                                      boolean includeExclusionAudit) {
-        return switch (format) {
-            case TOON -> JToon.encodeJson(formatJson(report, omitRedundancy, includeExclusionAudit));
-            case JSON -> formatJson(report, omitRedundancy, includeExclusionAudit);
-            case TEXT -> formatText(report, omitRedundancy, includeExclusionAudit);
-            case JUNIT -> formatJunit(report, omitRedundancy, includeExclusionAudit);
-            case NONE -> "";
-        };
+        if (format == ReportFormat.TOON) {
+            return JToon.encodeJson(formatJson(report, omitRedundancy, includeExclusionAudit));
+        }
+        return formatNonToon(report, format, omitRedundancy, includeExclusionAudit);
+    }
+
+    private static String formatNonToon(CrapReport report,
+                                        ReportFormat format,
+                                        boolean omitRedundancy,
+                                        boolean includeExclusionAudit) {
+        if (format == ReportFormat.JSON) {
+            return formatJson(report, omitRedundancy, includeExclusionAudit);
+        }
+        if (format == ReportFormat.TEXT) {
+            return formatText(report, omitRedundancy, includeExclusionAudit);
+        }
+        if (format == ReportFormat.JUNIT) {
+            return formatJunit(report, omitRedundancy, includeExclusionAudit);
+        }
+        throw new IllegalStateException("Unhandled report format: " + format);
     }
 
     private static String formatText(CrapReport report, boolean omitRedundancy, boolean includeExclusionAudit) {

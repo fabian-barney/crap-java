@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class SourceFileFinderTest {
@@ -99,6 +100,14 @@ class SourceFileFinderTest {
         );
 
         assertEquals(List.of(customSource), files);
+    }
+
+    @Test
+    void ignoresAbsoluteSourceRootsThatDoNotContainTheCandidate() {
+        Path candidate = tempDir.resolve("src/main/java/demo/Sample.java");
+        Path otherSourceRoot = tempDir.resolve("other/src/main/java");
+
+        assertFalse(ProductionSourceRoots.isUnderSourceRoot(candidate, List.of(otherSourceRoot)));
     }
 
     @Test

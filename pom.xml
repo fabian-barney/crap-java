@@ -192,9 +192,6 @@
             <groupId>media.barney</groupId>
             <artifactId>crap-java-maven-plugin</artifactId>
             <version>${project.version}</version>
-            <configuration>
-              <threshold>8.0</threshold>
-            </configuration>
             <executions>
               <execution>
                 <id>crap-java-check</id>
@@ -230,9 +227,6 @@
             <groupId>media.barney</groupId>
             <artifactId>crap-java-maven-plugin</artifactId>
             <version>${project.version}</version>
-            <configuration>
-              <threshold>8.0</threshold>
-            </configuration>
             <executions>
               <execution>
                 <id>crap-java-check</id>
