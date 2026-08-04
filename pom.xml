@@ -315,7 +315,7 @@
                 <arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED</arg>
                 <arg>-J--add-opens=jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED</arg>
                 <arg>-J--add-opens=jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED</arg>
-                <arg>-Xplugin:ErrorProne @${maven.multiModuleProjectDirectory}/errorprone.cfg -XepOpt:NullAway:AnnotatedPackages=${nullaway.annotated.packages}</arg>
+                <arg>-Xplugin:ErrorProne @${project.parent.basedir}/errorprone.cfg -XepOpt:NullAway:AnnotatedPackages=${nullaway.annotated.packages}</arg>
               </compilerArgs>
               <annotationProcessorPaths>
                 <path>
