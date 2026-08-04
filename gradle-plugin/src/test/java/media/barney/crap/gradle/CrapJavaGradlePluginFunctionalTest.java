@@ -274,6 +274,20 @@ class CrapJavaGradlePluginFunctionalTest {
         assertFalse(centralPublicationTasks.isEmpty());
         assertTrue(centralPublicationTasks.stream()
                 .allMatch(task -> task.getOutcome() == TaskOutcome.SKIPPED));
+
+        BuildResult blankCredentials = runPluginBuild(
+                pluginProject,
+                "-PmavenCentralTokenUsername=",
+                "-PmavenCentralTokenPassword=",
+                "publishAllPublicationsToCentralPortalOssrhStagingRepository"
+        );
+        List<BuildTask> blankCredentialPublicationTasks = blankCredentials.getTasks().stream()
+                .filter(task -> task.getPath().contains("ToCentralPortalOssrhStagingRepository"))
+                .filter(task -> !task.getPath().endsWith("publishAllPublicationsToCentralPortalOssrhStagingRepository"))
+                .toList();
+        assertFalse(blankCredentialPublicationTasks.isEmpty());
+        assertTrue(blankCredentialPublicationTasks.stream()
+                .allMatch(task -> task.getOutcome() == TaskOutcome.SKIPPED));
     }
 
     @Test
