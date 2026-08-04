@@ -17,6 +17,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.TreeSet;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -280,11 +282,12 @@ class CrapJavaGradlePluginFunctionalTest {
 
         BuildResult first = runBuild("--configuration-cache", "crap-java-check");
         assertEquals(TaskOutcome.SUCCESS, first.task(":crap-java-check").getOutcome());
-        assertTrue(hasConfigurationCacheState());
+        Set<String> firstConfigurationCacheState = configurationCacheState();
+        assertFalse(firstConfigurationCacheState.isEmpty());
 
         BuildResult second = runBuild("--configuration-cache", "crap-java-check");
 
-        assertTrue(hasConfigurationCacheState());
+        assertEquals(firstConfigurationCacheState, configurationCacheState());
         TaskOutcome outcome = second.task(":crap-java-check").getOutcome();
         assertTrue(outcome == TaskOutcome.SUCCESS || outcome == TaskOutcome.UP_TO_DATE);
     }
@@ -304,11 +307,12 @@ class CrapJavaGradlePluginFunctionalTest {
 
         BuildResult first = runBuild("--configuration-cache", "crap-java-check");
         assertEquals(TaskOutcome.SUCCESS, first.task(":crap-java-check").getOutcome());
-        assertTrue(hasConfigurationCacheState());
+        Set<String> firstConfigurationCacheState = configurationCacheState();
+        assertFalse(firstConfigurationCacheState.isEmpty());
 
         BuildResult second = runBuild("--configuration-cache", "crap-java-check");
 
-        assertTrue(hasConfigurationCacheState());
+        assertEquals(firstConfigurationCacheState, configurationCacheState());
         TaskOutcome outcome = second.task(":crap-java-check").getOutcome();
         assertTrue(outcome == TaskOutcome.SUCCESS || outcome == TaskOutcome.UP_TO_DATE);
         assertTrue(Files.exists(tempDir.resolve("build/reports/crap-java/report.json")));
@@ -702,14 +706,18 @@ class CrapJavaGradlePluginFunctionalTest {
         return currentDirectory.resolve("gradle-plugin");
     }
 
-    private boolean hasConfigurationCacheState() throws IOException {
+    private Set<String> configurationCacheState() throws IOException {
         Path configurationCacheDir = tempDir.resolve(".gradle/configuration-cache");
         if (!Files.isDirectory(configurationCacheDir)) {
-            return false;
+            return Set.of();
         }
+        Set<String> state = new TreeSet<>();
         try (var entries = Files.list(configurationCacheDir)) {
-            return entries.findAny().isPresent();
+            entries.map(configurationCacheDir::relativize)
+                    .map(Path::toString)
+                    .forEach(state::add);
         }
+        return state;
     }
 
     private void writeSingleModuleProject() throws IOException {
