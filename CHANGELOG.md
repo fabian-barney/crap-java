@@ -2,9 +2,28 @@
 
 ## Unreleased
 
+## 0.6.2 - 2026-08-09
+
 ### Changed
 
-- Reduced the default CRAP threshold from `8.0` to `6.0` while keeping the recommended `4.0` to `8.0` range unchanged.
+- Reduced the default CRAP threshold from `8.0` to `6.0` while keeping the
+  recommended `4.0` to `8.0` range unchanged. Configure `8.0` explicitly when
+  retaining the previous default behavior is required.
+- Enriched JUnit XML output with method metric summaries in testcase names and
+  detailed CRAP, coverage, and source context in diagnostic output.
+- Hardened CLI parsing, changed-file ordering, source-root and module
+  resolution, JaCoCo coverage parsing, and cross-platform path handling.
+- Hardened Maven and Gradle report defaults, report-path ownership, alias
+  handling, and configuration-cache state management.
+- Tightened CI and release plumbing with pinned workflow actions, safer JDK 25
+  quality-gate activation, blank-credential publication skips, and masked
+  Central upload authorization.
+
+### Dependencies
+
+- Updated the cognitive-java, JaCoCo, JUnit, Jackson, Error Prone, NullAway,
+  Surefire, Central publishing, and Gradle wrapper versions used by the build
+  and release workflow.
 
 ## 0.6.1 - 2026-06-01
 
