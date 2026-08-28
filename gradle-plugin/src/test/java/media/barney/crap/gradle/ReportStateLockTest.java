@@ -23,6 +23,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 class ReportStateLockTest {
 
@@ -221,7 +222,7 @@ class ReportStateLockTest {
             }
             Thread.sleep(10);
         }
-        assertTrue(false, "Expected worker thread to wait for the report-state lock");
+        fail("Expected worker thread to wait for the report-state lock");
     }
 
     private void releaseLockHolder(Process holder) throws IOException, InterruptedException {
