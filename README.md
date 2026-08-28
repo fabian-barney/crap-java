@@ -131,7 +131,7 @@ mvn -B -pl cli -am -DskipTests package
 From the project root you want to analyze:
 
 ```bash
-java -jar cli/target/crap-java-cli-0.6.2.jar
+java -jar cli/target/crap-java-cli-0.6.3.jar
 ```
 
 ## CLI
@@ -163,25 +163,25 @@ Value-taking long options may also be written with inline assignment, such as
 Examples:
 
 ```bash
-java -jar cli/target/crap-java-cli-0.6.2.jar --help
-java -jar cli/target/crap-java-cli-0.6.2.jar
-java -jar cli/target/crap-java-cli-0.6.2.jar --changed
-java -jar cli/target/crap-java-cli-0.6.2.jar --build-tool gradle
-java -jar cli/target/crap-java-cli-0.6.2.jar --build-tool=maven
-java -jar cli/target/crap-java-cli-0.6.2.jar --format json
-java -jar cli/target/crap-java-cli-0.6.2.jar --format none --junit-report target/crap-java/TEST-crap-java.xml
-java -jar cli/target/crap-java-cli-0.6.2.jar --format json --output target/crap-java/report.json
-java -jar cli/target/crap-java-cli-0.6.2.jar --failures-only=false --format json
-java -jar cli/target/crap-java-cli-0.6.2.jar --omit-redundancy=false --format json
-java -jar cli/target/crap-java-cli-0.6.2.jar --agent
-java -jar cli/target/crap-java-cli-0.6.2.jar --agent --format junit --output target/crap-java/TEST-crap-java-primary.xml
-java -jar cli/target/crap-java-cli-0.6.2.jar --junit-report target/crap-java/TEST-crap-java.xml
-java -jar cli/target/crap-java-cli-0.6.2.jar --exclude 'module-a/**' --exclude-class '.*MapperImpl$'
-java -jar cli/target/crap-java-cli-0.6.2.jar --exclude='module-a/**' --exclude-class='.*MapperImpl$'
-java -jar cli/target/crap-java-cli-0.6.2.jar --source-root src/java --source-root src/main/java17
-java -jar cli/target/crap-java-cli-0.6.2.jar --build-tool maven module-a/src/main/java/demo/Sample.java
-java -jar cli/target/crap-java-cli-0.6.2.jar src/main/java/demo/Sample.java
-java -jar cli/target/crap-java-cli-0.6.2.jar module-a module-b
+java -jar cli/target/crap-java-cli-0.6.3.jar --help
+java -jar cli/target/crap-java-cli-0.6.3.jar
+java -jar cli/target/crap-java-cli-0.6.3.jar --changed
+java -jar cli/target/crap-java-cli-0.6.3.jar --build-tool gradle
+java -jar cli/target/crap-java-cli-0.6.3.jar --build-tool=maven
+java -jar cli/target/crap-java-cli-0.6.3.jar --format json
+java -jar cli/target/crap-java-cli-0.6.3.jar --format none --junit-report target/crap-java/TEST-crap-java.xml
+java -jar cli/target/crap-java-cli-0.6.3.jar --format json --output target/crap-java/report.json
+java -jar cli/target/crap-java-cli-0.6.3.jar --failures-only=false --format json
+java -jar cli/target/crap-java-cli-0.6.3.jar --omit-redundancy=false --format json
+java -jar cli/target/crap-java-cli-0.6.3.jar --agent
+java -jar cli/target/crap-java-cli-0.6.3.jar --agent --format junit --output target/crap-java/TEST-crap-java-primary.xml
+java -jar cli/target/crap-java-cli-0.6.3.jar --junit-report target/crap-java/TEST-crap-java.xml
+java -jar cli/target/crap-java-cli-0.6.3.jar --exclude 'module-a/**' --exclude-class '.*MapperImpl$'
+java -jar cli/target/crap-java-cli-0.6.3.jar --exclude='module-a/**' --exclude-class='.*MapperImpl$'
+java -jar cli/target/crap-java-cli-0.6.3.jar --source-root src/java --source-root src/main/java17
+java -jar cli/target/crap-java-cli-0.6.3.jar --build-tool maven module-a/src/main/java/demo/Sample.java
+java -jar cli/target/crap-java-cli-0.6.3.jar src/main/java/demo/Sample.java
+java -jar cli/target/crap-java-cli-0.6.3.jar module-a module-b
 ```
 
 The CLI writes only the requested primary report format to stdout unless
@@ -243,12 +243,12 @@ but GitLab-visible details do not rely on properties.
 
 ## Distribution
 
-The current `0.6.2` release ships through Maven Central, with the Gradle Plugin Portal as the primary Gradle plugin channel:
+The current `0.6.3` release ships through Maven Central, with the Gradle Plugin Portal as the primary Gradle plugin channel:
 
-- `media.barney:crap-java-core:0.6.2`
-- `media.barney:crap-java-cli:0.6.2`
-- `media.barney:crap-java-maven-plugin:0.6.2`
-- Gradle plugin id `media.barney.crap-java` version `0.6.2`
+- `media.barney:crap-java-core:0.6.3`
+- `media.barney:crap-java-cli:0.6.3`
+- `media.barney:crap-java-maven-plugin:0.6.3`
+- Gradle plugin id `media.barney.crap-java` version `0.6.3`
 
 ### Gradle Plugin Portal
 
@@ -256,7 +256,7 @@ Apply the plugin in `build.gradle(.kts)`:
 
 ```kotlin
 plugins {
-    id("media.barney.crap-java") version "0.6.2"
+    id("media.barney.crap-java") version "0.6.3"
 }
 ```
 
@@ -311,14 +311,14 @@ Then apply the same plugin id in `build.gradle(.kts)`:
 
 ```kotlin
 plugins {
-    id("media.barney.crap-java") version "0.6.2"
+    id("media.barney.crap-java") version "0.6.3"
 }
 ```
 
 The marker publication lives at
-`media.barney.crap-java:media.barney.crap-java.gradle.plugin:0.6.2` and
+`media.barney.crap-java:media.barney.crap-java.gradle.plugin:0.6.3` and
 resolves to the implementation artifact
-`media.barney:crap-java-gradle-plugin:0.6.2`.
+`media.barney:crap-java-gradle-plugin:0.6.3`.
 
 ### Maven Central
 
@@ -349,7 +349,7 @@ Add the plugin:
     <plugin>
       <groupId>media.barney</groupId>
       <artifactId>crap-java-maven-plugin</artifactId>
-      <version>0.6.2</version>
+      <version>0.6.3</version>
       <executions>
         <execution>
           <goals>
