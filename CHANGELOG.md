@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### Fixed
+
+- Serialized Gradle report-state access within each JVM before acquiring the
+  cross-process file lock, preventing parallel subproject checks from failing
+  with `OverlappingFileLockException`.
+
 ## 0.6.2 - 2026-08-09
 
 ### Changed

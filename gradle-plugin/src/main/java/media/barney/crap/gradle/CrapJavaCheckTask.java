@@ -27,12 +27,9 @@ import org.gradle.work.DisableCachingByDefault;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.channels.FileChannel;
-import java.nio.channels.FileLock;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -200,17 +197,14 @@ public abstract class CrapJavaCheckTask extends DefaultTask {
             @Nullable Path configuredOutputPath,
             @Nullable Path configuredJunitReportPath
     ) throws Exception {
-        Path lockPath = stateLockPath();
-        Files.createDirectories(Objects.requireNonNull(lockPath.getParent()));
-        try (FileChannel channel = FileChannel.open(lockPath, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
-             FileLock ignored = channel.lock()) {
-            return runAndRememberReports(
+        return ReportStateLock.withLock(stateLockPath(), () ->
+                runAndRememberReports(
                     modules,
                     analysisRoot,
                     configuredOutputPath,
                     configuredJunitReportPath
-            );
-        }
+                )
+        );
     }
 
     private int runAndRememberReports(
