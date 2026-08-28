@@ -2,11 +2,18 @@
 
 ## Unreleased
 
+## 0.6.3 - 2026-08-29
+
 ### Fixed
 
 - Serialized Gradle report-state access within each JVM before acquiring the
   cross-process file lock, preventing parallel subproject checks from failing
   with `OverlappingFileLockException`.
+
+### Dependencies
+
+- Updated JUnit from `6.1.1` to `6.1.3`, JSpecify from `1.0.0` to `1.0.1`, and
+  Jackson from `2.22.0` to `2.22.1`.
 
 ## 0.6.2 - 2026-08-09
 
