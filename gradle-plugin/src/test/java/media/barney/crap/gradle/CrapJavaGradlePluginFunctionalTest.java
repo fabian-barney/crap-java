@@ -233,6 +233,61 @@ class CrapJavaGradlePluginFunctionalTest {
     }
 
     @Test
+    void parallelSubprojectChecksSerializeReportStateAccess() throws Exception {
+        writeFile("gradle.properties", "org.gradle.parallel=true\n");
+        writeFile("settings.gradle", """
+                rootProject.name = "workspace"
+                include("app", "lib")
+                """);
+        writeFile("build.gradle", """
+                plugins {
+                    id 'base'
+                    id 'media.barney.crap-java' apply false
+                }
+
+                subprojects {
+                    apply plugin: 'java'
+                    apply plugin: 'media.barney.crap-java'
+
+                    repositories {
+                        mavenCentral()
+                    }
+
+                    dependencies {
+                        testImplementation 'org.junit.jupiter:junit-jupiter:6.0.3'
+                        testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+                    }
+
+                    tasks.withType(Test).configureEach {
+                        useJUnitPlatform()
+                    }
+
+                    crapJava {
+                        format = 'json'
+                        output = layout.buildDirectory.file('reports/crap-java/primary.json')
+                        junitReport = layout.buildDirectory.file('reports/crap-java/junit.xml')
+                    }
+                }
+
+                tasks.register('quality') {
+                    dependsOn subprojects.collect { it.tasks.named('crap-java-check') }
+                }
+                """);
+        writeParallelSubproject("app", "AppSample", "alpha", 1);
+        writeParallelSubproject("lib", "LibSample", "beta", 2);
+
+        BuildResult result = runBuild("--parallel", "--max-workers=2", "quality");
+
+        assertEquals(TaskOutcome.SUCCESS, result.task(":app:crap-java-check").getOutcome());
+        assertEquals(TaskOutcome.SUCCESS, result.task(":lib:crap-java-check").getOutcome());
+        assertTrue(Files.exists(tempDir.resolve("app/build/reports/crap-java/primary.json")));
+        assertTrue(Files.exists(tempDir.resolve("app/build/reports/crap-java/junit.xml")));
+        assertTrue(Files.exists(tempDir.resolve("lib/build/reports/crap-java/primary.json")));
+        assertTrue(Files.exists(tempDir.resolve("lib/build/reports/crap-java/junit.xml")));
+        assertFalse(result.getOutput().contains("OverlappingFileLockException"));
+    }
+
+    @Test
     void customJacocoOutputLocationFeedsCrapJavaCheck() throws Exception {
         writeSingleModuleProject("""
 
@@ -785,6 +840,42 @@ class CrapJavaGradlePluginFunctionalTest {
                     }
                 }
                 """);
+    }
+
+    private void writeParallelSubproject(String name, String className, String methodName, int value)
+            throws IOException {
+        String packageName = "demo." + name;
+        writeFile(
+                name + "/src/main/java/" + packageName.replace('.', '/') + "/" + className + ".java",
+                String.join(
+                        System.lineSeparator(),
+                        "package " + packageName + ";",
+                        "",
+                        "public class " + className + " {",
+                        "    public int " + methodName + "() {",
+                        "        return " + value + ";",
+                        "    }",
+                        "}"
+                )
+        );
+        writeFile(
+                name + "/src/test/java/" + packageName.replace('.', '/') + "/" + className + "Test.java",
+                String.join(
+                        System.lineSeparator(),
+                        "package " + packageName + ";",
+                        "",
+                        "import org.junit.jupiter.api.Test;",
+                        "",
+                        "import static org.junit.jupiter.api.Assertions.assertEquals;",
+                        "",
+                        "class " + className + "Test {",
+                        "    @Test",
+                        "    void " + methodName + "ReturnsExpectedValue() {",
+                        "        assertEquals(" + value + ", new " + className + "()." + methodName + "());",
+                        "    }",
+                        "}"
+                )
+        );
     }
 
     private void writeFile(String relativePath, String content) throws IOException {
