@@ -51,12 +51,12 @@
     <maven.surefire.plugin.version>3.5.6</maven.surefire.plugin.version>
     <jspecify.version>1.0.1</jspecify.version>
     <jtoon.version>1.0.9</jtoon.version>
-    <jackson.version>2.22.1</jackson.version>
+    <jackson.version>2.22.2</jackson.version>
     <errorprone.version>2.50.0</errorprone.version>
-    <nullaway.version>0.13.7</nullaway.version>
+    <nullaway.version>0.13.8</nullaway.version>
     <nullaway.annotated.packages>media.barney.crap</nullaway.annotated.packages>
-    <spotbugs.version>4.9.8</spotbugs.version>
-    <spotbugs.maven.plugin.version>4.9.8.3</spotbugs.maven.plugin.version>
+    <spotbugs.version>4.10.4</spotbugs.version>
+    <spotbugs.maven.plugin.version>4.10.4.0</spotbugs.maven.plugin.version>
     <maven.source.plugin.version>3.4.0</maven.source.plugin.version>
     <maven.javadoc.plugin.version>3.12.0</maven.javadoc.plugin.version>
     <maven.gpg.plugin.version>3.2.8</maven.gpg.plugin.version>
