@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+## 0.6.4 - 2026-09-05
+
+### Dependencies
+
+- Updated Jackson from `2.22.1` to `2.22.2`, NullAway from `0.13.7` to
+  `0.13.8`, and Maven Surefire from `3.5.6` to `3.6.0`.
+
+### Changed
+
+- Aligned offline CI test-cache priming with the configured JUnit and Surefire
+  versions, including the Surefire provider's transitive dependencies.
+
 ## 0.6.3 - 2026-08-29
 
 ### Fixed
