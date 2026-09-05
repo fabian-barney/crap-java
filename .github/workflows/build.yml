@@ -27,8 +27,14 @@ jobs:
       - name: Build
         run: mvn -B -ntp -P!quality-gates-all -DskipTests install
 
-      - name: Prime SpotBugs Maven cache
-        run: mvn -B -ntp -P!quality-gates-all,quality-gate-spotbugs -DskipTests org.apache.maven.plugins:maven-dependency-plugin:3.7.0:go-offline
+      - name: Prime Maven test cache
+        run: |
+          mvn -B -ntp -P!quality-gates-all,quality-gate-spotbugs -DskipTests -DincludePluginDependencies=true org.apache.maven.plugins:maven-dependency-plugin:3.7.0:go-offline
+          junit_version="$(mvn -B -ntp -N -P!quality-gates-all help:evaluate -Dexpression=junit.version -q -DforceStdout | tail -n 1)"
+          surefire_version="$(mvn -B -ntp -N -P!quality-gates-all help:evaluate -Dexpression=maven.surefire.plugin.version -q -DforceStdout | tail -n 1)"
+          mvn -B -ntp -N -P!quality-gates-all org.apache.maven.plugins:maven-dependency-plugin:3.7.0:get -Dartifact="org.junit.platform:junit-platform-engine:${junit_version}"
+          mvn -B -ntp -N -P!quality-gates-all org.apache.maven.plugins:maven-dependency-plugin:3.7.0:get -Dartifact="org.junit.platform:junit-platform-launcher:${junit_version}"
+          mvn -B -ntp -N -P!quality-gates-all org.apache.maven.plugins:maven-dependency-plugin:3.7.0:get -Dartifact="org.apache.maven.surefire:surefire-junit-platform:${surefire_version}" -Dtransitive=true
 
       - name: Upload Maven repository
         uses: actions/upload-artifact@v7
