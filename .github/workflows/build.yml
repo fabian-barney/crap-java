@@ -28,7 +28,7 @@ jobs:
         run: mvn -B -ntp -P!quality-gates-all -DskipTests install
 
       - name: Prime SpotBugs Maven cache
-        run: mvn -B -ntp -P!quality-gates-all,quality-gate-spotbugs -DskipTests org.apache.maven.plugins:maven-dependency-plugin:3.7.0:go-offline
+        run: mvn -B -ntp -P!quality-gates-all,quality-gate-spotbugs -DskipTests -DincludePluginDependencies=true org.apache.maven.plugins:maven-dependency-plugin:3.7.0:go-offline
 
       - name: Upload Maven repository
         uses: actions/upload-artifact@v7
