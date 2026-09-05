@@ -27,7 +27,7 @@ jobs:
       - name: Build
         run: mvn -B -ntp -P!quality-gates-all -DskipTests install
 
-      - name: Prime SpotBugs Maven cache
+      - name: Prime Maven test cache
         run: |
           mvn -B -ntp -P!quality-gates-all,quality-gate-spotbugs -DskipTests -DincludePluginDependencies=true org.apache.maven.plugins:maven-dependency-plugin:3.7.0:go-offline
           junit_version="$(mvn -B -ntp -N -P!quality-gates-all help:evaluate -Dexpression=junit.version -q -DforceStdout | tail -n 1)"
