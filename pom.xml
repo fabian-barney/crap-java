@@ -48,7 +48,7 @@
     <cognitive-java.version>0.6.0</cognitive-java.version>
     <jacoco.version>0.8.15</jacoco.version>
     <junit.version>6.1.3</junit.version>
-    <maven.surefire.plugin.version>3.5.6</maven.surefire.plugin.version>
+    <maven.surefire.plugin.version>3.6.0</maven.surefire.plugin.version>
     <jspecify.version>1.0.1</jspecify.version>
     <jtoon.version>1.0.9</jtoon.version>
     <jackson.version>2.22.2</jackson.version>
