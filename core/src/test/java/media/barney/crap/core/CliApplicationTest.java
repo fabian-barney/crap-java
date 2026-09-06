@@ -58,8 +58,11 @@ class CliApplicationTest {
                 .execute(new String[0]);
 
         assertEquals(0, exit);
-        assertTrue(utf8(out).contains("status: passed"));
-        assertTrue(utf8(out).contains("methods[0]"));
+        assertEquals("""
+                status: passed
+                threshold: 6
+                methods: []
+                """.stripTrailing(), utf8(out));
     }
 
     @Test
@@ -81,7 +84,11 @@ class CliApplicationTest {
                 .execute(new String[]{"--changed"});
 
         assertEquals(0, exit);
-        assertTrue(utf8(out).contains("methods[0]"));
+        assertEquals("""
+                status: passed
+                threshold: 6
+                methods: []
+                """.stripTrailing(), utf8(out));
         assertEquals("", utf8(err));
     }
 
