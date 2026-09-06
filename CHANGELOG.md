@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+### Changed
+
+- Adopted TOON Specification 4.1 output semantics as a hard break. Empty arrays
+  now use the canonical `methods: []` representation; no legacy output mode is
+  retained.
+
+### Dependencies
+
+- Updated JToon from `1.0.9` to `2.0.2`, including its Jackson 3 runtime from
+  `3.0.4` to `3.2.1`.
+
 ## 0.6.4 - 2026-09-06
 
 ### Dependencies

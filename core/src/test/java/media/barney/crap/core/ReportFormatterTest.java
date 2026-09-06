@@ -108,11 +108,28 @@ class ReportFormatterTest {
                 metric("bar", "demo.Sample", 9, 2, null, null)
         ), ReportFormat.TOON);
 
-        assertTrue(report.contains("status: passed"));
-        assertTrue(report.contains("threshold: 6"));
-        assertTrue(report.contains("methods[2]{status,crap,cc,cov,covKind,method,src,lineStart,lineEnd}:"));
-        assertTrue(report.contains("passed,4.5,3,85,instruction,foo,src/main/java/demo/Sample.java,4,6"));
-        assertTrue(report.contains("skipped,null,2,null,N/A,bar,src/main/java/demo/Sample.java,9,11"));
+        String expected = """
+                status: passed
+                threshold: 6
+                methods[2]{status,crap,cc,cov,covKind,method,src,lineStart,lineEnd}:
+                  passed,4.5,3,85,instruction,foo,src/main/java/demo/Sample.java,4,6
+                  skipped,null,2,null,N/A,bar,src/main/java/demo/Sample.java,9,11
+                """.stripTrailing();
+
+        assertEquals(expected, report);
+    }
+
+    @Test
+    void formatsEmptyToonReportWithCanonicalEmptyArray() {
+        String report = ReportFormatter.format(report(), ReportFormat.TOON);
+
+        String expected = """
+                status: passed
+                threshold: 6
+                methods: []
+                """.stripTrailing();
+
+        assertEquals(expected, report);
     }
 
     @Test
@@ -270,12 +287,15 @@ class ReportFormatterTest {
                 metric("bar", "demo.Sample", 9, 2, null, null)
         ), ReportFormat.TOON, false, true);
 
-        assertTrue(report.contains("status: passed"));
-        assertTrue(report.contains("threshold: 6"));
-        assertTrue(report.contains("methods[2]{crap,cc,cov,covKind,method,src,lineStart,lineEnd}:"));
-        assertTrue(report.contains("4.5,3,85,instruction,foo,src/main/java/demo/Sample.java,4,6"));
-        assertTrue(report.contains("null,2,null,N/A,bar,src/main/java/demo/Sample.java,9,11"));
-        assertFalse(report.contains("methods[2]{status,"));
+        String expected = """
+                status: passed
+                threshold: 6
+                methods[2]{crap,cc,cov,covKind,method,src,lineStart,lineEnd}:
+                  4.5,3,85,instruction,foo,src/main/java/demo/Sample.java,4,6
+                  null,2,null,N/A,bar,src/main/java/demo/Sample.java,9,11
+                """.stripTrailing();
+
+        assertEquals(expected, report);
     }
 
     @Test
@@ -317,10 +337,14 @@ class ReportFormatterTest {
                 metric("safe", "demo.Sample", 9, 1, 100.0, 1.0)
         ), ReportFormat.TOON, true, true);
 
-        assertTrue(report.contains("status: failed"));
-        assertTrue(report.contains("threshold: 6"));
-        assertTrue(report.contains("methods[1]{crap,cc,cov,covKind,method,src,lineStart,lineEnd}:"));
-        assertTrue(report.contains("9.645,5,10,instruction,danger,src/main/java/demo/Sample.java,4,6"));
+        String expected = """
+                status: failed
+                threshold: 6
+                methods[1]{crap,cc,cov,covKind,method,src,lineStart,lineEnd}:
+                  9.645,5,10,instruction,danger,src/main/java/demo/Sample.java,4,6
+                """.stripTrailing();
+
+        assertEquals(expected, report);
     }
 
     @Test
@@ -467,11 +491,29 @@ class ReportFormatterTest {
 
         String json = ReportFormatter.format(report, ReportFormat.JSON);
         String text = ReportFormatter.format(report, ReportFormat.TEXT);
+        String toon = ReportFormatter.format(report, ReportFormat.TOON);
         String junit = ReportFormatter.format(report, ReportFormat.JUNIT);
+
+        String expectedToon = """
+                status: passed
+                threshold: 6
+                exclusions:
+                  candidateFiles: 2
+                  analyzedFiles: 1
+                  excludedFiles: 1
+                  excludedClasses: 1
+                  excludedFileReasons[1]{reason,count}:
+                    "default:path:generated-directory",1
+                  excludedClassReasons[1]{reason,count}:
+                    "default:annotation:Generated",1
+                methods[1]{status,crap,cc,cov,covKind,method,src,lineStart,lineEnd}:
+                  passed,1,1,100,instruction,safe,src/main/java/demo/Sample.java,4,6
+                """.stripTrailing();
 
         assertTrue(json.contains("\"exclusions\""));
         assertTrue(json.contains("\"excludedFiles\": 1"));
         assertTrue(text.contains("Exclusions:"));
+        assertEquals(expectedToon, toon);
         assertEquals("1", propertyValue(parseXml(junit), "exclusion.excludedFiles"));
         assertEquals("1", propertyValue(parseXml(junit), "exclusion.excludedClasses"));
     }
