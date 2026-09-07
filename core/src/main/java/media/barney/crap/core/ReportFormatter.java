@@ -365,7 +365,7 @@ final class ReportFormatter {
         XmlMapper mapper = XmlMapper.builder()
                 .configure(ToXmlGenerator.Feature.WRITE_XML_DECLARATION, true)
                 .build();
-        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+        mapper.setDefaultPropertyInclusion(JsonInclude.Include.NON_NULL);
         return mapper;
     }
 
@@ -397,7 +397,7 @@ final class ReportFormatter {
         List<CrapReport.MethodReport> sorted = new ArrayList<>(entries);
         sorted.sort(Comparator
                 .comparing((CrapReport.MethodReport e) -> e.crapScore() == null)
-                .thenComparing(e -> e.crapScore() == null ? 0.0 : -e.crapScore())
+                .thenComparingDouble(e -> e.crapScore() == null ? 0.0 : -e.crapScore())
                 .thenComparing(CrapReport.MethodReport::sourcePath)
                 .thenComparing(CrapReport.MethodReport::methodName)
                 .thenComparingInt(CrapReport.MethodReport::startLine));
