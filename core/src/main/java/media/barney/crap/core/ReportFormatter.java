@@ -365,7 +365,7 @@ final class ReportFormatter {
         XmlMapper mapper = XmlMapper.builder()
                 .configure(ToXmlGenerator.Feature.WRITE_XML_DECLARATION, true)
                 .build();
-        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+        mapper.setDefaultPropertyInclusion(JsonInclude.Include.NON_NULL);
         return mapper;
     }
 
