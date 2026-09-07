@@ -292,9 +292,6 @@
       <id>nullaway</id>
       <activation>
         <jdk>[25,26)</jdk>
-        <file>
-          <exists>../errorprone.cfg</exists>
-        </file>
       </activation>
       <build>
         <plugins>
