@@ -284,8 +284,9 @@ public final class Main {
     static double maxCrap(List<MethodMetrics> metrics) {
         double max = 0.0;
         for (MethodMetrics metric : metrics) {
-            if (metric.crapScore() != null) {
-                max = Math.max(max, metric.crapScore());
+            Double crapScore = metric.crapScore();
+            if (crapScore != null) {
+                max = Math.max(max, crapScore);
             }
         }
         return max;
