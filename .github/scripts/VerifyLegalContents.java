@@ -2,8 +2,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -26,7 +28,7 @@ final class VerifyLegalContents {
         verifyProjectLicense(cliJar, projectLicense, failures);
         verifyProjectLicense(repository.resolve("maven-plugin/target/crap-java-maven-plugin-" + version + ".jar"), projectLicense, failures);
         verifyProjectLicense(repository.resolve("gradle-plugin/build/libs/crap-java-gradle-plugin-" + version + ".jar"), projectLicense, failures);
-        verifyCliLegalResources(cliJar, failures);
+        verifyCliLegalResources(cliJar, repository, failures);
 
         if (!failures.isEmpty()) {
             failures.forEach(failure -> System.err.println("ERROR: " + failure));
@@ -52,19 +54,39 @@ final class VerifyLegalContents {
         });
     }
 
-    private static void verifyCliLegalResources(Path jarPath, List<String> failures) {
+    private static void verifyCliLegalResources(Path jarPath, Path repository, List<String> failures) {
         withJar(jarPath, failures, jar -> {
-            requireText(jar, "META-INF/LICENSE-jtoon", "MIT License", failures);
-            requireText(jar, "META-INF/LICENSE-stax2-api", "2-clause BSD", failures);
-            requireText(jar, "META-INF/LICENSE-woodstox-core", "Apache", failures);
-            requireText(jar, "META-INF/FastDoubleParser-LICENSE", "Werner Randelshofer", failures);
-            requireText(jar, "META-INF/FastDoubleParser-ThirdParty-LICENSE", "Boost Software License", failures);
-            requireText(jar, "META-INF/Schubfach-LICENSE", "Raffaello Giulietti", failures);
+            requireFile(jar, "META-INF/LICENSE-jtoon",
+                    repository.resolve("cli/src/main/resources/META-INF/LICENSE-jtoon"), failures);
+            requireFile(jar, "META-INF/LICENSE-stax2-api",
+                    repository.resolve("cli/src/main/resources/META-INF/LICENSE-stax2-api"), failures);
+            requireSha256(jar, "META-INF/FastDoubleParser-LICENSE",
+                    "59067508E44346BF93DC9C5E4D673A67ECD77988C2020BB5E0F8667EB199F396", failures);
+            requireSha256(jar, "META-INF/FastDoubleParser-ThirdParty-LICENSE",
+                    "DBC36F9422A40D58D1A214080583667CFD37D61C2FAE1657D981EDDA2A60727F", failures);
+            requireSha256(jar, "META-INF/Schubfach-LICENSE",
+                    "12D39A6615219D73202300715E365BEC2B958F858D1E837C8F2DACE57F905969", failures);
             requireText(jar, "META-INF/NOTICE", "Jackson 2.x", failures);
             requireText(jar, "META-INF/NOTICE", "Jackson 3.x", failures);
             requireText(jar, "META-INF/NOTICE", "FastDoubleParser", failures);
             requireText(jar, "META-INF/NOTICE", "Schubfach", failures);
         });
+    }
+
+    private static void requireFile(JarFile jar, String name, Path source, List<String> failures) throws IOException {
+        requireSingleEntry(jar, name, failures);
+        if (!Arrays.equals(Files.readAllBytes(source), readEntry(jar, name))) {
+            failures.add(jar.getName() + " entry " + name + " differs from " + source);
+        }
+    }
+
+    private static void requireSha256(JarFile jar, String name, String expected, List<String> failures) throws Exception {
+        requireSingleEntry(jar, name, failures);
+        String actual = HexFormat.of().withUpperCase()
+                .formatHex(MessageDigest.getInstance("SHA-256").digest(readEntry(jar, name)));
+        if (!expected.equals(actual)) {
+            failures.add(jar.getName() + " entry " + name + " has unexpected SHA-256 " + actual);
+        }
     }
 
     private static void requireText(JarFile jar, String name, String marker, List<String> failures) throws IOException {
