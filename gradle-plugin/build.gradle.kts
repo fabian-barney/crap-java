@@ -170,6 +170,10 @@ tasks.named("pluginUnderTestMetadata") {
 tasks.named<Jar>("jar") {
     dependsOn(verifyCoreJar)
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    from(layout.projectDirectory.file("../LICENSE")) {
+        into("META-INF")
+        rename("LICENSE", "LICENSE-crap-java")
+    }
     from(zipTree(coreJar))
 }
 
