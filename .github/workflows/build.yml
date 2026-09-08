@@ -18,7 +18,7 @@ jobs:
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
 
       - name: Validate Gradle wrapper
-        uses: gradle/actions/wrapper-validation@v4
+        uses: gradle/actions/wrapper-validation@48b5f213c81028ace310571dc5ec0fbbca0b2947 # v4
 
   build:
     name: build
@@ -807,9 +807,15 @@ jobs:
           MAVEN_VERSION: ${{ matrix.maven }}
         run: |
           archive="apache-maven-${MAVEN_VERSION}-bin.tar.gz"
+          case "$MAVEN_VERSION" in
+            3.9.0) expected_sha512="1ea149f4e48bc7b34d554aef86f948eca7df4e7874e30caf449f3708e4f8487c71a5e5c072a05f17c60406176ebeeaf56b5f895090c7346f8238e2da06cf6ecd" ;;
+            3.9.16) expected_sha512="831a8591fe20c8243b1dbe7d71e3244f31d1665b0804b2e825e38cbbe5ce0cafb8338851f90780735568773e0a6cd07bbec107cda0b896b008b861075358b6f6" ;;
+            *) echo "No trusted checksum for Maven ${MAVEN_VERSION}" >&2; exit 1 ;;
+          esac
           curl --fail --location --silent --show-error \
             --output "${RUNNER_TEMP}/${archive}" \
             "https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/${MAVEN_VERSION}/${archive}"
+          echo "${expected_sha512}  ${RUNNER_TEMP}/${archive}" | sha512sum --check --status
           tar -xzf "${RUNNER_TEMP}/${archive}" -C "${RUNNER_TEMP}"
           echo "${RUNNER_TEMP}/apache-maven-${MAVEN_VERSION}/bin" >> "$GITHUB_PATH"
 
@@ -862,7 +868,7 @@ jobs:
           cache: maven
 
       - name: Set up Gradle ${{ matrix.gradle }}
-        uses: gradle/actions/setup-gradle@v5
+        uses: gradle/actions/setup-gradle@0723195856401067f7a2779048b490ace7a47d7c # v5
         with:
           gradle-version: ${{ matrix.gradle }}
 
