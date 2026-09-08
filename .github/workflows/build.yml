@@ -9,6 +9,17 @@ permissions:
   contents: read
 
 jobs:
+  wrapper-validation:
+    name: verify / Gradle wrapper
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+
+      - name: Validate Gradle wrapper
+        uses: gradle/actions/wrapper-validation@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
+
   build:
     name: build
     runs-on: ubuntu-latest
@@ -770,3 +781,132 @@ jobs:
             echo "Found banned legacy package-registry references in tracked sources." >&2
             exit 1
           fi
+
+  compatibility-maven:
+    name: compatibility / Maven ${{ matrix.maven }} / Java ${{ matrix.java }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        maven: [ "3.9.0", "3.9.16" ]
+        java: [ "17", "21", "25" ]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+
+      - name: Set up JDK ${{ matrix.java }}
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+
+      - name: Install Maven ${{ matrix.maven }}
+        shell: bash
+        env:
+          MAVEN_VERSION: ${{ matrix.maven }}
+        run: |
+          archive="apache-maven-${MAVEN_VERSION}-bin.tar.gz"
+          case "$MAVEN_VERSION" in
+            3.9.0) expected_sha512="1ea149f4e48bc7b34d554aef86f948eca7df4e7874e30caf449f3708e4f8487c71a5e5c072a05f17c60406176ebeeaf56b5f895090c7346f8238e2da06cf6ecd" ;;
+            3.9.16) expected_sha512="831a8591fe20c8243b1dbe7d71e3244f31d1665b0804b2e825e38cbbe5ce0cafb8338851f90780735568773e0a6cd07bbec107cda0b896b008b861075358b6f6" ;;
+            *) echo "No trusted checksum for Maven ${MAVEN_VERSION}" >&2; exit 1 ;;
+          esac
+          curl --fail --location --silent --show-error \
+            --output "${RUNNER_TEMP}/${archive}" \
+            "https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/${MAVEN_VERSION}/${archive}"
+          echo "${expected_sha512}  ${RUNNER_TEMP}/${archive}" | sha512sum --check --status
+          tar -xzf "${RUNNER_TEMP}/${archive}" -C "${RUNNER_TEMP}"
+          echo "${RUNNER_TEMP}/apache-maven-${MAVEN_VERSION}/bin" >> "$GITHUB_PATH"
+
+      - name: Verify selected toolchain
+        shell: bash
+        env:
+          MAVEN_VERSION: ${{ matrix.maven }}
+        run: |
+          java -version
+          mvn_version="$(mvn --version | head -n 1)"
+          echo "$mvn_version"
+          [[ "$mvn_version" == "Apache Maven ${MAVEN_VERSION}"* ]]
+
+      - name: Run CLI and Maven plugin functional tests
+        run: mvn -B -ntp -P!quality-gates-all clean verify
+
+      - name: Verify Java 17 bytecode
+        shell: bash
+        run: |
+          javap -verbose -classpath core/target/classes media.barney.crap.core.Thresholds \
+            | grep --fixed-strings "major version: 61"
+
+  compatibility-gradle:
+    name: compatibility / Gradle ${{ matrix.gradle }} / Java ${{ matrix.java }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - gradle: "8.14.5"
+            java: "17"
+          - gradle: "8.14.5"
+            java: "21"
+          - gradle: "9.7.1"
+            java: "17"
+          - gradle: "9.7.1"
+            java: "21"
+          - gradle: "9.7.1"
+            java: "25"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+
+      - name: Set up JDK ${{ matrix.java }}
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+          cache: maven
+
+      - name: Set up Gradle ${{ matrix.gradle }}
+        uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
+        with:
+          gradle-version: ${{ matrix.gradle }}
+
+      - name: Build Java 17 core artifact
+        run: mvn -B -ntp -P!quality-gates-all -pl core -am -DskipTests package
+
+      - name: Run Gradle plugin functional tests
+        working-directory: gradle-plugin
+        run: gradle --version && gradle clean test validatePlugins
+
+  required:
+    name: verify / required
+    runs-on: ubuntu-latest
+    if: ${{ always() }}
+    needs:
+      - wrapper-validation
+      - publishing-preflight
+      - compatibility-maven
+      - compatibility-gradle
+
+    steps:
+      - name: Require every release-readiness gate
+        shell: bash
+        env:
+          WRAPPER_RESULT: ${{ needs.wrapper-validation.result }}
+          PREFLIGHT_RESULT: ${{ needs.publishing-preflight.result }}
+          MAVEN_RESULT: ${{ needs.compatibility-maven.result }}
+          GRADLE_RESULT: ${{ needs.compatibility-gradle.result }}
+        run: |
+          for gate in \
+            "Gradle wrapper validation:${WRAPPER_RESULT}" \
+            "publication preflight:${PREFLIGHT_RESULT}" \
+            "Maven compatibility matrix:${MAVEN_RESULT}" \
+            "Gradle compatibility matrix:${GRADLE_RESULT}"; do
+            name="${gate%%:*}"
+            result="${gate#*:}"
+            if [[ "$result" != "success" ]]; then
+              echo "Required gate '${name}' did not succeed: ${result}" >&2
+              exit 1
+            fi
+          done

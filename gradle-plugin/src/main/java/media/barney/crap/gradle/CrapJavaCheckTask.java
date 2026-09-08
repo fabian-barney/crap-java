@@ -72,16 +72,19 @@ public abstract class CrapJavaCheckTask extends DefaultTask {
         junitReportState = localStateFileProvider("junit-report.path");
         outputState = localStateFileProvider("primary-output.path");
         stateLock = globalStateFileProvider("state.lock");
-        internalExecutionMarkerRootProviders = getProject().getRootProject().getAllprojects().stream()
+        internalExecutionMarkerRootProviders = new ArrayList<>();
+        getProject().getRootProject().getAllprojects().stream()
                 .map(project -> project.getLayout().getBuildDirectory().dir("tmp/crap-java"))
-                .toList();
-        internalRememberedStateRootPaths = getProject().getRootProject().getAllprojects().stream()
-                .flatMap(project -> {
-                    Path stateRoot = projectCacheRoot(project).resolve("crap-java");
-                    return Stream.of(stateRoot, stateRoot.resolve(projectStateName(project)));
-                })
-                .distinct()
-                .toList();
+                .forEach(internalExecutionMarkerRootProviders::add);
+        internalRememberedStateRootPaths = new ArrayList<>(
+                getProject().getRootProject().getAllprojects().stream()
+                        .flatMap(project -> {
+                            Path stateRoot = projectCacheRoot(project).resolve("crap-java");
+                            return Stream.of(stateRoot, stateRoot.resolve(projectStateName(project)));
+                        })
+                        .distinct()
+                        .toList()
+        );
         getThreshold().convention(Main.DEFAULT_THRESHOLD);
         getAgent().convention(false);
         getFormat().convention(getAgent().map(agent -> agent ? "toon" : "none"));
