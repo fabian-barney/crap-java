@@ -16,7 +16,9 @@ download_with_retry() {
   local attempts=40
   local delay_seconds=15
   for ((attempt = 1; attempt <= attempts; attempt++)); do
-    if curl --fail --location --silent --show-error --output "$destination" "$url"; then
+    if curl --fail --location --silent --show-error \
+      --connect-timeout 15 --max-time 60 \
+      --output "$destination" "$url"; then
       return 0
     fi
     if ((attempt == attempts)); then

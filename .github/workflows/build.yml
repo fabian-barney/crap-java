@@ -917,12 +917,13 @@ jobs:
       - name: Compare two clean release builds
         shell: bash
         run: |
-          source_date_epoch="$(git show -s --format=%ct HEAD)"
+          repository_root="${GITHUB_WORKSPACE}"
+          source_date_epoch="$(git -C "$repository_root" show -s --format=%ct HEAD)"
           reproducibility_root="$(mktemp -d)"
           for build_name in first second; do
             build_root="${reproducibility_root}/${build_name}"
             mkdir "$build_root"
-            git archive HEAD | tar -x -C "$build_root"
+            git -C "$repository_root" archive HEAD | tar -x -C "$build_root"
             (
               cd "$build_root"
               export SOURCE_DATE_EPOCH="$source_date_epoch"

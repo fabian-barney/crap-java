@@ -11,7 +11,13 @@ from pathlib import Path
 
 
 def expected_timestamp() -> str:
-    epoch = int(os.environ["SOURCE_DATE_EPOCH"])
+    raw_epoch = os.environ.get("SOURCE_DATE_EPOCH")
+    if raw_epoch is None:
+        raise ValueError("SOURCE_DATE_EPOCH is required")
+    try:
+        epoch = int(raw_epoch)
+    except ValueError as error:
+        raise ValueError("SOURCE_DATE_EPOCH must be an integer Unix timestamp") from error
     return datetime.fromtimestamp(epoch, timezone.utc).isoformat(
         timespec="seconds"
     ).replace("+00:00", "Z")
