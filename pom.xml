@@ -101,6 +101,7 @@
         <executions>
           <execution>
             <id>enforce-supported-build-toolchain</id>
+            <phase>validate</phase>
             <goals>
               <goal>enforce</goal>
             </goals>

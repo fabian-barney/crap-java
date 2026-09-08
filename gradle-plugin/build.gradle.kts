@@ -5,6 +5,7 @@ import net.ltgt.gradle.errorprone.CheckSeverity
 import net.ltgt.gradle.errorprone.errorprone
 import org.gradle.plugin.compatibility.compatibility
 import org.gradle.api.tasks.testing.Test
+import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.jvm.tasks.Jar
 import org.gradle.api.publish.maven.MavenPublication
@@ -148,6 +149,9 @@ fun parentPomProperty(name: String): String {
 tasks.withType<Test>().configureEach {
     dependsOn(verifyCoreJar)
     useJUnitPlatform()
+    testLogging {
+        exceptionFormat = TestExceptionFormat.FULL
+    }
 }
 
 tasks.named<JacocoReport>("jacocoTestReport") {
