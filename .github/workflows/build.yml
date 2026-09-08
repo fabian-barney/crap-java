@@ -114,6 +114,15 @@ jobs:
       - name: Run package build
         run: mvn -B -ntp -P!quality-gates-all -o -DskipTests package
 
+      - name: Build Gradle plugin archive
+        working-directory: gradle-plugin
+        run: |
+          chmod +x gradlew
+          ./gradlew jar
+
+      - name: Verify archive legal content
+        run: java .github/scripts/VerifyLegalContents.java
+
   quality-crap-core:
     name: verify / quality-crap-core
     runs-on: ubuntu-latest
@@ -750,6 +759,9 @@ jobs:
       - name: Validate Gradle plugin publication metadata
         working-directory: gradle-plugin
         run: ./gradlew test validatePlugins publishToMavenLocal
+
+      - name: Verify archive legal content
+        run: java .github/scripts/VerifyLegalContents.java
 
       - name: Verify legacy package registry references are gone
         shell: bash
