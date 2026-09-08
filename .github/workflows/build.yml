@@ -898,9 +898,15 @@ jobs:
           MAVEN_RESULT: ${{ needs.compatibility-maven.result }}
           GRADLE_RESULT: ${{ needs.compatibility-gradle.result }}
         run: |
-          for result in "$WRAPPER_RESULT" "$PREFLIGHT_RESULT" "$MAVEN_RESULT" "$GRADLE_RESULT"; do
+          for gate in \
+            "Gradle wrapper validation:${WRAPPER_RESULT}" \
+            "publication preflight:${PREFLIGHT_RESULT}" \
+            "Maven compatibility matrix:${MAVEN_RESULT}" \
+            "Gradle compatibility matrix:${GRADLE_RESULT}"; do
+            name="${gate%%:*}"
+            result="${gate#*:}"
             if [[ "$result" != "success" ]]; then
-              echo "Required dependency did not succeed: $result" >&2
+              echo "Required gate '${name}' did not succeed: ${result}" >&2
               exit 1
             fi
           done
