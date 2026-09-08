@@ -76,13 +76,15 @@ public abstract class CrapJavaCheckTask extends DefaultTask {
         getProject().getRootProject().getAllprojects().stream()
                 .map(project -> project.getLayout().getBuildDirectory().dir("tmp/crap-java"))
                 .forEach(internalExecutionMarkerRootProviders::add);
-        internalRememberedStateRootPaths = getProject().getRootProject().getAllprojects().stream()
-                .flatMap(project -> {
-                    Path stateRoot = projectCacheRoot(project).resolve("crap-java");
-                    return Stream.of(stateRoot, stateRoot.resolve(projectStateName(project)));
-                })
-                .distinct()
-                .toList();
+        internalRememberedStateRootPaths = new ArrayList<>(
+                getProject().getRootProject().getAllprojects().stream()
+                        .flatMap(project -> {
+                            Path stateRoot = projectCacheRoot(project).resolve("crap-java");
+                            return Stream.of(stateRoot, stateRoot.resolve(projectStateName(project)));
+                        })
+                        .distinct()
+                        .toList()
+        );
         getThreshold().convention(Main.DEFAULT_THRESHOLD);
         getAgent().convention(false);
         getFormat().convention(getAgent().map(agent -> agent ? "toon" : "none"));
