@@ -44,6 +44,9 @@
 
   <properties>
     <maven.compiler.release>17</maven.compiler.release>
+    <maven.minimum.version>3.9.0</maven.minimum.version>
+    <maven.api.version>3.9.16</maven.api.version>
+    <maven.enforcer.plugin.version>3.6.3</maven.enforcer.plugin.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <cognitive-java.version>0.7.1</cognitive-java.version>
     <jacoco.version>0.8.15</jacoco.version>
@@ -91,6 +94,32 @@
 
   <build>
     <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <version>${maven.enforcer.plugin.version}</version>
+        <executions>
+          <execution>
+            <id>enforce-supported-build-toolchain</id>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+            <configuration>
+              <failFast>true</failFast>
+              <rules>
+                <requireJavaVersion>
+                  <version>[17,)</version>
+                  <message>crap-java requires Java 17 or newer.</message>
+                </requireJavaVersion>
+                <requireMavenVersion>
+                  <version>[${maven.minimum.version},)</version>
+                  <message>crap-java requires Maven ${maven.minimum.version} or newer.</message>
+                </requireMavenVersion>
+              </rules>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
