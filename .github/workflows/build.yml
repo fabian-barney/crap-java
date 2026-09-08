@@ -739,6 +739,10 @@ jobs:
             echo "EOF"
           } >> "$GITHUB_ENV"
 
+      - name: Record reproducible build timestamp
+        shell: bash
+        run: echo "SOURCE_DATE_EPOCH=$(git show -s --format=%ct HEAD)" >> "$GITHUB_ENV"
+
       - name: Verify release version parity
         shell: bash
         run: bash ./.github/scripts/verify-version-alignment.sh
@@ -757,6 +761,7 @@ jobs:
           "-Dmaven.repo.local=${PREFLIGHT_MAVEN_REPO_LOCAL}"
           -P!quality-gates-all,release
           -Dcentral.skipPublishing=true
+          "-Dproject.build.outputTimestamp=${SOURCE_DATE_EPOCH}"
           -pl .,cli,maven-plugin -am deploy
 
       - name: Clean Maven release workspace
@@ -773,6 +778,16 @@ jobs:
 
       - name: Verify archive legal content
         run: java .github/scripts/VerifyLegalContents.java
+
+      - name: Build signed release asset bundle
+        shell: bash
+        run: |
+          release_assets="${RUNNER_TEMP}/release-assets"
+          mkdir "$release_assets"
+          bash .github/scripts/build-release-payloads.sh "$release_assets"
+          bash .github/scripts/sign-release-assets.sh "$release_assets"
+          bash .github/scripts/verify-release-assets.sh "$release_assets" \
+            "$(python3 .github/scripts/project-version.py)"
 
       - name: Verify legacy package registry references are gone
         shell: bash
@@ -879,6 +894,49 @@ jobs:
         working-directory: gradle-plugin
         run: gradle --version && gradle clean test validatePlugins
 
+  reproducibility:
+    name: verify / reproducible-release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
+
+      - name: Compare two clean release builds
+        shell: bash
+        run: |
+          source_date_epoch="$(git show -s --format=%ct HEAD)"
+          reproducibility_root="$(mktemp -d)"
+          for build_name in first second; do
+            build_root="${reproducibility_root}/${build_name}"
+            mkdir "$build_root"
+            git archive HEAD | tar -x -C "$build_root"
+            (
+              cd "$build_root"
+              export SOURCE_DATE_EPOCH="$source_date_epoch"
+              bash .github/scripts/build-release-payloads.sh target/release-assets
+              version="$(python3 .github/scripts/project-version.py)"
+              python3 .github/scripts/verify-release-assets.py target/release-assets "$version"
+              find core/target cli/target maven-plugin/target gradle-plugin/build/libs target/release-assets \
+                -maxdepth 1 -type f \( -name '*.jar' -o -name '*.cdx.json' \) -print0 \
+                | sort -z | xargs -0 sha256sum > release-digests.sha256
+            )
+          done
+          diff --unified "${reproducibility_root}/first/release-digests.sha256" \
+            "${reproducibility_root}/second/release-digests.sha256"
+
   required:
     name: verify / required
     runs-on: ubuntu-latest
@@ -888,6 +946,7 @@ jobs:
       - publishing-preflight
       - compatibility-maven
       - compatibility-gradle
+      - reproducibility
 
     steps:
       - name: Require every release-readiness gate
@@ -897,12 +956,14 @@ jobs:
           PREFLIGHT_RESULT: ${{ needs.publishing-preflight.result }}
           MAVEN_RESULT: ${{ needs.compatibility-maven.result }}
           GRADLE_RESULT: ${{ needs.compatibility-gradle.result }}
+          REPRODUCIBILITY_RESULT: ${{ needs.reproducibility.result }}
         run: |
           for gate in \
             "Gradle wrapper validation:${WRAPPER_RESULT}" \
             "publication preflight:${PREFLIGHT_RESULT}" \
             "Maven compatibility matrix:${MAVEN_RESULT}" \
-            "Gradle compatibility matrix:${GRADLE_RESULT}"; do
+            "Gradle compatibility matrix:${GRADLE_RESULT}" \
+            "reproducible release build:${REPRODUCIBILITY_RESULT}"; do
             name="${gate%%:*}"
             result="${gate#*:}"
             if [[ "$result" != "success" ]]; then
