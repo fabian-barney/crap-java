@@ -18,7 +18,7 @@ jobs:
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
 
       - name: Validate Gradle wrapper
-        uses: gradle/actions/wrapper-validation@48b5f213c81028ace310571dc5ec0fbbca0b2947 # v4
+        uses: gradle/actions/wrapper-validation@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
 
   build:
     name: build
@@ -868,7 +868,7 @@ jobs:
           cache: maven
 
       - name: Set up Gradle ${{ matrix.gradle }}
-        uses: gradle/actions/setup-gradle@0723195856401067f7a2779048b490ace7a47d7c # v5
+        uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
         with:
           gradle-version: ${{ matrix.gradle }}
 
