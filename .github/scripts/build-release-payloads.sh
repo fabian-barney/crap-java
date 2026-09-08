@@ -10,7 +10,7 @@ if [[ ! "${SOURCE_DATE_EPOCH:-}" =~ ^[0-9]+$ ]]; then
   exit 2
 fi
 
-repository_root="$(git rev-parse --show-toplevel)"
+repository_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 output_directory="$1"
 if [[ "$output_directory" != /* ]]; then
   output_directory="$repository_root/$output_directory"
