@@ -44,6 +44,7 @@
 
   <properties>
     <maven.compiler.release>17</maven.compiler.release>
+    <java.minimum.version>17</java.minimum.version>
     <maven.minimum.version>3.9.0</maven.minimum.version>
     <maven.api.version>3.9.16</maven.api.version>
     <maven.enforcer.plugin.version>3.6.3</maven.enforcer.plugin.version>
@@ -109,8 +110,8 @@
               <failFast>true</failFast>
               <rules>
                 <requireJavaVersion>
-                  <version>[17,)</version>
-                  <message>crap-java requires Java 17 or newer.</message>
+                  <version>[${java.minimum.version},)</version>
+                  <message>crap-java requires Java ${java.minimum.version} or newer.</message>
                 </requireJavaVersion>
                 <requireMavenVersion>
                   <version>[${maven.minimum.version},)</version>
