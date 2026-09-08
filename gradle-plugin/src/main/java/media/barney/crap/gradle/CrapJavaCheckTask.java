@@ -72,9 +72,10 @@ public abstract class CrapJavaCheckTask extends DefaultTask {
         junitReportState = localStateFileProvider("junit-report.path");
         outputState = localStateFileProvider("primary-output.path");
         stateLock = globalStateFileProvider("state.lock");
-        internalExecutionMarkerRootProviders = getProject().getRootProject().getAllprojects().stream()
+        internalExecutionMarkerRootProviders = new ArrayList<>();
+        getProject().getRootProject().getAllprojects().stream()
                 .map(project -> project.getLayout().getBuildDirectory().dir("tmp/crap-java"))
-                .toList();
+                .forEach(internalExecutionMarkerRootProviders::add);
         internalRememberedStateRootPaths = getProject().getRootProject().getAllprojects().stream()
                 .flatMap(project -> {
                     Path stateRoot = projectCacheRoot(project).resolve("crap-java");
