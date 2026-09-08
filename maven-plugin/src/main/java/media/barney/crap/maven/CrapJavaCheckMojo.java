@@ -27,7 +27,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Mojo(name = "check", defaultPhase = LifecyclePhase.VERIFY, aggregator = true, threadSafe = true)
-public class CrapJavaCheckMojo extends AbstractMojo {
+public final class CrapJavaCheckMojo extends AbstractMojo {
 
     private final CrapJavaRunner runner;
 

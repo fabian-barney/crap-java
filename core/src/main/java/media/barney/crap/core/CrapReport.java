@@ -69,10 +69,11 @@ record CrapReport(
         }
 
         private static MethodStatus status(MethodMetrics metric, double threshold) {
-            if (metric.crapScore() == null) {
+            Double crapScore = metric.crapScore();
+            if (crapScore == null) {
                 return MethodStatus.SKIPPED;
             }
-            if (Double.compare(metric.crapScore(), threshold) > 0) {
+            if (Double.compare(crapScore, threshold) > 0) {
                 return MethodStatus.FAILED;
             }
             return MethodStatus.PASSED;

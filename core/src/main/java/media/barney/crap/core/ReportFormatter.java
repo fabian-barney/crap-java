@@ -397,11 +397,16 @@ final class ReportFormatter {
         List<CrapReport.MethodReport> sorted = new ArrayList<>(entries);
         sorted.sort(Comparator
                 .comparing((CrapReport.MethodReport e) -> e.crapScore() == null)
-                .thenComparingDouble(e -> e.crapScore() == null ? 0.0 : -e.crapScore())
+                .thenComparingDouble(ReportFormatter::descendingCrapScore)
                 .thenComparing(CrapReport.MethodReport::sourcePath)
                 .thenComparing(CrapReport.MethodReport::methodName)
                 .thenComparingInt(CrapReport.MethodReport::startLine));
         return sorted;
+    }
+
+    private static double descendingCrapScore(CrapReport.MethodReport method) {
+        Double crapScore = method.crapScore();
+        return crapScore == null ? 0.0 : -crapScore;
     }
 
     private static CrapReport failuresOnly(CrapReport report) {
