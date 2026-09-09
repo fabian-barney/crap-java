@@ -15,6 +15,12 @@ output_directory="$1"
 if [[ "$output_directory" != /* ]]; then
   output_directory="$repository_root/$output_directory"
 fi
+mkdir -p "$output_directory"
+if find "$output_directory" -mindepth 1 -maxdepth 1 -print -quit | grep -q .; then
+  echo "Output directory must be empty: $output_directory" >&2
+  exit 2
+fi
+output_directory="$(cd "$output_directory" && pwd)"
 cd "$repository_root"
 
 version="$(python3 .github/scripts/project-version.py)"
@@ -41,7 +47,6 @@ if find "$output_directory" -mindepth 1 -maxdepth 1 -print -quit | grep -q .; th
   echo "Output directory must be empty: $output_directory" >&2
   exit 2
 fi
-output_directory="$(cd "$output_directory" && pwd)"
 
 declare -A payload_sources=(
   ["crap-java-${version}.jar"]="cli/target/crap-java-cli-${version}.jar"
