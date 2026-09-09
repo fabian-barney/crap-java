@@ -68,8 +68,16 @@ is_protected_branch() {
     return 1
   fi
   local encoded_branch
+  local python_command=python3
   local rule_types
-  encoded_branch="$(python3 -c 'import sys, urllib.parse; print(urllib.parse.quote(sys.argv[1], safe=""))' "$branch")"
+  if [[ -n "${MSYSTEM:-}" ]]; then
+    python_command=python
+  fi
+  encoded_branch="$(
+    "$python_command" -c \
+      'import sys, urllib.parse; print(urllib.parse.quote(sys.argv[1], safe=""))' \
+      "$branch"
+  )"
   rule_types="$(gh api "repos/$repository/rules/branches/$encoded_branch" --jq '.[].type')" || return 1
   for required_rule in deletion non_fast_forward pull_request; do
     if ! grep -Fxq "$required_rule" <<<"$rule_types"; then
