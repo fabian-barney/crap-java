@@ -9,6 +9,10 @@ if [[ -z "${MAVEN_GPG_PASSPHRASE:-}" ]]; then
   echo "MAVEN_GPG_PASSPHRASE is required." >&2
   exit 2
 fi
+if [[ ! "${SOURCE_DATE_EPOCH:-}" =~ ^[0-9]+$ ]]; then
+  echo "SOURCE_DATE_EPOCH must be set to the release commit timestamp." >&2
+  exit 2
+fi
 
 assets_directory="$(cd "$1" && pwd)"
 mapfile -t payloads < <(
@@ -34,6 +38,7 @@ for asset in "${payloads[@]}" SHA256SUMS SHA512SUMS; do
   printf '%s' "$MAVEN_GPG_PASSPHRASE" | gpg --batch --yes --armor --detach-sign \
       --pinentry-mode loopback \
       --passphrase-fd 0 \
+      --faked-system-time "${SOURCE_DATE_EPOCH}!" \
       "${signing_key_arguments[@]}" \
       --output "$assets_directory/${asset}.asc" \
       "$assets_directory/$asset"

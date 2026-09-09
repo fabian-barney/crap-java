@@ -718,6 +718,10 @@ jobs:
           server-username: MAVEN_CENTRAL_TOKEN_USERNAME
           server-password: MAVEN_CENTRAL_TOKEN_PASSWORD
 
+      - name: Record reproducible build timestamp
+        shell: bash
+        run: echo "SOURCE_DATE_EPOCH=$(git show -s --format=%ct HEAD)" >> "$GITHUB_ENV"
+
       - name: Generate temporary GPG key for signing preflight
         shell: bash
         run: |
@@ -732,16 +736,14 @@ jobs:
           Passphrase: ${MAVEN_GPG_PASSPHRASE}
           %commit
           EOF
-          gpg --batch --pinentry-mode loopback --generate-key gpg-batch.txt
+          gpg --batch --pinentry-mode loopback \
+            --faked-system-time "$((SOURCE_DATE_EPOCH - 1))!" \
+            --generate-key gpg-batch.txt
           {
             echo "MAVEN_GPG_PRIVATE_KEY<<EOF"
             gpg --batch --pinentry-mode loopback --passphrase "${MAVEN_GPG_PASSPHRASE}" --armor --export-secret-keys preflight@example.com
             echo "EOF"
           } >> "$GITHUB_ENV"
-
-      - name: Record reproducible build timestamp
-        shell: bash
-        run: echo "SOURCE_DATE_EPOCH=$(git show -s --format=%ct HEAD)" >> "$GITHUB_ENV"
 
       - name: Verify release version parity
         shell: bash
@@ -920,6 +922,13 @@ jobs:
           repository_root="${GITHUB_WORKSPACE}"
           source_date_epoch="$(git -C "$repository_root" show -s --format=%ct HEAD)"
           reproducibility_root="$(mktemp -d)"
+          export GNUPGHOME="$(mktemp -d)"
+          export MAVEN_GPG_PASSPHRASE=reproducibility-only
+          gpg --batch --pinentry-mode loopback \
+            --passphrase "$MAVEN_GPG_PASSPHRASE" \
+            --faked-system-time "$((source_date_epoch - 1))!" \
+            --quick-generate-key "crap-java reproducibility <reproducibility@example.com>" \
+            rsa2048 sign 0
           for build_name in first second; do
             build_root="${reproducibility_root}/${build_name}"
             mkdir "$build_root"
@@ -928,10 +937,13 @@ jobs:
               cd "$build_root"
               export SOURCE_DATE_EPOCH="$source_date_epoch"
               bash .github/scripts/build-release-payloads.sh target/release-assets
+              bash .github/scripts/sign-release-assets.sh target/release-assets
               version="$(python3 .github/scripts/project-version.py)"
-              python3 .github/scripts/verify-release-assets.py target/release-assets "$version"
+              bash .github/scripts/verify-release-assets.sh target/release-assets "$version"
               find core/target cli/target maven-plugin/target gradle-plugin/build/libs target/release-assets \
-                -maxdepth 1 -type f \( -name '*.jar' -o -name '*.cdx.json' \) -print0 \
+                -maxdepth 1 -type f \
+                \( -name '*.jar' -o -name '*.cdx.json' -o -name '*.asc' \
+                  -o -name 'SHA256SUMS' -o -name 'SHA512SUMS' \) -print0 \
                 | sort -z | xargs -0 sha256sum > release-digests.sha256
             )
           done
