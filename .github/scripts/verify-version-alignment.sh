@@ -13,7 +13,7 @@ sanitized version must also match it exactly.
 Set MAVEN_VERSION_OUTPUT, MAVEN_MODULE_VERSION_OUTPUTS, or
 GRADLE_VERSION_OUTPUT to override the default file-based version sources for
 local dry-runs of malformed version scenarios. Module overrides use one
-"path=version" entry per line.
+"label=version" entry per line.
 EOF
 }
 
