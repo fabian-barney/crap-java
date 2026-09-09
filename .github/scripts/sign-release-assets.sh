@@ -17,7 +17,7 @@ fi
 assets_directory="$(cd "$1" && pwd)"
 mapfile -t payloads < <(
   find "$assets_directory" -maxdepth 1 -type f \
-    \( -name '*.jar' -o -name '*.cdx.json' \) -printf '%f\n' | sort
+    \( -name '*.jar' -o -name '*.cdx.json' \) -printf '%f\n' | LC_ALL=C sort
 )
 if [[ ${#payloads[@]} -ne 5 ]]; then
   echo "Expected five release payloads, found ${#payloads[@]}." >&2

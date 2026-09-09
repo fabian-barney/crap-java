@@ -72,7 +72,7 @@ jobs:
           RELEASE_SIGNING_FINGERPRINT: E6BB1FB6EE83EEAB7B408C6B5CA409BD8EE61724
           MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
         run: |
-          mkdir target/release-assets
+          mkdir -p target/release-assets
           bash .github/scripts/build-release-payloads.sh target/release-assets
           bash .github/scripts/sign-release-assets.sh target/release-assets
           bash .github/scripts/verify-release-assets.sh target/release-assets \

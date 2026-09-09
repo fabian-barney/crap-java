@@ -944,7 +944,7 @@ jobs:
                 -maxdepth 1 -type f \
                 \( -name '*.jar' -o -name '*.cdx.json' -o -name '*.asc' \
                   -o -name 'SHA256SUMS' -o -name 'SHA512SUMS' \) -print0 \
-                | sort -z | xargs -0 sha256sum > release-digests.sha256
+                | LC_ALL=C sort -z | xargs -0 sha256sum > release-digests.sha256
             )
           done
           diff --unified "${reproducibility_root}/first/release-digests.sha256" \
