@@ -5,13 +5,15 @@ usage() {
   cat <<'EOF'
 Usage: verify-version-alignment.sh [--expected-version <version>]
 
-Validates that the root Maven POM version and Gradle plugin version resolve to
-the same single-line value after stripping formatting noise. When
---expected-version is provided, the sanitized version must also match it
-exactly.
+Validates that the root Maven POM version, every published module parent
+version, and the Gradle plugin version resolve to the same single-line value
+after stripping formatting noise. When --expected-version is provided, the
+sanitized version must also match it exactly.
 
-Set MAVEN_VERSION_OUTPUT or GRADLE_VERSION_OUTPUT to override the default file-
-based version sources for local dry-runs of malformed version scenarios.
+Set MAVEN_VERSION_OUTPUT, MAVEN_MODULE_VERSION_OUTPUTS, or
+GRADLE_VERSION_OUTPUT to override the default file-based version sources for
+local dry-runs of malformed version scenarios. Module overrides use one
+"path=version" entry per line.
 EOF
 }
 
@@ -115,6 +117,69 @@ read_gradle_version_output() {
   }
 }
 
+read_maven_module_version_outputs() {
+  if [ "${MAVEN_MODULE_VERSION_OUTPUTS+x}" = x ]; then
+    printf '%s\n' "$MAVEN_MODULE_VERSION_OUTPUTS"
+    return
+  fi
+
+  local module_pom
+  local parsed_versions
+  local python_command=python3
+  if [[ -n "${MSYSTEM:-}" ]]; then
+    python_command=python
+  fi
+  for module_pom in core/pom.xml cli/pom.xml maven-plugin/pom.xml gradle-plugin/pom.xml; do
+    if [ ! -f "$module_pom" ]; then
+      echo "::error::Missing published module POM: $module_pom" >&2
+      exit 1
+    fi
+    parsed_versions="$("$python_command" - "$module_pom" <<'PY'
+import sys
+import xml.etree.ElementTree as element_tree
+
+path = sys.argv[1]
+project = element_tree.parse(path).getroot()
+namespace = {"m": "http://maven.apache.org/POM/4.0.0"}
+parent_version = project.findtext("m:parent/m:version", namespaces=namespace)
+if not parent_version:
+    raise SystemExit(f"Unable to locate parent.version in {path}.")
+print(f"{path} parent.version={parent_version.strip()}")
+project_version = project.findtext("m:version", namespaces=namespace)
+if project_version:
+    print(f"{path} project.version={project_version.strip()}")
+PY
+)" || {
+      echo "::error::Unable to parse release versions from $module_pom." >&2
+      exit 1
+    }
+    printf '%s\n' "$parsed_versions"
+  done
+}
+
+validate_maven_module_versions() {
+  local expected_version="$1"
+  local module_entry
+  local module_label
+  local module_outputs
+  local module_version
+
+  module_outputs="$(read_maven_module_version_outputs)"
+  while IFS= read -r module_entry; do
+    [ -n "$module_entry" ] || continue
+    if [[ "$module_entry" != *=* ]]; then
+      echo "::error::Invalid module version entry: $module_entry" >&2
+      exit 1
+    fi
+    module_label="${module_entry%%=*}"
+    module_version="$(normalize_single_line "$module_label" "${module_entry#*=}")"
+    if [ "$module_version" != "$expected_version" ]; then
+      echo "::error::${module_label} is ${module_version}, expected ${expected_version}." >&2
+      exit 1
+    fi
+  done <<<"$module_outputs"
+}
+
 main() {
   local expected_version=""
   local expected_version_requested=false
@@ -147,6 +212,7 @@ main() {
 
   maven_version="$(normalize_single_line "Maven project.version" "$(read_maven_version_output)")"
   gradle_version="$(normalize_single_line "Gradle project.version" "$(read_gradle_version_output)")"
+  validate_maven_module_versions "$maven_version"
 
   if [ "$maven_version" != "$gradle_version" ]; then
     echo "::error::Maven and Gradle versions disagree: Maven=${maven_version}, Gradle=${gradle_version}." >&2
