@@ -3,7 +3,11 @@ import com.github.spotbugs.snom.Effort
 import com.github.spotbugs.snom.SpotBugsTask
 import net.ltgt.gradle.errorprone.CheckSeverity
 import net.ltgt.gradle.errorprone.errorprone
+import org.cyclonedx.Version
+import org.cyclonedx.gradle.CyclonedxDirectTask
 import org.gradle.plugin.compatibility.compatibility
+import org.gradle.api.file.RegularFile
+import org.gradle.api.tasks.bundling.AbstractArchiveTask
 import org.gradle.api.tasks.testing.Test
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.compile.JavaCompile
@@ -17,6 +21,7 @@ import javax.xml.parsers.DocumentBuilderFactory
 plugins {
     `java-gradle-plugin`
     id("com.gradle.plugin-publish") version "2.1.1"
+    id("org.cyclonedx.bom") version "3.4.1"
     id("com.github.spotbugs") version "6.5.5"
     id("net.ltgt.errorprone") version "5.1.0" apply false
     jacoco
@@ -84,6 +89,11 @@ val verifyCoreJar = tasks.register("verifyCoreJar") {
 tasks.withType<JavaCompile>().configureEach {
     dependsOn(verifyCoreJar)
     options.release.set(17)
+}
+
+tasks.withType<AbstractArchiveTask>().configureEach {
+    isPreserveFileTimestamps = false
+    isReproducibleFileOrder = true
 }
 
 dependencies {
@@ -179,6 +189,16 @@ tasks.named<Jar>("jar") {
         rename("LICENSE", "LICENSE-crap-java")
     }
     from(zipTree(coreJar))
+}
+
+tasks.named<CyclonedxDirectTask>("cyclonedxDirectBom") {
+    schemaVersion = Version.VERSION_16
+    includeBomSerialNumber = false
+    includeLicenseText = false
+    includeBuildSystem = false
+    includeConfigs = listOf("runtimeClasspath")
+    jsonOutput = layout.buildDirectory.file("reports/sbom/crap-java-gradle-plugin-${projectVersion}.cdx.json")
+    xmlOutput.convention(null as RegularFile?)
 }
 
 publishing {

@@ -65,6 +65,7 @@
     <maven.javadoc.plugin.version>3.12.0</maven.javadoc.plugin.version>
     <maven.gpg.plugin.version>3.2.8</maven.gpg.plugin.version>
     <central.publishing.plugin.version>0.11.0</central.publishing.plugin.version>
+    <cyclonedx.maven.plugin.version>2.9.3</cyclonedx.maven.plugin.version>
     <central.skipPublishing>false</central.skipPublishing>
   </properties>
 
@@ -152,6 +153,11 @@
     </plugins>
     <pluginManagement>
       <plugins>
+        <plugin>
+          <groupId>org.cyclonedx</groupId>
+          <artifactId>cyclonedx-maven-plugin</artifactId>
+          <version>${cyclonedx.maven.plugin.version}</version>
+        </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-antrun-plugin</artifactId>
@@ -390,6 +396,28 @@
       <id>release</id>
       <build>
         <plugins>
+          <plugin>
+            <groupId>org.cyclonedx</groupId>
+            <artifactId>cyclonedx-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>component-sbom</id>
+                <phase>package</phase>
+                <goals>
+                  <goal>makeBom</goal>
+                </goals>
+              </execution>
+            </executions>
+            <configuration>
+              <schemaVersion>1.6</schemaVersion>
+              <includeBomSerialNumber>false</includeBomSerialNumber>
+              <includeLicenseText>false</includeLicenseText>
+              <outputFormat>json</outputFormat>
+              <outputName>bom</outputName>
+              <skipAttach>true</skipAttach>
+              <skipNotDeployed>false</skipNotDeployed>
+            </configuration>
+          </plugin>
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-source-plugin</artifactId>
