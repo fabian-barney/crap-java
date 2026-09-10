@@ -217,6 +217,9 @@ Keep those values fixed or otherwise trusted in CI configurations.
 Machine-readable primary reports include top-level `status` (`passed` or
 `failed`) and `threshold` values. Method entries use compact fields `status`,
 `crap`, `cc`, `cov`, `covKind`, `method`, `src`, `lineStart`, and `lineEnd`.
+The per-method `status` field is omitted when `--omit-redundancy` is enabled;
+consumers can derive `skipped` when `crap` is `null`, `failed` when `crap` is
+greater than the top-level `threshold`, and `passed` otherwise.
 `src` is the project-relative source file path. `covKind` identifies the
 coverage input used for each CRAP score (`instruction`, `branch`, or `N/A`).
 `N/A` also covers methods whose JaCoCo coverage cannot be attributed
