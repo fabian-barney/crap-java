@@ -978,6 +978,7 @@ jobs:
       - name: Require every release-readiness gate
         shell: bash
         env:
+          RELEASE_CONTROLS_RESULT: ${{ needs.release-controls.result }}
           WRAPPER_RESULT: ${{ needs.wrapper-validation.result }}
           PREFLIGHT_RESULT: ${{ needs.publishing-preflight.result }}
           MAVEN_RESULT: ${{ needs.compatibility-maven.result }}
@@ -985,6 +986,7 @@ jobs:
           REPRODUCIBILITY_RESULT: ${{ needs.reproducibility.result }}
         run: |
           for gate in \
+            "release controls:${RELEASE_CONTROLS_RESULT}" \
             "Gradle wrapper validation:${WRAPPER_RESULT}" \
             "publication preflight:${PREFLIGHT_RESULT}" \
             "Maven compatibility matrix:${MAVEN_RESULT}" \
