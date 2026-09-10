@@ -25,7 +25,7 @@ build-tool combinations are:
 | --- | --- | --- |
 | CLI | Java 17, 21, and 25 | Java 17, 21, and 25 |
 | Maven plugin | Maven 3.9.x on Java 17, 21, or 25 | Maven 3.9.0 and 3.9.16 on each Java version |
-| Gradle plugin | Gradle 8.14.x on Java 17 or 21; Gradle 9.7.x on Java 17, 21, or 25 | Gradle 8.14.5 and 9.7.1 on those Java versions |
+| Gradle plugin | Gradle 8.14.x on Java 17 or 21; Gradle 9.7.x on Java 17, 21, or 25 | Gradle 8.14.5 on Java 17/21; Gradle 9.7.1 on Java 17/21/25 |
 
 Java 17 and Maven 3.9.0 are the minimums enforced by the Maven build and plugin
 metadata. Gradle 8.14 is not supported on Java 25; use Gradle 9.7.x for that
