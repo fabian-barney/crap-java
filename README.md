@@ -12,6 +12,26 @@ The toolkit resolves Maven and Gradle modules natively, including standard multi
 - `gradle-plugin`: self-contained Gradle plugin build exposing `media.barney.crap-java`
 - `maven-plugin`: native Maven plugin exposing the `check` goal
 
+The `core` artifact exists to support the CLI and plugins. It is internal
+implementation, not a supported Java library API, and carries no direct binary
+or source compatibility guarantee.
+
+## Requirements and support
+
+All artifacts contain Java 17-compatible bytecode. The supported runtime and
+build-tool combinations are:
+
+| Integration | Supported versions | Tested boundaries |
+| --- | --- | --- |
+| CLI | Java 17, 21, and 25 | Java 17, 21, and 25 |
+| Maven plugin | Maven 3.9.x on Java 17, 21, or 25 | Maven 3.9.0 and 3.9.16 on each Java version |
+| Gradle plugin | Gradle 8.14.x on Java 17 or 21; Gradle 9.7.x on Java 17, 21, or 25 | Gradle 8.14.5 and 9.7.1 on those Java versions |
+
+Java 17 and Maven 3.9.0 are the minimums enforced by the Maven build and plugin
+metadata. Gradle 8.14 is not supported on Java 25; use Gradle 9.7.x for that
+runtime. The repository wrapper uses Gradle 9.7.1. Versions outside this matrix
+may work but are not part of the v1 support commitment.
+
 ## Formula
 
 `CRAP = CC^2 * (1 - coverage)^3 + CC`
@@ -131,7 +151,8 @@ mvn -B -pl cli -am -DskipTests package
 From the project root you want to analyze:
 
 ```bash
-java -jar cli/target/crap-java-cli-0.6.4.jar
+CRAP_JAVA_JAR=/path/to/crap-java-VERSION.jar
+java -jar "$CRAP_JAVA_JAR"
 ```
 
 ## CLI
@@ -163,25 +184,25 @@ Value-taking long options may also be written with inline assignment, such as
 Examples:
 
 ```bash
-java -jar cli/target/crap-java-cli-0.6.4.jar --help
-java -jar cli/target/crap-java-cli-0.6.4.jar
-java -jar cli/target/crap-java-cli-0.6.4.jar --changed
-java -jar cli/target/crap-java-cli-0.6.4.jar --build-tool gradle
-java -jar cli/target/crap-java-cli-0.6.4.jar --build-tool=maven
-java -jar cli/target/crap-java-cli-0.6.4.jar --format json
-java -jar cli/target/crap-java-cli-0.6.4.jar --format none --junit-report target/crap-java/TEST-crap-java.xml
-java -jar cli/target/crap-java-cli-0.6.4.jar --format json --output target/crap-java/report.json
-java -jar cli/target/crap-java-cli-0.6.4.jar --failures-only=false --format json
-java -jar cli/target/crap-java-cli-0.6.4.jar --omit-redundancy=false --format json
-java -jar cli/target/crap-java-cli-0.6.4.jar --agent
-java -jar cli/target/crap-java-cli-0.6.4.jar --agent --format junit --output target/crap-java/TEST-crap-java-primary.xml
-java -jar cli/target/crap-java-cli-0.6.4.jar --junit-report target/crap-java/TEST-crap-java.xml
-java -jar cli/target/crap-java-cli-0.6.4.jar --exclude 'module-a/**' --exclude-class '.*MapperImpl$'
-java -jar cli/target/crap-java-cli-0.6.4.jar --exclude='module-a/**' --exclude-class='.*MapperImpl$'
-java -jar cli/target/crap-java-cli-0.6.4.jar --source-root src/java --source-root src/main/java17
-java -jar cli/target/crap-java-cli-0.6.4.jar --build-tool maven module-a/src/main/java/demo/Sample.java
-java -jar cli/target/crap-java-cli-0.6.4.jar src/main/java/demo/Sample.java
-java -jar cli/target/crap-java-cli-0.6.4.jar module-a module-b
+java -jar "$CRAP_JAVA_JAR" --help
+java -jar "$CRAP_JAVA_JAR"
+java -jar "$CRAP_JAVA_JAR" --changed
+java -jar "$CRAP_JAVA_JAR" --build-tool gradle
+java -jar "$CRAP_JAVA_JAR" --build-tool=maven
+java -jar "$CRAP_JAVA_JAR" --format json
+java -jar "$CRAP_JAVA_JAR" --format none --junit-report target/crap-java/TEST-crap-java.xml
+java -jar "$CRAP_JAVA_JAR" --format json --output target/crap-java/report.json
+java -jar "$CRAP_JAVA_JAR" --failures-only=false --format json
+java -jar "$CRAP_JAVA_JAR" --omit-redundancy=false --format json
+java -jar "$CRAP_JAVA_JAR" --agent
+java -jar "$CRAP_JAVA_JAR" --agent --format junit --output target/crap-java/TEST-crap-java-primary.xml
+java -jar "$CRAP_JAVA_JAR" --junit-report target/crap-java/TEST-crap-java.xml
+java -jar "$CRAP_JAVA_JAR" --exclude 'module-a/**' --exclude-class '.*MapperImpl$'
+java -jar "$CRAP_JAVA_JAR" --exclude='module-a/**' --exclude-class='.*MapperImpl$'
+java -jar "$CRAP_JAVA_JAR" --source-root src/java --source-root src/main/java17
+java -jar "$CRAP_JAVA_JAR" --build-tool maven module-a/src/main/java/demo/Sample.java
+java -jar "$CRAP_JAVA_JAR" src/main/java/demo/Sample.java
+java -jar "$CRAP_JAVA_JAR" module-a module-b
 ```
 
 The CLI writes only the requested primary report format to stdout unless
@@ -195,10 +216,11 @@ Keep those values fixed or otherwise trusted in CI configurations.
 Machine-readable primary reports include top-level `status` (`passed` or
 `failed`) and `threshold` values. Method entries use compact fields `status`,
 `crap`, `cc`, `cov`, `covKind`, `method`, `src`, `lineStart`, and `lineEnd`.
-`src` is the project-relative source file path. `coverageKind` identifies the
+`src` is the project-relative source file path. `covKind` identifies the
 coverage input used for each CRAP score (`instruction`, `branch`, or `N/A`).
 `N/A` also covers methods whose JaCoCo coverage cannot be attributed
-unambiguously to one source method.
+unambiguously to one source method. The corresponding JUnit property retains
+the descriptive name `coverageKind`.
 Full primary reports also include exclusion audit counts when any source was
 considered; optimized primary reports produced through `--agent` omit that audit
 detail by default to stay focused on actionable failures. The JUnit sidecar
@@ -241,14 +263,97 @@ failure/skipped element text include CRAP score, threshold, coverage kind,
 source path, and line range. Custom properties remain for tools that read them,
 but GitLab-visible details do not rely on properties.
 
+## v1 compatibility contract
+
+Semantic Versioning applies to the user-facing CLI options and their behavior,
+Maven and Gradle plugin configuration, process exit codes, and the JSON, TOON,
+and JUnit output schemas. Within the 1.x line, existing names and meanings on
+those surfaces will not be removed or changed incompatibly. Additions remain
+possible when existing correct configurations and parsers continue to work.
+The human-readable text report is intended for people and is not a stable
+machine schema.
+
+TOON output follows TOON Specification 4.1 for the entire 1.x line. An
+incompatible upstream TOON format change requires a new crap-java major
+version. The `core` Java artifact remains internal and is excluded from the
+binary/source compatibility promise; supported integrations are the CLI and
+the two build plugins.
+
+Users upgrading from 0.6.4 must account for the TOON 4.1 empty-array encoding.
+See [Migrating from 0.6.4 to 1.0.0](MIGRATING.md).
+
 ## Distribution
 
-The current `0.6.4` release ships through Maven Central, with the Gradle Plugin Portal as the primary Gradle plugin channel:
+Releases ship through Maven Central, with the Gradle Plugin Portal as the
+primary Gradle plugin channel. Replace `VERSION` in the snippets below with the
+release version you are installing:
 
-- `media.barney:crap-java-core:0.6.4`
-- `media.barney:crap-java-cli:0.6.4`
-- `media.barney:crap-java-maven-plugin:0.6.4`
-- Gradle plugin id `media.barney.crap-java` version `0.6.4`
+- `media.barney:crap-java-core:VERSION`
+- `media.barney:crap-java-cli:VERSION`
+- `media.barney:crap-java-maven-plugin:VERSION`
+- `media.barney:crap-java-gradle-plugin:VERSION`
+- Gradle plugin id `media.barney.crap-java` version `VERSION`
+
+### Direct CLI download
+
+Download the executable JAR from the matching GitHub Release and run it on a
+supported Java runtime:
+
+```bash
+VERSION=VERSION
+curl --fail --location --remote-name \
+  "https://github.com/fabian-barney/crap-java/releases/download/v${VERSION}/crap-java-${VERSION}.jar"
+java -jar "crap-java-${VERSION}.jar" --help
+```
+
+Each release also includes four CycloneDX 1.6 JSON component SBOMs, SHA-256
+and SHA-512 manifests, and ASCII-armored detached PGP signatures for the JAR,
+SBOMs, and checksum manifests.
+
+### Verify a GitHub release
+
+Install GitHub CLI, GnuPG, and GNU `sha256sum`/`sha512sum`, then download and
+verify the complete release bundle:
+
+```bash
+VERSION=VERSION
+RELEASE_DIR="crap-java-${VERSION}-release"
+mkdir "$RELEASE_DIR"
+gh release download "v${VERSION}" \
+  --repo fabian-barney/crap-java \
+  --dir "$RELEASE_DIR"
+curl --fail --location \
+  --output "$RELEASE_DIR/release-signing-key.asc" \
+  "https://raw.githubusercontent.com/fabian-barney/crap-java/v${VERSION}/.github/release-signing-key.asc"
+
+cd "$RELEASE_DIR"
+test "$(gpg --show-keys --with-colons release-signing-key.asc \
+  | awk -F: '$1 == "fpr" { print $10; exit }')" \
+  = "E6BB1FB6EE83EEAB7B408C6B5CA409BD8EE61724"
+gpg --import release-signing-key.asc
+sha256sum --check --strict SHA256SUMS
+sha512sum --check --strict SHA512SUMS
+for payload in crap-java-"${VERSION}".jar *.cdx.json SHA256SUMS SHA512SUMS; do
+  gpg --verify "${payload}.asc" "$payload"
+done
+
+SOURCE_DIGEST="$(gh api \
+  "repos/fabian-barney/crap-java/commits/v${VERSION}" --jq .sha)"
+gh attestation verify "crap-java-${VERSION}.jar" \
+  --repo fabian-barney/crap-java \
+  --signer-workflow fabian-barney/crap-java/.github/workflows/release.yml \
+  --source-digest "$SOURCE_DIGEST"
+gh attestation verify "crap-java-${VERSION}.jar" \
+  --repo fabian-barney/crap-java \
+  --signer-workflow fabian-barney/crap-java/.github/workflows/release.yml \
+  --source-digest "$SOURCE_DIGEST" \
+  --predicate-type https://cyclonedx.org/bom
+```
+
+The first attestation command verifies build provenance; the second verifies
+that the CLI JAR is bound to its CycloneDX SBOM. The same two attestation types
+are published for the core, Maven plugin, and Gradle plugin artifacts in their
+registry builds.
 
 ### Gradle Plugin Portal
 
@@ -256,7 +361,7 @@ Apply the plugin in `build.gradle(.kts)`:
 
 ```kotlin
 plugins {
-    id("media.barney.crap-java") version "0.6.4"
+    id("media.barney.crap-java") version "VERSION"
 }
 ```
 
@@ -311,20 +416,24 @@ Then apply the same plugin id in `build.gradle(.kts)`:
 
 ```kotlin
 plugins {
-    id("media.barney.crap-java") version "0.6.4"
+    id("media.barney.crap-java") version "VERSION"
 }
 ```
 
 The marker publication lives at
-`media.barney.crap-java:media.barney.crap-java.gradle.plugin:0.6.4` and
+`media.barney.crap-java:media.barney.crap-java.gradle.plugin:VERSION` and
 resolves to the implementation artifact
-`media.barney:crap-java-gradle-plugin:0.6.4`.
+`media.barney:crap-java-gradle-plugin:VERSION`.
 
 ### Maven Central
 
 Add the plugin:
 
 ```xml
+<properties>
+  <crap-java.version>VERSION</crap-java.version>
+</properties>
+
 <build>
   <plugins>
     <plugin>
@@ -349,7 +458,7 @@ Add the plugin:
     <plugin>
       <groupId>media.barney</groupId>
       <artifactId>crap-java-maven-plugin</artifactId>
-      <version>0.6.4</version>
+      <version>${crap-java.version}</version>
       <executions>
         <execution>
           <goals>

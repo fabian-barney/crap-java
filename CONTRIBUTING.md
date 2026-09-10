@@ -13,3 +13,6 @@ the merged `main` commit is green.
 4. Open a PR that closes the issue and keeps the change scoped to that issue.
 5. Keep the PR green, reply to review comments, and resolve threads only after the fix or an explicit invalidation response.
 6. Merge only after the latest review is newer than the latest push and all required checks are green.
+
+Maintainers preparing a tag or recovering a publication must also follow
+[RELEASING.md](RELEASING.md).
