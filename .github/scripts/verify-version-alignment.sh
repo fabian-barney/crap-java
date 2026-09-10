@@ -124,12 +124,33 @@ read_maven_module_version_outputs() {
   fi
 
   local module_pom
+  local module_poms
   local parsed_versions
   local python_command=python3
   if [[ -n "${MSYSTEM:-}" ]]; then
     python_command=python
   fi
-  for module_pom in core/pom.xml cli/pom.xml maven-plugin/pom.xml gradle-plugin/pom.xml; do
+  module_poms="$("$python_command" - pom.xml <<'PY' | tr -d '\r'
+import sys
+import xml.etree.ElementTree as element_tree
+
+project = element_tree.parse(sys.argv[1]).getroot()
+namespace = {"m": "http://maven.apache.org/POM/4.0.0"}
+modules = project.findall("m:modules/m:module", namespaces=namespace)
+if not modules:
+    raise SystemExit("Root pom.xml does not declare any modules.")
+for module in modules:
+    if not module.text or not module.text.strip():
+        raise SystemExit("Root pom.xml declares an empty module path.")
+    print(f"{module.text.strip()}/pom.xml")
+PY
+)" || {
+    echo "::error::Unable to read the module list from root pom.xml." >&2
+    exit 1
+  }
+
+  while IFS= read -r module_pom; do
+    [ -n "$module_pom" ] || continue
     if [ ! -f "$module_pom" ]; then
       echo "::error::Missing published module POM: $module_pom" >&2
       exit 1
@@ -154,7 +175,7 @@ PY
       exit 1
     }
     printf '%s\n' "$parsed_versions"
-  done
+  done <<< "$module_poms"
 }
 
 validate_maven_module_versions() {
