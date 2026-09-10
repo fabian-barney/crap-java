@@ -151,7 +151,8 @@ mvn -B -pl cli -am -DskipTests package
 From the project root you want to analyze:
 
 ```bash
-CRAP_JAVA_JAR=/path/to/crap-java-VERSION.jar
+VERSION=x.y.z # replace with the version built above
+CRAP_JAVA_JAR="cli/target/crap-java-cli-${VERSION}.jar"
 java -jar "$CRAP_JAVA_JAR"
 ```
 
@@ -288,8 +289,8 @@ See [Migrating from 0.6.4 to 1.0.0](MIGRATING.md).
 ## Distribution
 
 Releases ship through Maven Central, with the Gradle Plugin Portal as the
-primary Gradle plugin channel. Replace `VERSION` in the snippets below with the
-release version you are installing:
+primary Gradle plugin channel. Replace `VERSION` in configuration snippets and
+`x.y.z` in shell snippets with the release version you are installing:
 
 - `media.barney:crap-java-core:VERSION`
 - `media.barney:crap-java-cli:VERSION`
@@ -303,7 +304,7 @@ Download the executable JAR from the matching GitHub Release and run it on a
 supported Java runtime:
 
 ```bash
-VERSION=VERSION
+VERSION=x.y.z # replace with the release version
 curl --fail --location --remote-name \
   "https://github.com/fabian-barney/crap-java/releases/download/v${VERSION}/crap-java-${VERSION}.jar"
 java -jar "crap-java-${VERSION}.jar" --help
@@ -319,12 +320,13 @@ Install GitHub CLI, GnuPG, and GNU `sha256sum`/`sha512sum`, then download and
 verify the complete release bundle:
 
 ```bash
-VERSION=VERSION
+VERSION=x.y.z # replace with the release version
 RELEASE_DIR="crap-java-${VERSION}-release"
-mkdir "$RELEASE_DIR"
+mkdir -p "$RELEASE_DIR"
 gh release download "v${VERSION}" \
   --repo fabian-barney/crap-java \
-  --dir "$RELEASE_DIR"
+  --dir "$RELEASE_DIR" \
+  --clobber
 curl --fail --location \
   --output "$RELEASE_DIR/release-signing-key.asc" \
   "https://raw.githubusercontent.com/fabian-barney/crap-java/v${VERSION}/.github/release-signing-key.asc"
