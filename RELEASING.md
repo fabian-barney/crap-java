@@ -48,7 +48,7 @@ versions only in historical or migration context.
 Run the local gates supported by the current host:
 
 ```bash
-.github/scripts/verify-version-alignment.sh --expected-version VERSION
+bash .github/scripts/verify-version-alignment.sh --expected-version VERSION
 mvn -B -ntp verify
 mvn -B -ntp -P'!quality-gates-all,release' \
   -DskipTests -Dgpg.skip=true -Dcentral.skipPublishing=true verify
@@ -136,4 +136,3 @@ after all checks pass.
 - If verification cannot establish artifact, signature, attestation, registry,
   and tag identity, keep the GitHub Release in draft state and record the exact
   failing target on the release issue.
-
