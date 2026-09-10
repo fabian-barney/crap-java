@@ -222,9 +222,12 @@ coverage input used for each CRAP score (`instruction`, `branch`, or `N/A`).
 unambiguously to one source method. The corresponding JUnit property retains
 the descriptive name `coverageKind`.
 Full primary reports also include exclusion audit counts when any source was
-considered; optimized primary reports produced through `--agent` omit that audit
-detail by default to stay focused on actionable failures. The JUnit sidecar
-keeps the complete exclusion audit.
+considered. The `exclusions` object contains `candidateFiles`, `analyzedFiles`,
+`excludedFiles`, `excludedClasses`, `excludedFileReasons`, and
+`excludedClassReasons`; each reason entry contains `reason` and `count`.
+Optimized primary reports produced through `--agent` omit that audit detail by
+default to stay focused on actionable failures. The JUnit sidecar keeps the
+complete exclusion audit.
 
 Built-in exclusions are conservative and generated-code focused. They exclude
 source files under any directory segment containing `generated`, source files
@@ -380,6 +383,7 @@ Configure default report behavior in `build.gradle(.kts)`:
 
 ```kotlin
 crapJava {
+    threshold.set(8.0)
     format.set("json")
     agent.set(false)
     failuresOnly.set(false)
