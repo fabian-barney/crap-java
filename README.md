@@ -293,8 +293,8 @@ See [Migrating from 0.6.4 to 1.0.0](MIGRATING.md).
 
 ## Distribution
 
-Release 1.0.0 is available through Maven Central, with the Gradle Plugin Portal
-as the primary Gradle plugin channel:
+Releases are published through Maven Central, with the Gradle Plugin Portal as
+the primary Gradle plugin channel. The current installation coordinates are:
 
 - `media.barney:crap-java-core:1.0.0`
 - `media.barney:crap-java-cli:1.0.0`
