@@ -1,5 +1,7 @@
 # Changelog
 
+## Unreleased
+
 ## 1.0.0 - 2026-09-11
 
 ### Added
@@ -7,8 +9,9 @@
 - Defined the v1 compatibility contract for CLI options, plugin configuration,
   exit codes, and JSON, TOON, and JUnit output schemas, together with a
   0.6.4-to-1.0.0 migration guide and maintainer release runbook.
-- Declared and continuously test Java 17, 21, and 25, Maven 3.9.x, and Gradle
-  8.14.x and 9.7.x support while retaining Java 17-compatible bytecode.
+- Declared and added continuous testing for Java 17, 21, and 25, Maven 3.9.x,
+  and Gradle 8.14.x and 9.7.x support while retaining Java 17-compatible
+  bytecode.
 - Added deterministic CycloneDX 1.6 component SBOMs, signed GitHub release
   assets, SHA-256 and SHA-512 manifests, and GitHub build-provenance and SBOM
   attestations.
