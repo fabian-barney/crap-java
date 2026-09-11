@@ -325,6 +325,7 @@ Install GitHub CLI, GnuPG, and GNU `sha256sum`/`sha512sum`, then download and
 verify the complete release bundle:
 
 ```bash
+set -euo pipefail
 VERSION=x.y.z # replace with the release version
 RELEASE_DIR="crap-java-${VERSION}-release"
 mkdir -p "$RELEASE_DIR"

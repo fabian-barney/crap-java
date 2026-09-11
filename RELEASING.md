@@ -12,9 +12,9 @@ private signing key whose fingerprint is
 `E6BB1FB6EE83EEAB7B408C6B5CA409BD8EE61724`. Configure Git to create signed
 annotated tags with that key.
 
-The protected `release` environment requires approval from `fabian-barney` and
-permits self-review. The following Actions secrets deliberately remain at
-repository scope as an accepted residual risk:
+The protected `release` environment requires approval from one of its
+configured reviewers and permits self-review. The following Actions secrets
+deliberately remain at repository scope as an accepted residual risk:
 
 - `GRADLE_PUBLISH_KEY`
 - `GRADLE_PUBLISH_SECRET`
