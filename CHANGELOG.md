@@ -2,16 +2,44 @@
 
 ## Unreleased
 
+## 1.0.0 - 2026-09-11
+
+### Added
+
+- Defined the v1 compatibility contract for CLI options, plugin configuration,
+  exit codes, and JSON, TOON, and JUnit output schemas, together with a
+  0.6.4-to-1.0.0 migration guide and maintainer release runbook.
+- Declared and added continuous testing for Java 17, 21, and 25, Maven 3.9.x,
+  and Gradle 8.14.x and 9.7.x support while retaining Java 17-compatible
+  bytecode.
+- Added deterministic CycloneDX 1.6 component SBOMs, signed GitHub release
+  assets, SHA-256 and SHA-512 manifests, and GitHub build-provenance and SBOM
+  attestations.
+
 ### Changed
 
 - Adopted TOON Specification 4.1 output semantics as a hard break. Empty arrays
   now use the canonical `methods: []` representation; no legacy output mode is
   retained.
+- Hardened signed-tag, protected-source, version-alignment, environment-approval,
+  and immutable GitHub Actions controls for normal and isolated-hotfix releases.
+- Made Maven and Gradle release archives reproducible and gated publication on
+  registry, asset, signature, checksum, SBOM, and attestation verification.
+
+### Fixed
+
+- Packaged the project license and uniquely named third-party licenses and
+  notices in all applicable artifacts, with automated archive-content checks.
+- Removed JDK 25 build warnings, corrected deprecated Jackson configuration,
+  and preserved Maven builds from Windows paths containing spaces.
 
 ### Dependencies
 
 - Updated JToon from `1.0.9` to `2.0.2`, including its Jackson 3 runtime from
   `3.0.4` to `3.2.1`.
+- Updated cognitive-java from `0.6.0` to `0.7.1`, Maven Compiler Plugin from
+  `3.15.0` to `3.16.0`, Maven JAR Plugin from `3.5.0` to `3.5.1`, and SpotBugs
+  Maven Plugin from `4.9.8.3` to `4.10.4.1`.
 
 ## 0.6.4 - 2026-09-06
 
