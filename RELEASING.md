@@ -1,9 +1,9 @@
 # Releasing crap-java
 
 This runbook covers normal releases from `main` and isolated patch releases
-from `release/hotfix/**`. A release is complete only when Maven Central, the
-Gradle Plugin Portal, the signed GitHub assets, and GitHub attestations are all
-public and verified.
+from single-segment `release/hotfix/<slug>` branches. A release is complete
+only when Maven Central, the Gradle Plugin Portal, the signed GitHub assets,
+and GitHub attestations are all public and verified.
 
 ## Access and prerequisites
 

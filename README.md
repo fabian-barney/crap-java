@@ -185,6 +185,8 @@ Value-taking long options may also be written with inline assignment, such as
 Examples:
 
 ```bash
+VERSION=x.y.z # replace with the version built above
+CRAP_JAVA_JAR="cli/target/crap-java-cli-${VERSION}.jar"
 java -jar "$CRAP_JAVA_JAR" --help
 java -jar "$CRAP_JAVA_JAR"
 java -jar "$CRAP_JAVA_JAR" --changed
