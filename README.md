@@ -151,7 +151,7 @@ mvn -B -pl cli -am -DskipTests package
 From the project root you want to analyze:
 
 ```bash
-VERSION=1.0.0
+VERSION=x.y.z # replace with the version built above
 CRAP_JAVA_JAR="cli/target/crap-java-cli-${VERSION}.jar"
 java -jar "$CRAP_JAVA_JAR"
 ```
@@ -185,7 +185,7 @@ Value-taking long options may also be written with inline assignment, such as
 Examples:
 
 ```bash
-VERSION=1.0.0
+VERSION=x.y.z # replace with the version built above
 CRAP_JAVA_JAR="cli/target/crap-java-cli-${VERSION}.jar"
 java -jar "$CRAP_JAVA_JAR" --help
 java -jar "$CRAP_JAVA_JAR"
