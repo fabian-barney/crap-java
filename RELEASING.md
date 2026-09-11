@@ -48,7 +48,8 @@ versions only in historical or migration context.
 Run the local gates supported by the current host:
 
 ```bash
-bash .github/scripts/verify-version-alignment.sh --expected-version VERSION
+VERSION=x.y.z # replace with the version being prepared
+bash .github/scripts/verify-version-alignment.sh --expected-version "$VERSION"
 mvn -B -ntp verify
 mvn -B -ntp -P'!quality-gates-all,release' \
   -DskipTests -Dgpg.skip=true -Dcentral.skipPublishing=true verify
@@ -67,9 +68,10 @@ Copilot review after its latest push. Merge only through a merge commit.
 4. Create the immutable signed annotated tag:
 
    ```bash
-   git tag -s vVERSION -m "Release vVERSION"
-   git verify-tag vVERSION
-   git push origin vVERSION
+   VERSION=x.y.z # replace with the version being released
+   git tag -s "v${VERSION}" -m "Release v${VERSION}"
+   git verify-tag "v${VERSION}"
+   git push origin "v${VERSION}"
    ```
 
 5. In the GitHub deployment approval, confirm the tag, commit, version, and
