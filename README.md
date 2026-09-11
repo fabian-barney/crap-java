@@ -151,7 +151,7 @@ mvn -B -pl cli -am -DskipTests package
 From the project root you want to analyze:
 
 ```bash
-VERSION=x.y.z # replace with the version built above
+VERSION=1.0.0
 CRAP_JAVA_JAR="cli/target/crap-java-cli-${VERSION}.jar"
 java -jar "$CRAP_JAVA_JAR"
 ```
@@ -185,7 +185,7 @@ Value-taking long options may also be written with inline assignment, such as
 Examples:
 
 ```bash
-VERSION=x.y.z # replace with the version built above
+VERSION=1.0.0
 CRAP_JAVA_JAR="cli/target/crap-java-cli-${VERSION}.jar"
 java -jar "$CRAP_JAVA_JAR" --help
 java -jar "$CRAP_JAVA_JAR"
@@ -293,15 +293,14 @@ See [Migrating from 0.6.4 to 1.0.0](MIGRATING.md).
 
 ## Distribution
 
-Releases ship through Maven Central, with the Gradle Plugin Portal as the
-primary Gradle plugin channel. Replace `VERSION` in configuration snippets and
-`x.y.z` in shell snippets with the release version you are installing:
+Release 1.0.0 is available through Maven Central, with the Gradle Plugin Portal
+as the primary Gradle plugin channel:
 
-- `media.barney:crap-java-core:VERSION`
-- `media.barney:crap-java-cli:VERSION`
-- `media.barney:crap-java-maven-plugin:VERSION`
-- `media.barney:crap-java-gradle-plugin:VERSION`
-- Gradle plugin id `media.barney.crap-java` version `VERSION`
+- `media.barney:crap-java-core:1.0.0`
+- `media.barney:crap-java-cli:1.0.0`
+- `media.barney:crap-java-maven-plugin:1.0.0`
+- `media.barney:crap-java-gradle-plugin:1.0.0`
+- Gradle plugin id `media.barney.crap-java` version `1.0.0`
 
 ### Direct CLI download
 
@@ -309,7 +308,7 @@ Download the executable JAR from the matching GitHub Release and run it on a
 supported Java runtime:
 
 ```bash
-VERSION=x.y.z # replace with the release version
+VERSION=1.0.0
 curl --fail --location --remote-name \
   "https://github.com/fabian-barney/crap-java/releases/download/v${VERSION}/crap-java-${VERSION}.jar"
 java -jar "crap-java-${VERSION}.jar" --help
@@ -326,7 +325,7 @@ verify the complete release bundle:
 
 ```bash
 set -euo pipefail
-VERSION=x.y.z # replace with the release version
+VERSION=1.0.0
 RELEASE_DIR="crap-java-${VERSION}-release"
 mkdir -p "$RELEASE_DIR"
 gh release download "v${VERSION}" \
@@ -372,7 +371,7 @@ Apply the plugin in `build.gradle(.kts)`:
 
 ```kotlin
 plugins {
-    id("media.barney.crap-java") version "VERSION"
+    id("media.barney.crap-java") version "1.0.0"
 }
 ```
 
@@ -428,14 +427,14 @@ Then apply the same plugin id in `build.gradle(.kts)`:
 
 ```kotlin
 plugins {
-    id("media.barney.crap-java") version "VERSION"
+    id("media.barney.crap-java") version "1.0.0"
 }
 ```
 
 The marker publication lives at
-`media.barney.crap-java:media.barney.crap-java.gradle.plugin:VERSION` and
+`media.barney.crap-java:media.barney.crap-java.gradle.plugin:1.0.0` and
 resolves to the implementation artifact
-`media.barney:crap-java-gradle-plugin:VERSION`.
+`media.barney:crap-java-gradle-plugin:1.0.0`.
 
 ### Maven Central
 
@@ -443,7 +442,7 @@ Add the plugin:
 
 ```xml
 <properties>
-  <crap-java.version>VERSION</crap-java.version>
+  <crap-java.version>1.0.0</crap-java.version>
 </properties>
 
 <build>
