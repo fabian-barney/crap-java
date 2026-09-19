@@ -8,7 +8,7 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
-from sbom_identity import canonicalize, deterministic_serial_number
+from sbom_identity import canonicalize, deterministic_serial_number_from_canonical
 
 
 def main() -> None:
@@ -23,8 +23,8 @@ def main() -> None:
     metadata["timestamp"] = datetime.fromtimestamp(
         args.source_date_epoch, timezone.utc
     ).isoformat(timespec="seconds").replace("+00:00", "Z")
-    document["serialNumber"] = deterministic_serial_number(document)
     normalized = canonicalize(document)
+    normalized["serialNumber"] = deterministic_serial_number_from_canonical(normalized)
     args.sbom.write_text(
         json.dumps(normalized, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",

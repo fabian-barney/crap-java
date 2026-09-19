@@ -25,8 +25,8 @@ def canonicalize(value: Any) -> Any:
     return value
 
 
-def deterministic_serial_number(document: dict[str, Any]) -> str:
-    identity_document = canonicalize(document)
+def deterministic_serial_number_from_canonical(document: dict[str, Any]) -> str:
+    identity_document = dict(document)
     identity_document.pop("serialNumber", None)
     identity = json.dumps(
         identity_document,
@@ -35,3 +35,7 @@ def deterministic_serial_number(document: dict[str, Any]) -> str:
         separators=(",", ":"),
     )
     return f"urn:uuid:{uuid.uuid5(SERIAL_NAMESPACE, identity)}"
+
+
+def deterministic_serial_number(document: dict[str, Any]) -> str:
+    return deterministic_serial_number_from_canonical(canonicalize(document))
