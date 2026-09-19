@@ -296,11 +296,11 @@ See [Migrating from 0.6.4 to 1.0.0](MIGRATING.md).
 Releases are published through Maven Central, with the Gradle Plugin Portal as
 the primary Gradle plugin channel. The current installation coordinates are:
 
-- `media.barney:crap-java-core:1.0.0`
-- `media.barney:crap-java-cli:1.0.0`
-- `media.barney:crap-java-maven-plugin:1.0.0`
-- `media.barney:crap-java-gradle-plugin:1.0.0`
-- Gradle plugin id `media.barney.crap-java` version `1.0.0`
+- `media.barney:crap-java-core:1.0.1`
+- `media.barney:crap-java-cli:1.0.1`
+- `media.barney:crap-java-maven-plugin:1.0.1`
+- `media.barney:crap-java-gradle-plugin:1.0.1`
+- Gradle plugin id `media.barney.crap-java` version `1.0.1`
 
 ### Direct CLI download
 
@@ -308,7 +308,7 @@ Download the executable JAR from the matching GitHub Release and run it on a
 supported Java runtime:
 
 ```bash
-VERSION=1.0.0
+VERSION=1.0.1
 curl --fail --location --remote-name \
   "https://github.com/fabian-barney/crap-java/releases/download/v${VERSION}/crap-java-${VERSION}.jar"
 java -jar "crap-java-${VERSION}.jar" --help
@@ -325,7 +325,7 @@ verify the complete release bundle:
 
 ```bash
 set -euo pipefail
-VERSION=1.0.0
+VERSION=1.0.1
 RELEASE_DIR="crap-java-${VERSION}-release"
 mkdir -p "$RELEASE_DIR"
 gh release download "v${VERSION}" \
@@ -371,7 +371,7 @@ Apply the plugin in `build.gradle(.kts)`:
 
 ```kotlin
 plugins {
-    id("media.barney.crap-java") version "1.0.0"
+    id("media.barney.crap-java") version "1.0.1"
 }
 ```
 
@@ -427,14 +427,14 @@ Then apply the same plugin id in `build.gradle(.kts)`:
 
 ```kotlin
 plugins {
-    id("media.barney.crap-java") version "1.0.0"
+    id("media.barney.crap-java") version "1.0.1"
 }
 ```
 
 The marker publication lives at
-`media.barney.crap-java:media.barney.crap-java.gradle.plugin:1.0.0` and
+`media.barney.crap-java:media.barney.crap-java.gradle.plugin:1.0.1` and
 resolves to the implementation artifact
-`media.barney:crap-java-gradle-plugin:1.0.0`.
+`media.barney:crap-java-gradle-plugin:1.0.1`.
 
 ### Maven Central
 
@@ -442,7 +442,7 @@ Add the plugin:
 
 ```xml
 <properties>
-  <crap-java.version>1.0.0</crap-java.version>
+  <crap-java.version>1.0.1</crap-java.version>
 </properties>
 
 <build>
