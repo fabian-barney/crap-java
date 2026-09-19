@@ -7,16 +7,8 @@ import argparse
 import json
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
 
-
-def canonicalize(value: Any) -> Any:
-    if isinstance(value, dict):
-        return {key: canonicalize(value[key]) for key in sorted(value)}
-    if isinstance(value, list):
-        items = [canonicalize(item) for item in value]
-        return sorted(items, key=lambda item: json.dumps(item, sort_keys=True, separators=(",", ":")))
-    return value
+from sbom_identity import canonicalize, deterministic_serial_number
 
 
 def main() -> None:
@@ -31,6 +23,7 @@ def main() -> None:
     metadata["timestamp"] = datetime.fromtimestamp(
         args.source_date_epoch, timezone.utc
     ).isoformat(timespec="seconds").replace("+00:00", "Z")
+    document["serialNumber"] = deterministic_serial_number(document)
     normalized = canonicalize(document)
     args.sbom.write_text(
         json.dumps(normalized, ensure_ascii=False, indent=2, sort_keys=True) + "\n",

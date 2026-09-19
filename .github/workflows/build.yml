@@ -21,6 +21,9 @@ jobs:
         shell: bash
         run: bash .github/scripts/test-release-controls.sh
 
+      - name: Test deterministic SBOM normalization
+        run: python3 .github/scripts/test-sbom-normalization.py
+
   wrapper-validation:
     name: verify / Gradle wrapper
     runs-on: ubuntu-latest
