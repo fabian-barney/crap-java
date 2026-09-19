@@ -134,6 +134,19 @@ class SbomNormalizationTest(unittest.TestCase):
 
             core_sbom = assets / "crap-java-core-1.0.1.cdx.json"
             core_document = json.loads(core_sbom.read_text(encoding="utf-8"))
+            core_document["metadata"]["timestamp"] = "2099-01-01T00:00:00Z"
+            core_sbom.write_text(json.dumps(core_document), encoding="utf-8")
+            bad_timestamp = subprocess.run(
+                verification_command,
+                check=False,
+                capture_output=True,
+                env=environment,
+                text=True,
+            )
+
+            self.assertNotEqual(0, bad_timestamp.returncode)
+            self.assertIn("has a non-reproducible timestamp", bad_timestamp.stderr)
+
             core_document.pop("serialNumber")
             core_sbom.write_text(json.dumps(core_document), encoding="utf-8")
             rejected = subprocess.run(

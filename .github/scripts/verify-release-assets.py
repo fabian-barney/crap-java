@@ -32,11 +32,11 @@ def verify_sbom(path: Path, component_name: str, version: str) -> None:
     serial_number = document.get("serialNumber")
     if not serial_number:
         raise ValueError(f"{path.name} is not recognized as CycloneDX by actions/attest")
-    if serial_number != deterministic_serial_number(document):
-        raise ValueError(f"{path.name} has a non-deterministic BOM serial number")
     metadata = document.get("metadata", {})
     if metadata.get("timestamp") != expected_timestamp():
         raise ValueError(f"{path.name} has a non-reproducible timestamp")
+    if serial_number != deterministic_serial_number(document):
+        raise ValueError(f"{path.name} has a non-deterministic BOM serial number")
     component = metadata.get("component", {})
     if component.get("name") != component_name or component.get("version") != version:
         raise ValueError(f"{path.name} identifies the wrong component")
