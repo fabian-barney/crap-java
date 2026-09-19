@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added deterministic CycloneDX UUID serial numbers required by GitHub SBOM attestations while keeping
+  release SBOMs reproducible.
+
 ## 1.0.0 - 2026-09-11
 
 ### Added

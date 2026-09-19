@@ -9,6 +9,8 @@ import os
 from datetime import datetime, timezone
 from pathlib import Path
 
+from sbom_identity import deterministic_serial_number
+
 
 def expected_timestamp() -> str:
     raw_epoch = os.environ.get("SOURCE_DATE_EPOCH")
@@ -27,11 +29,14 @@ def verify_sbom(path: Path, component_name: str, version: str) -> None:
     document = json.loads(path.read_text(encoding="utf-8"))
     if document.get("bomFormat") != "CycloneDX" or document.get("specVersion") != "1.6":
         raise ValueError(f"{path.name} is not CycloneDX 1.6 JSON")
-    if "serialNumber" in document:
-        raise ValueError(f"{path.name} contains a random BOM serial number")
+    serial_number = document.get("serialNumber")
+    if not serial_number:
+        raise ValueError(f"{path.name} is not recognized as CycloneDX by actions/attest")
     metadata = document.get("metadata", {})
     if metadata.get("timestamp") != expected_timestamp():
         raise ValueError(f"{path.name} has a non-reproducible timestamp")
+    if serial_number != deterministic_serial_number(document):
+        raise ValueError(f"{path.name} has a non-deterministic BOM serial number")
     component = metadata.get("component", {})
     if component.get("name") != component_name or component.get("version") != version:
         raise ValueError(f"{path.name} identifies the wrong component")
