@@ -66,6 +66,7 @@ class SbomNormalizationTest(unittest.TestCase):
     def test_equivalent_documents_are_byte_identical_and_attestable(self) -> None:
         first = sample_document()
         second = copy.deepcopy(first)
+        second["serialNumber"] = "urn:uuid:11111111-1111-4111-8111-111111111111"
         second["components"] = list(reversed(second["components"]))
         second["dependencies"][0]["dependsOn"].reverse()
 
