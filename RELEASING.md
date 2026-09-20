@@ -7,14 +7,14 @@ and GitHub attestations are all public and verified.
 
 ## Access and prerequisites
 
-The releaser needs repository-owner access, GitHub CLI authentication, and the
-private signing key whose fingerprint is
-`E6BB1FB6EE83EEAB7B408C6B5CA409BD8EE61724`. Configure Git to create signed
-annotated tags with that key.
+The releaser needs repository-owner access and GitHub CLI authentication for
+preparation and recovery work. CI owns the private signing key whose
+fingerprint is `E6BB1FB6EE83EEAB7B408C6B5CA409BD8EE61724`; maintainers do not need to
+unlock the key, create a tag, or approve a deployment locally.
 
-The protected `release` environment requires approval from one of its
-configured reviewers and permits self-review. The following Actions secrets
-deliberately remain at repository scope as an accepted residual risk:
+The `release` environment accepts deployments only from protected branches and
+does not require a manual reviewer. The following Actions secrets deliberately
+remain at repository scope as an accepted residual risk:
 
 - `GRADLE_PUBLISH_KEY`
 - `GRADLE_PUBLISH_SECRET`
@@ -23,9 +23,12 @@ deliberately remain at repository scope as an accepted residual risk:
 - `MAVEN_GPG_PASSPHRASE`
 - `MAVEN_GPG_PRIVATE_KEY`
 
-Only the environment-gated publish job may reference them. Never print, copy
-into workflow arguments without masking, or include their values in issues,
-commits, artifacts, or logs.
+Only the environment-gated publish job may reference them. Never print or
+include their values in issues, commits, artifacts, or logs. In particular,
+never copy `MAVEN_GPG_PASSPHRASE` into command-line arguments or files; the
+workflow supplies it to GPG through a private file descriptor. Existing
+publishing-plugin credentials remain masked when their command interfaces
+require workflow arguments.
 
 Before preparing a release, confirm:
 
@@ -33,9 +36,8 @@ Before preparing a release, confirm:
 - the worktree is clean and the release branch is synchronized with its remote;
 - every change since the selected baseline is linked to release scope;
 - `verify / required` is green on the source commit;
-- the release version does not already exist in either registry or as a tag;
-- `gpg --list-secret-keys E6BB1FB6EE83EEAB7B408C6B5CA409BD8EE61724`
-  resolves to the expected private key.
+- the release version does not already exist in either registry, as a tag, or
+  as a GitHub Release.
 
 ## Prepare through a pull request
 
@@ -60,30 +62,31 @@ The pull request must close its issue, pass the full hosted compatibility and
 reproducibility matrix, resolve every review conversation, and receive a fresh
 Copilot review after its latest push. Merge only through a merge commit.
 
+Merging that pull request is the irreversible release action. A protected-branch
+push that changes the aligned project version from its first parent is treated
+as an intentional release candidate. Ordinary merges that leave the version
+unchanged finish the `Release` workflow as a successful no-op without accessing
+publishing secrets.
+
 ## Normal release from main
 
-1. Synchronize local `main` after the release-preparation PR merges.
-2. Wait for the merged commit's `verify / required` check to pass.
-3. Re-run the version-alignment check and confirm `git status --short` is empty.
-4. Create the immutable signed annotated tag:
+1. Merge the reviewed release-preparation pull request into protected `main`.
+2. Monitor both the merged commit's `verify / required` check and its `Release`
+   workflow run.
+3. The secret-free candidate job validates the stable version increase,
+   aligned Maven and Gradle versions, dated changelog heading, protected source,
+   and absence of release collisions. It waits for `verify / required` on the
+   exact merge commit.
+4. The environment-gated job imports the existing GitHub GPG secrets, verifies
+   the private-key fingerprint, creates and verifies the immutable signed
+   annotated tag, and pushes it with `GITHUB_TOKEN`.
+5. The same run creates the draft GitHub Release, publishes both registries,
+   uploads the signed bundle, verifies every target and attestation, and only
+   then publishes the draft.
 
-   ```bash
-   VERSION=x.y.z # replace with the version being released
-   git tag -s "v${VERSION}" -m "Release v${VERSION}"
-   git verify-tag "v${VERSION}"
-   git push origin "v${VERSION}"
-   ```
-
-5. In the GitHub deployment approval, confirm the tag, commit, version, and
-   pending environment are exact, then approve the `release` deployment.
-6. Monitor the `Release` workflow through registry publication, asset upload,
-   attestation verification, registry verification, and finalization.
-
-The workflow first validates the signed tag, committed public-key fingerprint,
-source ancestry, and version alignment without access to secrets. It then
-creates a draft GitHub Release, publishes both registries, uploads the signed
-bundle, verifies every target, and publishes the draft only after all gates
-succeed.
+Do not create release tags manually. Tag pushes do not trigger publication,
+and a tag already present on an initial workflow attempt is treated as an
+interference failure.
 
 ## Isolated hotfix release
 
@@ -93,8 +96,8 @@ Use this path only when the patch must not include newer `main` work.
    branch history must contain that tag.
 2. Land the minimal fix and patch-version preparation through reviewed PRs into
    that branch. The same `verify / required` policy applies.
-3. Create and push the signed annotated version tag from the protected hotfix
-   branch head, then approve and monitor the release exactly as above.
+3. Merge the patch-version preparation into the protected hotfix branch. That
+   merge automatically signs the tag and publishes exactly as on `main`.
 4. After publication, merge the hotfix branch back into `main` through a PR.
    Resolve conflicts without dropping the released fix or release history.
 5. Delete the hotfix branch only after the merge-back is complete.
@@ -126,8 +129,12 @@ after all checks pass.
 ## Failure recovery
 
 - Before any target is public, leave the GitHub Release as a draft. For a
-  transient service or credential failure, re-run the same workflow on the same
-  immutable tagged commit after correcting external configuration.
+  transient service or credential failure, correct the external configuration
+  and re-run the failed workflow jobs on the same commit. Do not create another
+  trigger commit or tag.
+- A rerun may reuse an existing tag only when it points to the exact release
+  commit and has a valid signature from the committed public key. Any mismatch
+  is a hard failure.
 - If one registry is public but another step fails, do not overwrite or delete
   the public artifact. Re-run the immutable commit only when the remaining work
   is retry-safe and requires no code change.

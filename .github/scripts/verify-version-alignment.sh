@@ -3,12 +3,16 @@ set -euo pipefail
 
 usage() {
   cat <<'EOF'
-Usage: verify-version-alignment.sh [--expected-version <version>]
+Usage: verify-version-alignment.sh [--expected-version <version>] [--print-version]
 
 Validates that the root Maven POM version, every published module parent
 version, and the Gradle plugin version resolve to the same single-line value
 after stripping formatting noise. When --expected-version is provided, the
 sanitized version must also match it exactly.
+
+Use --print-version to emit only the validated aligned version. This is
+intended for callers that need to pass the version to another release-control
+step.
 
 Set MAVEN_VERSION_OUTPUT, MAVEN_MODULE_VERSION_OUTPUTS, or
 GRADLE_VERSION_OUTPUT to override the default file-based version sources for
@@ -204,6 +208,7 @@ validate_maven_module_versions() {
 main() {
   local expected_version=""
   local expected_version_requested=false
+  local print_version=false
   local maven_version
   local gradle_version
 
@@ -218,6 +223,10 @@ main() {
         expected_version_requested=true
         expected_version="$2"
         shift 2
+        ;;
+      --print-version)
+        print_version=true
+        shift
         ;;
       --help|-h)
         usage
@@ -248,7 +257,11 @@ main() {
     fi
   fi
 
-  echo "Validated version alignment: ${maven_version}"
+  if [ "$print_version" = true ]; then
+    printf '%s\n' "$maven_version"
+  else
+    echo "Validated version alignment: ${maven_version}"
+  fi
 }
 
 main "$@"
