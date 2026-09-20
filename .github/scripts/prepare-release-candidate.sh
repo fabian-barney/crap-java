@@ -22,12 +22,19 @@ write_output() {
   fi
 }
 
-read_parent_version() {
-  local python_command=python3
+python_command() {
   if [[ -n "${MSYSTEM:-}" ]]; then
-    python_command=python
+    printf '%s\n' python
+  else
+    printf '%s\n' python3
   fi
-  git show "${release_commit}^1:pom.xml" | "$python_command" -c '
+}
+
+read_parent_version() {
+  local command
+  local parent_version
+  command="$(python_command)"
+  parent_version="$(git show "${release_commit}^1:pom.xml" | "$command" -c '
 import sys
 import xml.etree.ElementTree as element_tree
 
@@ -37,7 +44,8 @@ version = project.findtext("m:version", namespaces=namespace)
 if not version or not version.strip():
     raise SystemExit("Unable to read the first-parent Maven project version.")
 print(version.strip())
-'
+')" || error "Unable to read the first-parent Maven project version."
+  printf '%s\n' "$parent_version"
 }
 
 is_greater_version() {
@@ -56,11 +64,9 @@ is_greater_version() {
 
 validate_changelog() {
   local version="$1"
-  local python_command=python3
-  if [[ -n "${MSYSTEM:-}" ]]; then
-    python_command=python
-  fi
-  "$python_command" - "$version" CHANGELOG.md <<'PY'
+  local command
+  command="$(python_command)"
+  "$command" - "$version" CHANGELOG.md <<'PY'
 import datetime
 import re
 import sys
@@ -88,8 +94,10 @@ is_protected_branch() {
   fi
   [[ -n "$repository" && -n "${GH_TOKEN:-}" ]] \
     || error "GITHUB_REPOSITORY and GH_TOKEN are required to verify branch protection."
+  local command
   local encoded_branch
-  encoded_branch="$(python3 -c 'import sys, urllib.parse; print(urllib.parse.quote(sys.argv[1], safe=""))' "$branch")"
+  command="$(python_command)"
+  encoded_branch="$("$command" -c 'import sys, urllib.parse; print(urllib.parse.quote(sys.argv[1], safe=""))' "$branch")"
   local rule_types
   rule_types="$(gh api "repos/$repository/rules/branches/$encoded_branch" --jq '.[].type')" || return 1
   local required_rule

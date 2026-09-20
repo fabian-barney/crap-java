@@ -194,6 +194,28 @@ expect_failure() {
   fi
 }
 
+expect_failure_containing() {
+  local label="$1"
+  local expected_message="$2"
+  shift 2
+  if "$@" >"$test_root/unexpected-success.log" 2>&1; then
+    echo "Expected failure: $label" >&2
+    cat "$test_root/unexpected-success.log" >&2
+    exit 1
+  fi
+  if ! grep -Fq "$expected_message" "$test_root/unexpected-success.log"; then
+    echo "Expected failure message for $label: $expected_message" >&2
+    cat "$test_root/unexpected-success.log" >&2
+    exit 1
+  fi
+}
+
+grep -Fq '      - "release/hotfix/*"' "$repository_root/.github/workflows/release.yml"
+if grep -Fq '      - "release/**"' "$repository_root/.github/workflows/release.yml"; then
+  echo "Release workflow must only trigger for supported hotfix branch names." >&2
+  exit 1
+fi
+
 main_repository="$(new_repository main-source)"
 sign_tag "$main_repository" v1.0.0
 validate_source "$main_repository" v1.0.0 main >/dev/null
@@ -257,6 +279,16 @@ validate_candidate "$candidate_repository" 1.0.1 main main >/dev/null
 grep -Fxq 'release=true' "$candidate_repository/candidate-output"
 grep -Fxq 'version=1.0.1' "$candidate_repository/candidate-output"
 grep -Fxq 'tag=v1.0.1' "$candidate_repository/candidate-output"
+
+missing_parent_pom_repository="$(new_repository missing-parent-pom)"
+write_candidate_pom "$missing_parent_pom_repository" 1.0.1
+printf '# Changelog\n\n## 1.0.1 - 2026-09-20\n\n- Test release.\n' \
+  > "$missing_parent_pom_repository/CHANGELOG.md"
+git -C "$missing_parent_pom_repository" add pom.xml CHANGELOG.md
+git -C "$missing_parent_pom_repository" commit -q -m "Prepare candidate"
+expect_failure_containing "missing first-parent POM" \
+  "::error::Unable to read the first-parent Maven project version." \
+  validate_candidate "$missing_parent_pom_repository" 1.0.1 main main
 
 misaligned_candidate="$(new_candidate_repository misaligned-candidate 1.0.0 1.0.1)"
 validate_misaligned_candidate() {
