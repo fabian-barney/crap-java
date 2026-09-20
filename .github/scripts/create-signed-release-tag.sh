@@ -38,7 +38,7 @@ if git show-ref --verify --quiet "refs/tags/$release_tag"; then
   exit 0
 fi
 
-git -c user.name=github-actions -c user.email=41898282+github-actions[bot]@users.noreply.github.com \
+git -c user.name=github-actions -c 'user.email=41898282+github-actions[bot]@users.noreply.github.com' \
   -c user.signingkey="$expected_fingerprint" -c gpg.program="$signer" \
   tag -s "$release_tag" "$release_commit" -m "Release $release_tag"
 

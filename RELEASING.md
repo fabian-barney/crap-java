@@ -23,10 +23,12 @@ remain at repository scope as an accepted residual risk:
 - `MAVEN_GPG_PASSPHRASE`
 - `MAVEN_GPG_PRIVATE_KEY`
 
-Only the environment-gated publish job may reference them. Never print, copy
-into command-line arguments or files, or include their values in issues,
-commits, artifacts, or logs. The workflow supplies the GPG passphrase to GPG
-through a private file descriptor.
+Only the environment-gated publish job may reference them. Never print or
+include their values in issues, commits, artifacts, or logs. In particular,
+never copy `MAVEN_GPG_PASSPHRASE` into command-line arguments or files; the
+workflow supplies it to GPG through a private file descriptor. Existing
+publishing-plugin credentials remain masked when their command interfaces
+require workflow arguments.
 
 Before preparing a release, confirm:
 

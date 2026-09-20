@@ -318,7 +318,8 @@ missing_changelog_repository="$(new_candidate_repository missing-changelog 1.0.0
 printf '# Changelog\n\n## Unreleased\n' > "$missing_changelog_repository/CHANGELOG.md"
 git -C "$missing_changelog_repository" add CHANGELOG.md
 git -C "$missing_changelog_repository" commit -q --amend --no-edit
-expect_failure "missing release changelog heading" \
+expect_failure_containing "missing release changelog heading" \
+  "::error::Expected exactly one dated changelog heading for 1.0.1; found 0." \
   validate_candidate "$missing_changelog_repository" 1.0.1 main main
 
 unprotected_repository="$(new_candidate_repository unprotected-source 1.0.0 1.0.1)"

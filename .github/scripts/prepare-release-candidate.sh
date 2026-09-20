@@ -65,8 +65,9 @@ is_greater_version() {
 validate_changelog() {
   local version="$1"
   local command
+  local validation_error
   command="$(python_command)"
-  "$command" - "$version" CHANGELOG.md <<'PY'
+  if ! validation_error="$("$command" - "$version" CHANGELOG.md 2>&1 <<'PY'
 import datetime
 import re
 import sys
@@ -75,15 +76,24 @@ version = sys.argv[1]
 path = sys.argv[2]
 pattern = re.compile(rf"^## {re.escape(version)} - (\d{{4}}-\d{{2}}-\d{{2}})$")
 matches = []
-with open(path, encoding="utf-8") as changelog:
-    for line in changelog:
-        match = pattern.fullmatch(line.rstrip("\n\r"))
-        if match:
-            matches.append(match.group(1))
+try:
+    with open(path, encoding="utf-8") as changelog:
+        for line in changelog:
+            match = pattern.fullmatch(line.rstrip("\n\r"))
+            if match:
+                matches.append(match.group(1))
+except OSError as exception:
+    raise SystemExit(f"Unable to read {path}: {exception}") from None
 if len(matches) != 1:
     raise SystemExit(f"Expected exactly one dated changelog heading for {version}; found {len(matches)}.")
-datetime.date.fromisoformat(matches[0])
+try:
+    datetime.date.fromisoformat(matches[0])
+except ValueError:
+    raise SystemExit(f"Invalid changelog date for {version}: {matches[0]}.") from None
 PY
+)"; then
+    error "$validation_error"
+  fi
 }
 
 is_protected_branch() {
