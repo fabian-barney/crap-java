@@ -360,6 +360,10 @@ mkdir "$mock_bin"
 cat > "$mock_bin/gh" <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
+if [[ "${MOCK_GH_FORCE_FAILURE:-false}" == true ]]; then
+  echo "Mock GitHub API failure." >&2
+  exit 1
+fi
 count=0
 if [[ -f "$MOCK_GH_COUNTER" ]]; then
   count="$(cat "$MOCK_GH_COUNTER")"
@@ -369,6 +373,29 @@ printf '%s\n' "$count" > "$MOCK_GH_COUNTER"
 sed -n "${count}p" "$MOCK_GH_RESPONSES"
 EOF
 chmod +x "$mock_bin/gh"
+
+validate_candidate_with_protection_api_failure() {
+  local path="$1"
+  (
+    cd "$path"
+    PATH="$mock_bin:$PATH" \
+    MOCK_GH_FORCE_FAILURE=true \
+    GH_TOKEN=test-token \
+    GITHUB_REPOSITORY=test/repository \
+    GITHUB_SHA="$(git rev-parse HEAD)" \
+    GITHUB_REF_NAME=main \
+    GITHUB_RUN_ATTEMPT=1 \
+    RELEASE_EXISTING_RELEASE_STATE=none \
+    MAVEN_VERSION_OUTPUT=1.0.1 \
+    MAVEN_MODULE_VERSION_OUTPUTS="$(candidate_modules 1.0.1)" \
+    GRADLE_VERSION_OUTPUT=1.0.1 \
+      bash "$candidate_validator"
+  )
+}
+
+expect_failure_containing "branch protection API failure" \
+  "::error::Unable to query protection rules for release source branch main." \
+  validate_candidate_with_protection_api_failure "$candidate_repository"
 
 wait_for_check() {
   local responses="$1"

@@ -99,7 +99,8 @@ is_protected_branch() {
   command="$(python_command)"
   encoded_branch="$("$command" -c 'import sys, urllib.parse; print(urllib.parse.quote(sys.argv[1], safe=""))' "$branch")"
   local rule_types
-  rule_types="$(gh api "repos/$repository/rules/branches/$encoded_branch" --jq '.[].type')" || return 1
+  rule_types="$(gh api "repos/$repository/rules/branches/$encoded_branch" --jq '.[].type')" \
+    || error "Unable to query protection rules for release source branch $branch."
   local required_rule
   for required_rule in deletion non_fast_forward pull_request; do
     grep -Fxq "$required_rule" <<< "$rule_types" || return 1
