@@ -22,8 +22,8 @@ plugins {
     `java-gradle-plugin`
     id("com.gradle.plugin-publish") version "2.1.1"
     id("org.cyclonedx.bom") version "3.4.1"
-    id("com.github.spotbugs") version "6.5.5"
-    id("net.ltgt.errorprone") version "5.1.0" apply false
+    id("com.github.spotbugs") version "6.5.11"
+    id("net.ltgt.errorprone") version "5.1.1" apply false
     jacoco
     signing
 }
