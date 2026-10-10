@@ -39,6 +39,8 @@ jacoco {
     toolVersion = "0.8.15"
 }
 
+val spotbugsVersion = parentPomProperty("spotbugs.version")
+
 spotbugs {
     toolVersion.set(spotbugsVersion)
     effort.set(Effort.MAX)
@@ -54,7 +56,6 @@ val jspecifyVersion = parentPomProperty("jspecify.version")
 val errorproneVersion = parentPomProperty("errorprone.version")
 val nullawayVersion = parentPomProperty("nullaway.version")
 val nullawayAnnotatedPackages = parentPomProperty("nullaway.annotated.packages")
-val spotbugsVersion = parentPomProperty("spotbugs.version")
 val qualityNullaway = providers.gradleProperty("qualityNullaway").map(String::toBoolean).getOrElse(false)
 val coreJar = layout.projectDirectory.file("../core/target/crap-java-core-${projectVersion}.jar")
 val gpgPrivateKey = providers.environmentVariable("MAVEN_GPG_PRIVATE_KEY")
