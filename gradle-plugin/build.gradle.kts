@@ -22,8 +22,8 @@ plugins {
     `java-gradle-plugin`
     id("com.gradle.plugin-publish") version "2.1.1"
     id("org.cyclonedx.bom") version "3.4.1"
-    id("com.github.spotbugs") version "6.5.5"
-    id("net.ltgt.errorprone") version "5.1.0" apply false
+    id("com.github.spotbugs") version "6.5.11"
+    id("net.ltgt.errorprone") version "5.1.1" apply false
     jacoco
     signing
 }
@@ -38,6 +38,8 @@ repositories {
 jacoco {
     toolVersion = "0.8.15"
 }
+
+val spotbugsVersion = parentPomProperty("spotbugs.version")
 
 spotbugs {
     toolVersion.set(spotbugsVersion)
@@ -54,7 +56,6 @@ val jspecifyVersion = parentPomProperty("jspecify.version")
 val errorproneVersion = parentPomProperty("errorprone.version")
 val nullawayVersion = parentPomProperty("nullaway.version")
 val nullawayAnnotatedPackages = parentPomProperty("nullaway.annotated.packages")
-val spotbugsVersion = parentPomProperty("spotbugs.version")
 val qualityNullaway = providers.gradleProperty("qualityNullaway").map(String::toBoolean).getOrElse(false)
 val coreJar = layout.projectDirectory.file("../core/target/crap-java-core-${projectVersion}.jar")
 val gpgPrivateKey = providers.environmentVariable("MAVEN_GPG_PRIVATE_KEY")
