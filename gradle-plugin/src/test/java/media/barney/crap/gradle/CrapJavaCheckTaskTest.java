@@ -4,8 +4,24 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
+import java.lang.reflect.Modifier;
+import java.nio.file.Path;
 
 class CrapJavaCheckTaskTest {
+
+    @Test
+    void recognizesOwnerLinksAndRejectsFilesystemRoots() {
+        assertTrue(CrapJavaCheckTask.isOwnerLink(Path.of("junit-report.owner")));
+        assertFalse(CrapJavaCheckTask.isOwnerLink(Path.of("junit-report.path")));
+        assertFalse(CrapJavaCheckTask.isOwnerLink(Path.of("/")));
+    }
+
+    @Test
+    void preventsFinalizerOverridesAfterFailedConstruction() throws Exception {
+        var finalizer = CrapJavaCheckTask.class.getDeclaredMethod("finalize");
+        assertTrue(Modifier.isFinal(finalizer.getModifiers()));
+        assertTrue(Modifier.isProtected(finalizer.getModifiers()));
+    }
 
     @Test
     void caseSensitivityFallbackTreatsWindowsAsInsensitive() {
