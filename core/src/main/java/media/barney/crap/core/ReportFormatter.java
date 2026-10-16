@@ -1,32 +1,34 @@
 package media.barney.crap.core;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.util.DefaultIndenter;
-import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
-import com.fasterxml.jackson.databind.json.JsonMapper;
-import com.fasterxml.jackson.dataformat.xml.XmlMapper;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlText;
-import com.fasterxml.jackson.dataformat.xml.ser.ToXmlGenerator;
 import dev.toonformat.jtoon.JToon;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import org.jspecify.annotations.Nullable;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.core.util.DefaultIndenter;
+import tools.jackson.core.util.DefaultPrettyPrinter;
+import tools.jackson.databind.MapperFeature;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectWriter;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.dataformat.xml.XmlMapper;
+import tools.jackson.dataformat.xml.XmlWriteFeature;
+import tools.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
+import tools.jackson.dataformat.xml.annotation.JacksonXmlProperty;
+import tools.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
+import tools.jackson.dataformat.xml.annotation.JacksonXmlText;
 
 final class ReportFormatter {
 
     private static final ObjectWriter JSON_WRITER = JsonMapper.builder()
+            .disable(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY)
             .build()
-            .writer(new JsonPrettyPrinter());
+            .writer()
+            .with(new JsonPrettyPrinter());
     private static final ObjectWriter XML_WRITER = xmlMapper()
             .writerWithDefaultPrettyPrinter();
 
@@ -244,7 +246,7 @@ final class ReportFormatter {
     private static String writeJson(JsonReport report) {
         try {
             return JSON_WRITER.writeValueAsString(report) + '\n';
-        } catch (JsonProcessingException ex) {
+        } catch (JacksonException ex) {
             throw new IllegalStateException("Unable to format JSON report", ex);
         }
     }
@@ -356,17 +358,17 @@ final class ReportFormatter {
     private static String writeXml(JunitTestSuites testSuites) {
         try {
             return XML_WRITER.writeValueAsString(testSuites) + '\n';
-        } catch (JsonProcessingException ex) {
+        } catch (JacksonException ex) {
             throw new IllegalStateException("Unable to format JUnit XML report", ex);
         }
     }
 
     private static ObjectMapper xmlMapper() {
-        XmlMapper mapper = XmlMapper.builder()
-                .configure(ToXmlGenerator.Feature.WRITE_XML_DECLARATION, true)
+        return XmlMapper.builder()
+                .disable(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY)
+                .enable(XmlWriteFeature.WRITE_XML_DECLARATION)
+                .changeDefaultPropertyInclusion(inclusion -> inclusion.withValueInclusion(JsonInclude.Include.NON_NULL))
                 .build();
-        mapper.setDefaultPropertyInclusion(JsonInclude.Include.NON_NULL);
-        return mapper;
     }
 
     private static String testcaseName(CrapReport.MethodReport method) {
@@ -567,7 +569,7 @@ final class ReportFormatter {
         }
 
         @Override
-        public void writeObjectFieldValueSeparator(JsonGenerator generator) throws IOException {
+        public void writeObjectNameValueSeparator(JsonGenerator generator) {
             generator.writeRaw(": ");
         }
     }

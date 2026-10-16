@@ -82,15 +82,6 @@
                     <exclude>META-INF/LICENSE-crap-java</exclude>
                   </excludes>
                 </filter>
-                <filter>
-                  <artifact>tools.jackson.core:jackson-core</artifact>
-                  <excludes>
-                    <!-- Jackson 2.x and 3.x package byte-identical copies of these resources. -->
-                    <exclude>META-INF/FastDoubleParser-LICENSE</exclude>
-                    <exclude>META-INF/FastDoubleParser-ThirdParty-LICENSE</exclude>
-                    <exclude>META-INF/Schubfach-LICENSE</exclude>
-                  </excludes>
-                </filter>
               </filters>
             </configuration>
           </execution>

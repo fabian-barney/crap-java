@@ -42,6 +42,8 @@ chmod +x gradle-plugin/gradlew
   ./gradlew --no-daemon clean assemble sourcesJar javadocJar cyclonedxDirectBom -x test
 )
 
+python3 .github/scripts/verify-runtime-baseline.py
+
 mkdir -p "$output_directory"
 if find "$output_directory" -mindepth 1 -maxdepth 1 -print -quit | grep -q .; then
   echo "Output directory must be empty: $output_directory" >&2

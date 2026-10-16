@@ -24,6 +24,9 @@ jobs:
       - name: Test deterministic SBOM normalization
         run: python3 .github/scripts/test-sbom-normalization.py
 
+      - name: Test runtime archive contract verification
+        run: python3 .github/scripts/test-runtime-baseline.py
+
   wrapper-validation:
     name: verify / Gradle wrapper
     runs-on: ubuntu-latest
@@ -43,11 +46,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+      - name: Set up Maven
+        uses: ./.github/actions/setup-maven
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: temurin
-          java-version: "17"
+          java-version: "21"
           cache: maven
 
       - name: Build
@@ -55,7 +61,7 @@ jobs:
 
       - name: Prime Maven test cache
         run: |
-          mvn -B -ntp -P!quality-gates-all,quality-gate-spotbugs -DskipTests -DincludePluginDependencies=true org.apache.maven.plugins:maven-dependency-plugin:3.7.0:go-offline
+          mvn -B -ntp -P!quality-gates-all,quality-gate-spotbugs -DskipTests -DincludePluginDependencies=true org.apache.maven.plugins:maven-dependency-plugin:3.11.0:go-offline
           junit_version="$(mvn -B -ntp -N -P!quality-gates-all help:evaluate -Dexpression=junit.version -q -DforceStdout | tail -n 1)"
           surefire_version="$(mvn -B -ntp -N -P!quality-gates-all help:evaluate -Dexpression=maven.surefire.plugin.version -q -DforceStdout | tail -n 1)"
           for version_variable in junit_version surefire_version; do
@@ -65,9 +71,9 @@ jobs:
               exit 1
             fi
           done
-          mvn -B -ntp -N -P!quality-gates-all org.apache.maven.plugins:maven-dependency-plugin:3.7.0:get -Dartifact="org.junit.platform:junit-platform-engine:${junit_version}" -Dtransitive=true
-          mvn -B -ntp -N -P!quality-gates-all org.apache.maven.plugins:maven-dependency-plugin:3.7.0:get -Dartifact="org.junit.platform:junit-platform-launcher:${junit_version}" -Dtransitive=true
-          mvn -B -ntp -N -P!quality-gates-all org.apache.maven.plugins:maven-dependency-plugin:3.7.0:get -Dartifact="org.apache.maven.surefire:surefire-junit-platform:${surefire_version}" -Dtransitive=true
+          mvn -B -ntp -N -P!quality-gates-all org.apache.maven.plugins:maven-dependency-plugin:3.11.0:get -Dartifact="org.junit.platform:junit-platform-engine:${junit_version}" -Dtransitive=true
+          mvn -B -ntp -N -P!quality-gates-all org.apache.maven.plugins:maven-dependency-plugin:3.11.0:get -Dartifact="org.junit.platform:junit-platform-launcher:${junit_version}" -Dtransitive=true
+          mvn -B -ntp -N -P!quality-gates-all org.apache.maven.plugins:maven-dependency-plugin:3.11.0:get -Dartifact="org.apache.maven.surefire:surefire-junit-platform:${surefire_version}" -Dtransitive=true
 
       - name: Upload Maven repository
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -86,11 +92,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+      - name: Set up Maven
+        uses: ./.github/actions/setup-maven
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: temurin
-          java-version: "17"
+          java-version: "21"
           cache: maven
 
       - name: Download Maven repository
@@ -124,11 +133,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+      - name: Set up Maven
+        uses: ./.github/actions/setup-maven
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: temurin
-          java-version: "17"
+          java-version: "21"
           cache: maven
 
       - name: Download Maven repository
@@ -149,6 +161,9 @@ jobs:
       - name: Verify archive legal content
         run: java .github/scripts/VerifyLegalContents.java
 
+      - name: Verify published runtime requirements
+        run: python3 .github/scripts/verify-runtime-baseline.py
+
   quality-crap-core:
     name: verify / quality-crap-core
     runs-on: ubuntu-latest
@@ -160,11 +175,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+      - name: Set up Maven
+        uses: ./.github/actions/setup-maven
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: temurin
-          java-version: "17"
+          java-version: "21"
           cache: maven
 
       - name: Download Maven repository
@@ -194,11 +212,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+      - name: Set up Maven
+        uses: ./.github/actions/setup-maven
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: temurin
-          java-version: "17"
+          java-version: "21"
           cache: maven
 
       - name: Download Maven repository
@@ -228,11 +249,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+      - name: Set up Maven
+        uses: ./.github/actions/setup-maven
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: temurin
-          java-version: "17"
+          java-version: "21"
           cache: maven
 
       - name: Download Maven repository
@@ -286,11 +310,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+      - name: Set up Maven
+        uses: ./.github/actions/setup-maven
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: temurin
-          java-version: "17"
+          java-version: "21"
           cache: maven
 
       - name: Download Maven repository
@@ -323,11 +350,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+      - name: Set up Maven
+        uses: ./.github/actions/setup-maven
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: temurin
-          java-version: "17"
+          java-version: "21"
           cache: maven
 
       - name: Download Maven repository
@@ -357,11 +387,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+      - name: Set up Maven
+        uses: ./.github/actions/setup-maven
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: temurin
-          java-version: "17"
+          java-version: "21"
           cache: maven
 
       - name: Download Maven repository
@@ -391,11 +424,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+      - name: Set up Maven
+        uses: ./.github/actions/setup-maven
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: temurin
-          java-version: "17"
+          java-version: "21"
           cache: maven
 
       - name: Download Maven repository
@@ -425,11 +461,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+      - name: Set up Maven
+        uses: ./.github/actions/setup-maven
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: temurin
-          java-version: "17"
+          java-version: "21"
           cache: maven
 
       - name: Download Maven repository
@@ -454,6 +493,10 @@ jobs:
   quality-nullaway-core:
     name: verify / quality-nullaway-core
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        java: [ "21", "25" ]
     needs:
       - build
       - test-unit
@@ -462,11 +505,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
-      - name: Set up JDK 25
-        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+      - name: Set up Maven
+        uses: ./.github/actions/setup-maven
+
+      - name: Set up JDK ${{ matrix.java }}
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: temurin
-          java-version: "25"
+          java-version: ${{ matrix.java }}
           cache: maven
 
       - name: Download Maven repository
@@ -482,6 +528,10 @@ jobs:
   quality-nullaway-cli:
     name: verify / quality-nullaway-cli
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        java: [ "21", "25" ]
     needs:
       - build
       - test-unit
@@ -490,11 +540,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
-      - name: Set up JDK 25
-        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+      - name: Set up Maven
+        uses: ./.github/actions/setup-maven
+
+      - name: Set up JDK ${{ matrix.java }}
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: temurin
-          java-version: "25"
+          java-version: ${{ matrix.java }}
           cache: maven
 
       - name: Download Maven repository
@@ -510,6 +563,10 @@ jobs:
   quality-nullaway-gradle-plugin:
     name: verify / quality-nullaway-gradle-plugin
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        java: [ "21", "25" ]
     needs:
       - build
       - test-unit
@@ -518,11 +575,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
-      - name: Set up JDK 25
-        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+      - name: Set up Maven
+        uses: ./.github/actions/setup-maven
+
+      - name: Set up JDK ${{ matrix.java }}
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: temurin
-          java-version: "25"
+          java-version: ${{ matrix.java }}
           cache: maven
 
       - name: Download Maven repository
@@ -544,6 +604,10 @@ jobs:
   quality-nullaway-maven-plugin:
     name: verify / quality-nullaway-maven-plugin
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        java: [ "21", "25" ]
     needs:
       - build
       - test-unit
@@ -552,11 +616,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
-      - name: Set up JDK 25
-        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+      - name: Set up Maven
+        uses: ./.github/actions/setup-maven
+
+      - name: Set up JDK ${{ matrix.java }}
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: temurin
-          java-version: "25"
+          java-version: ${{ matrix.java }}
           cache: maven
 
       - name: Download Maven repository
@@ -583,11 +650,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+      - name: Set up Maven
+        uses: ./.github/actions/setup-maven
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: temurin
-          java-version: "17"
+          java-version: "21"
           cache: maven
 
       - name: Download Maven repository
@@ -611,11 +681,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+      - name: Set up Maven
+        uses: ./.github/actions/setup-maven
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: temurin
-          java-version: "17"
+          java-version: "21"
           cache: maven
 
       - name: Download Maven repository
@@ -639,11 +712,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+      - name: Set up Maven
+        uses: ./.github/actions/setup-maven
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: temurin
-          java-version: "17"
+          java-version: "21"
           cache: maven
 
       - name: Download Maven repository
@@ -673,11 +749,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+      - name: Set up Maven
+        uses: ./.github/actions/setup-maven
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: temurin
-          java-version: "17"
+          java-version: "21"
           cache: maven
 
       - name: Download Maven repository
@@ -723,15 +802,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+      - name: Set up Maven
+        uses: ./.github/actions/setup-maven
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: temurin
-          java-version: "17"
+          java-version: "21"
           cache: maven
           server-id: central
-          server-username: MAVEN_CENTRAL_TOKEN_USERNAME
-          server-password: MAVEN_CENTRAL_TOKEN_PASSWORD
+          server-username-env-var: MAVEN_CENTRAL_TOKEN_USERNAME
+          server-password-env-var: MAVEN_CENTRAL_TOKEN_PASSWORD
+          gpg-passphrase-env-var: MAVEN_GPG_PASSPHRASE
+          mvn-server-repository-origins: central:https://central.sonatype.com
 
       - name: Record reproducible build timestamp
         shell: bash
@@ -793,6 +877,11 @@ jobs:
         working-directory: gradle-plugin
         run: ./gradlew test validatePlugins publishToMavenLocal
 
+      - name: Verify Gradle runtime variant metadata
+        run: >
+          python3 .github/scripts/verify-runtime-baseline.py
+          --gradle-metadata gradle-plugin/build/publications/pluginMaven/module.json
+
       - name: Verify archive legal content
         run: java .github/scripts/VerifyLegalContents.java
 
@@ -820,36 +909,23 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        maven: [ "3.9.0", "3.9.16" ]
-        java: [ "17", "21", "25" ]
+        maven: [ "3.9.16", "3.10.0" ]
+        java: [ "21", "25" ]
 
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
       - name: Set up JDK ${{ matrix.java }}
-        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: temurin
           java-version: ${{ matrix.java }}
 
       - name: Install Maven ${{ matrix.maven }}
-        shell: bash
-        env:
-          MAVEN_VERSION: ${{ matrix.maven }}
-        run: |
-          archive="apache-maven-${MAVEN_VERSION}-bin.tar.gz"
-          case "$MAVEN_VERSION" in
-            3.9.0) expected_sha512="1ea149f4e48bc7b34d554aef86f948eca7df4e7874e30caf449f3708e4f8487c71a5e5c072a05f17c60406176ebeeaf56b5f895090c7346f8238e2da06cf6ecd" ;;
-            3.9.16) expected_sha512="831a8591fe20c8243b1dbe7d71e3244f31d1665b0804b2e825e38cbbe5ce0cafb8338851f90780735568773e0a6cd07bbec107cda0b896b008b861075358b6f6" ;;
-            *) echo "No trusted checksum for Maven ${MAVEN_VERSION}" >&2; exit 1 ;;
-          esac
-          curl --fail --location --silent --show-error \
-            --output "${RUNNER_TEMP}/${archive}" \
-            "https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/${MAVEN_VERSION}/${archive}"
-          echo "${expected_sha512}  ${RUNNER_TEMP}/${archive}" | sha512sum --check --status
-          tar -xzf "${RUNNER_TEMP}/${archive}" -C "${RUNNER_TEMP}"
-          echo "${RUNNER_TEMP}/apache-maven-${MAVEN_VERSION}/bin" >> "$GITHUB_PATH"
+        uses: ./.github/actions/setup-maven
+        with:
+          version: ${{ matrix.maven }}
 
       - name: Verify selected toolchain
         shell: bash
@@ -864,11 +940,11 @@ jobs:
       - name: Run CLI and Maven plugin functional tests
         run: mvn -B -ntp -P!quality-gates-all clean verify
 
-      - name: Verify Java 17 bytecode
+      - name: Verify Java 21 bytecode
         shell: bash
         run: |
           javap -verbose -classpath core/target/classes media.barney.crap.core.Thresholds \
-            | grep --fixed-strings "major version: 61"
+            | grep --fixed-strings "major version: 65"
 
   compatibility-gradle:
     name: compatibility / Gradle ${{ matrix.gradle }} / Java ${{ matrix.java }}
@@ -877,18 +953,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - gradle: "8.14.5"
-            java: "17"
-          - gradle: "8.14.5"
+          - gradle: "8.14.6"
             java: "21"
-          - gradle: "9.7.1"
-            java: "17"
-          - gradle: "9.7.1"
-            java: "21"
-          - gradle: "9.7.1"
-            java: "25"
-          - gradle: "9.8.1"
-            java: "17"
           - gradle: "9.8.1"
             java: "21"
           - gradle: "9.8.1"
@@ -898,8 +964,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
+      - name: Set up Maven
+        uses: ./.github/actions/setup-maven
+
       - name: Set up JDK ${{ matrix.java }}
-        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: temurin
           java-version: ${{ matrix.java }}
@@ -910,7 +979,7 @@ jobs:
         with:
           gradle-version: ${{ matrix.gradle }}
 
-      - name: Build Java 17 core artifact
+      - name: Build Java 21 core artifact
         run: mvn -B -ntp -P!quality-gates-all -pl core -am -DskipTests package
 
       - name: Run Gradle plugin functional tests
@@ -927,11 +996,14 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+      - name: Set up Maven
+        uses: ./.github/actions/setup-maven
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: temurin
-          java-version: "17"
+          java-version: "21"
           cache: maven
 
       - name: Set up Gradle

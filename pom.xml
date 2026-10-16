@@ -43,28 +43,32 @@
   </modules>
 
   <properties>
-    <maven.compiler.release>17</maven.compiler.release>
-    <java.minimum.version>17</java.minimum.version>
-    <maven.minimum.version>3.9.0</maven.minimum.version>
+    <maven.compiler.release>21</maven.compiler.release>
+    <java.minimum.version>21</java.minimum.version>
+    <maven.minimum.version>3.9.16</maven.minimum.version>
     <maven.api.version>3.9.16</maven.api.version>
     <maven.enforcer.plugin.version>3.6.3</maven.enforcer.plugin.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <cognitive-java.version>0.7.1</cognitive-java.version>
+    <cognitive-java.version>1.0.0</cognitive-java.version>
     <jacoco.version>0.8.15</jacoco.version>
     <junit.version>6.1.3</junit.version>
     <maven.surefire.plugin.version>3.6.0</maven.surefire.plugin.version>
     <jspecify.version>1.0.1</jspecify.version>
-    <jtoon.version>2.0.5</jtoon.version>
-    <jackson.version>2.22.3</jackson.version>
+    <jtoon.version>3.0.0</jtoon.version>
+    <jackson.version>3.2.3</jackson.version>
+    <woodstox.version>7.3.0</woodstox.version>
+    <stax2.version>4.3.2</stax2.version>
+    <maven.compiler.plugin.version>3.16.0</maven.compiler.plugin.version>
+    <maven.plugin.tools.version>3.16.0</maven.plugin.tools.version>
     <errorprone.version>2.50.0</errorprone.version>
-    <nullaway.version>0.13.8</nullaway.version>
+    <nullaway.version>0.14.2</nullaway.version>
     <nullaway.annotated.packages>media.barney.crap</nullaway.annotated.packages>
-    <spotbugs.version>4.9.8</spotbugs.version>
-    <spotbugs.maven.plugin.version>4.10.4.1</spotbugs.maven.plugin.version>
+    <spotbugs.version>4.10.5</spotbugs.version>
+    <spotbugs.maven.plugin.version>4.10.5.0</spotbugs.maven.plugin.version>
     <maven.source.plugin.version>3.4.0</maven.source.plugin.version>
     <maven.javadoc.plugin.version>3.12.0</maven.javadoc.plugin.version>
     <maven.gpg.plugin.version>3.2.8</maven.gpg.plugin.version>
-    <central.publishing.plugin.version>0.11.0</central.publishing.plugin.version>
+    <central.publishing.plugin.version>0.12.0</central.publishing.plugin.version>
     <cyclonedx.maven.plugin.version>2.9.3</cyclonedx.maven.plugin.version>
     <central.skipPublishing>false</central.skipPublishing>
   </properties>
@@ -79,11 +83,21 @@
         <scope>import</scope>
       </dependency>
       <dependency>
-        <groupId>com.fasterxml.jackson</groupId>
+        <groupId>tools.jackson</groupId>
         <artifactId>jackson-bom</artifactId>
         <version>${jackson.version}</version>
         <type>pom</type>
         <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>com.fasterxml.woodstox</groupId>
+        <artifactId>woodstox-core</artifactId>
+        <version>${woodstox.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.codehaus.woodstox</groupId>
+        <artifactId>stax2-api</artifactId>
+        <version>${stax2.version}</version>
       </dependency>
       <dependency>
         <groupId>org.jspecify</groupId>
@@ -154,6 +168,26 @@
     <pluginManagement>
       <plugins>
         <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-clean-plugin</artifactId>
+          <version>3.5.0</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-resources-plugin</artifactId>
+          <version>3.5.0</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-install-plugin</artifactId>
+          <version>3.2.0</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-deploy-plugin</artifactId>
+          <version>3.2.0</version>
+        </plugin>
+        <plugin>
           <groupId>org.cyclonedx</groupId>
           <artifactId>cyclonedx-maven-plugin</artifactId>
           <version>${cyclonedx.maven.plugin.version}</version>
@@ -182,7 +216,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-compiler-plugin</artifactId>
-          <version>3.16.0</version>
+          <version>${maven.compiler.plugin.version}</version>
           <configuration>
             <release>${maven.compiler.release}</release>
           </configuration>
@@ -349,7 +383,7 @@
     <profile>
       <id>nullaway</id>
       <activation>
-        <jdk>[25,26)</jdk>
+        <jdk>[21,)</jdk>
       </activation>
       <build>
         <plugins>
@@ -358,7 +392,7 @@
             <artifactId>maven-compiler-plugin</artifactId>
             <configuration>
               <fork>true</fork>
-              <!-- Error Prone/NullAway on JDK 25 need javac internals opened/exported. -->
+              <!-- Error Prone/NullAway on supported JDKs need javac internals opened/exported. -->
               <compilerArgs>
                 <arg>-XDcompilePolicy=simple</arg>
                 <arg>--should-stop=ifError=FLOW</arg>
@@ -451,7 +485,7 @@
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-gpg-plugin</artifactId>
             <configuration>
-              <passphrase>${env.MAVEN_GPG_PASSPHRASE}</passphrase>
+              <passphraseEnvName>MAVEN_GPG_PASSPHRASE</passphraseEnvName>
               <gpgArguments>
                 <arg>--pinentry-mode</arg>
                 <arg>loopback</arg>

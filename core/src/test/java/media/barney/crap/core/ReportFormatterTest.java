@@ -19,6 +19,31 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class ReportFormatterTest {
 
     @Test
+    void preservesUnicodeAndControlCharactersAcrossMachineReports() throws Exception {
+        String methodName = "quoted\"\\path\t\n<&>\u00e4";
+        CrapReport report = report(metric(methodName, "demo.Unicode", 4, 1, 99.999, 1.0000001));
+
+        String json = ReportFormatter.format(report, ReportFormat.JSON);
+        var jsonReport = tools.jackson.databind.json.JsonMapper.builder().build().readTree(json);
+        assertEquals(methodName, jsonReport.path("methods").path(0).path("method").asString());
+        assertEquals(1.0000001, jsonReport.path("methods").path(0).path("crap").asDouble());
+        assertTrue(json.endsWith("\n"));
+        assertFalse(json.endsWith("\n\n"));
+
+        String junit = ReportFormatter.format(report, ReportFormat.JUNIT);
+        assertEquals(methodName, propertyValue(parseXml(junit), "methodName"));
+        assertTrue(junit.startsWith("<?xml"));
+        assertEquals("UTF-8", parseXml(junit).getXmlEncoding());
+        assertTrue(junit.endsWith("\n"));
+
+        String toon = ReportFormatter.format(report, ReportFormat.TOON);
+        var toonReport = tools.jackson.databind.json.JsonMapper.builder().build()
+                .readTree(dev.toonformat.jtoon.JToon.decodeToJson(toon));
+        assertEquals(methodName, toonReport.path("methods").path(0).path("method").asString());
+        assertEquals(1.0000001, toonReport.path("methods").path(0).path("crap").asDouble());
+    }
+
+    @Test
     void formatsTextReportWithStatusAndCoverageKind() {
         String report = ReportFormatter.format(report(
                 metric("foo", "demo.Sample", 4, 3, 85.0, 4.5),

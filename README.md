@@ -18,19 +18,23 @@ or source compatibility guarantee.
 
 ## Requirements and support
 
-All artifacts contain Java 17-compatible bytecode. The supported runtime and
-build-tool combinations are:
+This development branch stages the next major release. Its changes are unreleased;
+the published 1.x runtime and report contracts remain unchanged. Project versions
+stay at 1.0.1 until a separate release-preparation change.
+
+Development artifacts contain Java 21 bytecode and require a full JDK, including
+`jdk.compiler`. Supported runtimes use the latest security patches in these LTS lines:
 
 | Integration | Supported versions | Tested boundaries |
 | --- | --- | --- |
-| CLI | Java 17, 21, and 25 | Java 17, 21, and 25 |
-| Maven plugin | Maven 3.9.x on Java 17, 21, or 25 | Maven 3.9.0 and 3.9.16 on each Java version |
-| Gradle plugin | Gradle 8.14.x on Java 17 or 21; Gradle 9.7.x/9.8.x on Java 17, 21, or 25 | Gradle 8.14.5 on Java 17/21; Gradle 9.7.1 and 9.8.1 on Java 17/21/25 |
+| CLI | JDK 21 and 25 | JDK 21 and 25 |
+| Maven plugin | Maven 3.9.16+ in 3.9.x, or 3.10.x, on JDK 21/25 | Maven 3.9.16 and 3.10.0 on both JDKs |
+| Gradle plugin | Gradle 8.14.6+ in 8.14.x on JDK 21; Gradle 9.8.x on JDK 21/25 | Gradle 8.14.6 on JDK 21; 9.8.1 on both JDKs |
 
-Java 17 and Maven 3.9.0 are the minimums enforced by the Maven build and plugin
-metadata. Gradle 8.14 is not supported on Java 25; use Gradle 9.7.x for that
-runtime. The repository wrapper uses Gradle 9.8.1. Versions outside this matrix
-may work but are not part of the v1 support commitment.
+The Maven build and plugin metadata enforce JDK 21 and Maven 3.9.16 minimums.
+The repository wrapper uses Gradle 9.8.1. Gradle 8.14 is not supported on JDK 25.
+Primary CI and release builds use Maven 3.10.0. Other runtime/build-tool versions,
+including non-LTS Java releases and Maven 4 previews, are unverified.
 
 ## Formula
 
@@ -202,7 +206,7 @@ java -jar "$CRAP_JAVA_JAR" --agent --format junit --output target/crap-java/TEST
 java -jar "$CRAP_JAVA_JAR" --junit-report target/crap-java/TEST-crap-java.xml
 java -jar "$CRAP_JAVA_JAR" --exclude 'module-a/**' --exclude-class '.*MapperImpl$'
 java -jar "$CRAP_JAVA_JAR" --exclude='module-a/**' --exclude-class='.*MapperImpl$'
-java -jar "$CRAP_JAVA_JAR" --source-root src/java --source-root src/main/java17
+java -jar "$CRAP_JAVA_JAR" --source-root src/java --source-root src/main/custom-java
 java -jar "$CRAP_JAVA_JAR" --build-tool maven module-a/src/main/java/demo/Sample.java
 java -jar "$CRAP_JAVA_JAR" src/main/java/demo/Sample.java
 java -jar "$CRAP_JAVA_JAR" module-a module-b
@@ -272,7 +276,12 @@ failure/skipped element text include CRAP score, threshold, coverage kind,
 source path, and line range. Custom properties remain for tools that read them,
 but GitLab-visible details do not rely on properties.
 
-## v1 compatibility contract
+## Public compatibility contracts
+
+The unreleased next-major changes above raise runtime requirements and adopt
+JToon 3 semantics. JSON/JUnit field meanings, CLI options, plugin configuration,
+text formatting, and exit codes remain stable. The following statements describe
+the published 1.x contract and its migration history.
 
 Semantic Versioning applies to the user-facing CLI options and their behavior,
 Maven and Gradle plugin configuration, process exit codes, and the JSON, TOON,
@@ -282,7 +291,7 @@ possible when existing correct configurations and parsers continue to work.
 The human-readable text report is intended for people and is not a stable
 machine schema.
 
-TOON output follows TOON Specification 4.1 for the entire 1.x line. An
+Published 1.x TOON output follows TOON Specification 4.1 for the entire 1.x line. An
 incompatible upstream TOON format change requires a new crap-java major
 version. The `core` Java artifact remains internal and is excluded from the
 binary/source compatibility promise; supported integrations are the CLI and
