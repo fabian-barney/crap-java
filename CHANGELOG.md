@@ -1,8 +1,8 @@
 # Changelog
 
-## Unreleased
+## 2.0.0 - 2026-10-17
 
-### Breaking changes for the next major release
+### Breaking changes
 
 - Require full JDK 21, retain JDK 21/25 support, and emit Java 21 bytecode.
 - Require Maven 3.9.16, add Maven 3.10.0, and test Gradle 8.14.6/9.8.1.
@@ -12,7 +12,14 @@
 - Refresh build/publishing plugins, use setup-java 6, and verify emitted archive
   bytecode, Maven runtime metadata, dependency inventory, and license contents.
 
-Project versions remain unchanged; this branch does not publish these changes.
+### Changed
+
+- Automate signed release tags and publication after a reviewed version-change
+  PR merges, with protected-source validation and required CI on the merge commit.
+- Reuse the imported GPG home for Gradle publication signing and verify the
+  resulting signatures during publishing preflight.
+- Refresh compatible dependencies, including Woodstox and stax2-api, and run the
+  complete Gradle verification lifecycle across the supported compatibility matrix.
 
 ## 1.0.1 - 2026-09-19
 

@@ -1,12 +1,16 @@
-# Migrating to the next major release (unreleased)
+# Migrating from 1.x to 2.0.0
 
-The development branch requires a full JDK 21 or 25 and emits Java 21 bytecode.
+Version 2.0.0 requires a full JDK 21 or 25 and emits Java 21 bytecode.
 Java 17 runtime support is removed as a project policy decision; this does not
 mean that every vendor's Java 17 distribution is EOL. The parser still requires
 `jdk.compiler` and accepts the running JDK's supported non-preview source syntax.
 
 Use Maven 3.9.16 or newer in 3.9.x, or Maven 3.10.x. Use Gradle 8.14.6 on JDK 21,
 or Gradle 9.8.1 on JDK 21/25. Keep the existing plugin names and configuration.
+
+Update CLI filenames, Maven coordinates, the Gradle plugin version, and cached
+artifacts from `1.0.1` to `2.0.0` together. Then run the existing CLI commands
+or plugin checks and review reports consumed by automation before deployment.
 
 Reporting now uses Jackson 3.2.3 and JToon 3.0.0. JSON/JUnit field meanings, text
 formatting, exit codes, filtering, and full JUnit sidecars retain their contracts.
@@ -19,9 +23,9 @@ infix order. Its scores may increase; fix affected methods rather than raising
 quality thresholds. NullAway and SpotBugs upgrades may identify additional
 nullability or constructor/finalizer problems.
 
-These changes are staged for a new major release. They do not alter artifacts
-already published as 1.0.1. The following migration notes describe historical
-releases and retain their original support and format statements.
+These changes do not alter artifacts already published as 1.0.1.
+The following migration notes describe historical releases and retain their
+original support and format statements.
 
 # Migrating from 0.6.4 to 1.0.0
 

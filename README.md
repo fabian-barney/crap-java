@@ -18,11 +18,7 @@ or source compatibility guarantee.
 
 ## Requirements and support
 
-This development branch stages the next major release. Its changes are unreleased;
-the published 1.x runtime and report contracts remain unchanged. Project versions
-stay at 1.0.1 until a separate release-preparation change.
-
-Development artifacts contain Java 21 bytecode and require a full JDK, including
+Version 2.0.0 artifacts contain Java 21 bytecode and require a full JDK, including
 `jdk.compiler`. Supported runtimes use the latest security patches in these LTS lines:
 
 | Integration | Supported versions | Tested boundaries |
@@ -281,38 +277,38 @@ but GitLab-visible details do not rely on properties.
 
 ## Public compatibility contracts
 
-The unreleased next-major changes above raise runtime requirements and adopt
-JToon 3 semantics. JSON/JUnit field meanings, CLI options, plugin configuration,
-text formatting, and exit codes remain stable. The following statements describe
-the published 1.x contract and its migration history.
+Version 2.0.0 raises runtime requirements and adopts JToon 3 semantics.
+JSON/JUnit field meanings, CLI options, plugin configuration, text formatting,
+and exit codes retain their 1.x behavior. See [Migrating from 1.x to 2.0.0](MIGRATING.md)
+for the runtime, build-tool, TOON, and metric changes.
 
 Semantic Versioning applies to the user-facing CLI options and their behavior,
 Maven and Gradle plugin configuration, process exit codes, and the JSON, TOON,
-and JUnit output schemas. Within the 1.x line, existing names and meanings on
+and JUnit output schemas. Within the 2.x line, existing names and meanings on
 those surfaces will not be removed or changed incompatibly. Additions remain
 possible when existing correct configurations and parsers continue to work.
 The human-readable text report is intended for people and is not a stable
 machine schema.
 
-Published 1.x TOON output follows TOON Specification 4.1 for the entire 1.x line. An
-incompatible upstream TOON format change requires a new crap-java major
-version. The `core` Java artifact remains internal and is excluded from the
+TOON output follows JToon 3 semantics. An incompatible upstream TOON format
+change requires a new crap-java major version. The `core` Java artifact remains
+internal and is excluded from the
 binary/source compatibility promise; supported integrations are the CLI and
 the two build plugins.
 
-Users upgrading from 0.6.4 must account for the TOON 4.1 empty-array encoding.
-See [Migrating from 0.6.4 to 1.0.0](MIGRATING.md).
+Historical 1.x releases follow TOON Specification 4.1. Users upgrading from
+0.6.4 should also review the [0.6.4-to-1.0.0 migration notes](MIGRATING.md).
 
 ## Distribution
 
 Releases are published through Maven Central, with the Gradle Plugin Portal as
 the primary Gradle plugin channel. The current installation coordinates are:
 
-- `media.barney:crap-java-core:1.0.1`
-- `media.barney:crap-java-cli:1.0.1`
-- `media.barney:crap-java-maven-plugin:1.0.1`
-- `media.barney:crap-java-gradle-plugin:1.0.1`
-- Gradle plugin id `media.barney.crap-java` version `1.0.1`
+- `media.barney:crap-java-core:2.0.0`
+- `media.barney:crap-java-cli:2.0.0`
+- `media.barney:crap-java-maven-plugin:2.0.0`
+- `media.barney:crap-java-gradle-plugin:2.0.0`
+- Gradle plugin id `media.barney.crap-java` version `2.0.0`
 
 ### Direct CLI download
 
@@ -320,7 +316,7 @@ Download the executable JAR from the matching GitHub Release and run it on a
 supported Java runtime:
 
 ```bash
-VERSION=1.0.1
+VERSION=2.0.0
 curl --fail --location --remote-name \
   "https://github.com/fabian-barney/crap-java/releases/download/v${VERSION}/crap-java-${VERSION}.jar"
 java -jar "crap-java-${VERSION}.jar" --help
@@ -337,7 +333,7 @@ verify the complete release bundle:
 
 ```bash
 set -euo pipefail
-VERSION=1.0.1
+VERSION=2.0.0
 RELEASE_DIR="crap-java-${VERSION}-release"
 mkdir -p "$RELEASE_DIR"
 gh release download "v${VERSION}" \
@@ -383,7 +379,7 @@ Apply the plugin in `build.gradle(.kts)`:
 
 ```kotlin
 plugins {
-    id("media.barney.crap-java") version "1.0.1"
+    id("media.barney.crap-java") version "2.0.0"
 }
 ```
 
@@ -439,14 +435,14 @@ Then apply the same plugin id in `build.gradle(.kts)`:
 
 ```kotlin
 plugins {
-    id("media.barney.crap-java") version "1.0.1"
+    id("media.barney.crap-java") version "2.0.0"
 }
 ```
 
 The marker publication lives at
-`media.barney.crap-java:media.barney.crap-java.gradle.plugin:1.0.1` and
+`media.barney.crap-java:media.barney.crap-java.gradle.plugin:2.0.0` and
 resolves to the implementation artifact
-`media.barney:crap-java-gradle-plugin:1.0.1`.
+`media.barney:crap-java-gradle-plugin:2.0.0`.
 
 ### Maven Central
 
@@ -454,7 +450,7 @@ Add the plugin:
 
 ```xml
 <properties>
-  <crap-java.version>1.0.1</crap-java.version>
+  <crap-java.version>2.0.0</crap-java.version>
 </properties>
 
 <build>

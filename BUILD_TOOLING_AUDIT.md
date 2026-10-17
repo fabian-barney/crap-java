@@ -1,9 +1,9 @@
 # Build tooling audit
 
-## Unreleased baseline for issue #248 - 2026-10-16
+## 2.0.0 baseline for issue #248 - 2026-10-16
 
 This section supersedes the support and dependency conclusions of the historical
-v1 audit below. Product versions remain at 1.0.1 pending separate major-release preparation.
+v1 audit below. These baseline changes ship in version 2.0.0.
 
 ### Selected tools and compatibility
 
