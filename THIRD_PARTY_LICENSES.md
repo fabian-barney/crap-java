@@ -22,7 +22,7 @@ tagged source and binary distributions do not contain a NOTICE file.
 The root project license is copied without modification to
 `META-INF/LICENSE-crap-java` in every binary JAR.
 The Jackson notices from all packaged Jackson artifacts are merged into
-`META-INF/NOTICE`; the verifier requires both the Jackson 3.x and shared 2.x annotations notices and
+`META-INF/NOTICE`; the verifier requires the Jackson 3.x notice and
 the bundled FastDoubleParser and Schubfach attributions.
 
 All listed licenses are permissive and compatible with distribution of the

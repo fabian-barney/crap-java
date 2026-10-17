@@ -71,7 +71,7 @@ For each resolved module today:
 1. Detect Maven or Gradle automatically, unless `--build-tool` is supplied.
 2. Delete stale JaCoCo artifacts for the detected build tool.
 3. Run the module-scoped coverage command:
-   - Maven: `mvn` or `mvnw`, using JaCoCo `0.8.13`
+   - Maven: `mvn` or `mvnw`, using JaCoCo `0.8.15`
    - Gradle: `gradle` or `gradlew`, running `test` and `jacocoTestReport`
 4. Read the module report:
    - Maven: `target/site/jacoco/jacoco.xml`
@@ -79,7 +79,7 @@ For each resolved module today:
 5. Analyze the selected Java files for that module
 
 For Maven CLI coverage generation, crap-java invokes
-`org.jacoco:jacoco-maven-plugin:0.8.13` explicitly. It does not inspect or
+`org.jacoco:jacoco-maven-plugin:0.8.15` explicitly. It does not inspect or
 reuse a `jacoco-maven-plugin` version pinned in the analyzed project's POM. If
 your build requires a different JaCoCo version, generate the XML report in your
 own Maven build and run the Maven plugin path below, which consumes that report
@@ -459,7 +459,7 @@ Add the plugin:
     <plugin>
       <groupId>org.jacoco</groupId>
       <artifactId>jacoco-maven-plugin</artifactId>
-      <version>0.8.13</version>
+      <version>0.8.15</version>
       <executions>
         <execution>
           <goals>
