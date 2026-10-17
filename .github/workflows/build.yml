@@ -982,9 +982,9 @@ jobs:
       - name: Build Java 21 core artifact
         run: mvn -B -ntp -P!quality-gates-all -pl core -am -DskipTests package
 
-      - name: Run Gradle plugin functional tests
+      - name: Run Gradle plugin checks and functional tests
         working-directory: gradle-plugin
-        run: gradle --version && gradle clean test validatePlugins
+        run: gradle --version && gradle clean check validatePlugins
 
   reproducibility:
     name: verify / reproducible-release
