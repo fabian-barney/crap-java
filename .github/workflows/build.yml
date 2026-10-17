@@ -877,6 +877,19 @@ jobs:
         working-directory: gradle-plugin
         run: ./gradlew test validatePlugins publishToMavenLocal
 
+      - name: Verify Gradle publication signatures with the shared GPG home
+        working-directory: gradle-plugin
+        shell: bash
+        run: |
+          mapfile -d '' signatures < <(find build/libs build/publications -type f -name '*.asc' -print0)
+          if [[ ${#signatures[@]} -eq 0 ]]; then
+            echo "::error::Gradle publishing preflight produced no signatures." >&2
+            exit 1
+          fi
+          for signature in "${signatures[@]}"; do
+            gpg --batch --verify "$signature" "${signature%.asc}"
+          done
+
       - name: Verify Gradle runtime variant metadata
         run: >
           python3 .github/scripts/verify-runtime-baseline.py

@@ -63,6 +63,8 @@ val qualityNullaway = providers.gradleProperty("qualityNullaway").map(String::to
 val coreJar = layout.projectDirectory.file("../core/target/crap-java-core-${projectVersion}.jar")
 val gpgPrivateKey = providers.environmentVariable("MAVEN_GPG_PRIVATE_KEY")
 val gpgPassphrase = providers.environmentVariable("MAVEN_GPG_PASSPHRASE")
+val gpgHome = providers.environmentVariable("GNUPGHOME").filter(String::isNotBlank)
+val signingEnabled = !gpgPrivateKey.orNull.isNullOrBlank()
 val mavenCentralTokenUsername = providers.gradleProperty("mavenCentralTokenUsername")
     .map(String::trim)
     .filter(String::isNotEmpty)
@@ -265,15 +267,20 @@ tasks.withType<PublishToMavenRepository>().configureEach {
 }
 
 signing {
-    val key = gpgPrivateKey.orNull
-    if (!key.isNullOrBlank()) {
-        useInMemoryPgpKeys(key, gpgPassphrase.orNull)
+    if (signingEnabled) {
+        val importedHome = gpgHome.orNull
+            ?: throw GradleException("Import the signing key and export GNUPGHOME before signing publications.")
+        val passphrase = gpgPassphrase.orNull
+            ?: throw GradleException("MAVEN_GPG_PASSPHRASE is required for signing publications.")
+        project.extra["signing.gnupg.homeDir"] = importedHome
+        project.extra["signing.gnupg.passphrase"] = passphrase
+        useGpgCmd()
         sign(publishing.publications)
     }
 }
 
 tasks.withType<Sign>().configureEach {
-    onlyIf { !gpgPrivateKey.orNull.isNullOrBlank() }
+    onlyIf { signingEnabled }
 }
 
 gradlePlugin {
