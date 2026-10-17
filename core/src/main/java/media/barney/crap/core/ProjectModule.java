@@ -5,11 +5,13 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.ResourceBundle;
 import org.jspecify.annotations.Nullable;
 
 record ProjectModule(Path moduleRoot, Path executionRoot, BuildTool buildTool) {
 
-    private static final String JACOCO_MAVEN_PLUGIN_VERSION = "0.8.13";
+    private static final String JACOCO_MAVEN_PLUGIN_VERSION = ResourceBundle.getBundle(
+            "media.barney.crap.core.build-versions", Locale.ROOT).getString("jacoco.version");
 
     ProjectModule {
         moduleRoot = moduleRoot.normalize();

@@ -18,19 +18,23 @@ or source compatibility guarantee.
 
 ## Requirements and support
 
-All artifacts contain Java 17-compatible bytecode. The supported runtime and
-build-tool combinations are:
+This development branch stages the next major release. Its changes are unreleased;
+the published 1.x runtime and report contracts remain unchanged. Project versions
+stay at 1.0.1 until a separate release-preparation change.
+
+Development artifacts contain Java 21 bytecode and require a full JDK, including
+`jdk.compiler`. Supported runtimes use the latest security patches in these LTS lines:
 
 | Integration | Supported versions | Tested boundaries |
 | --- | --- | --- |
-| CLI | Java 17, 21, and 25 | Java 17, 21, and 25 |
-| Maven plugin | Maven 3.9.x on Java 17, 21, or 25 | Maven 3.9.0 and 3.9.16 on each Java version |
-| Gradle plugin | Gradle 8.14.x on Java 17 or 21; Gradle 9.7.x/9.8.x on Java 17, 21, or 25 | Gradle 8.14.5 on Java 17/21; Gradle 9.7.1 and 9.8.1 on Java 17/21/25 |
+| CLI | JDK 21 and 25 | JDK 21 and 25 |
+| Maven plugin | Maven 3.9.16+ in 3.9.x, or 3.10.x, on JDK 21/25 | Maven 3.9.16 and 3.10.0 on both JDKs |
+| Gradle plugin | Gradle 8.14.6+ in 8.14.x on JDK 21; Gradle 9.8.x on JDK 21/25 | Gradle 8.14.6 on JDK 21; 9.8.1 on both JDKs |
 
-Java 17 and Maven 3.9.0 are the minimums enforced by the Maven build and plugin
-metadata. Gradle 8.14 is not supported on Java 25; use Gradle 9.7.x for that
-runtime. The repository wrapper uses Gradle 9.8.1. Versions outside this matrix
-may work but are not part of the v1 support commitment.
+The Maven build and plugin metadata enforce JDK 21 and Maven 3.9.16 minimums.
+The repository wrapper uses Gradle 9.8.1. Gradle 8.14 is not supported on JDK 25.
+Primary CI and release builds use Maven 3.10.0. Other runtime/build-tool versions,
+including non-LTS Java releases and Maven 4 previews, are unverified.
 
 ## Formula
 
@@ -67,7 +71,7 @@ For each resolved module today:
 1. Detect Maven or Gradle automatically, unless `--build-tool` is supplied.
 2. Delete stale JaCoCo artifacts for the detected build tool.
 3. Run the module-scoped coverage command:
-   - Maven: `mvn` or `mvnw`, using JaCoCo `0.8.13`
+   - Maven: `mvn` or `mvnw`, using JaCoCo `0.8.15`
    - Gradle: `gradle` or `gradlew`, running `test` and `jacocoTestReport`
 4. Read the module report:
    - Maven: `target/site/jacoco/jacoco.xml`
@@ -75,7 +79,7 @@ For each resolved module today:
 5. Analyze the selected Java files for that module
 
 For Maven CLI coverage generation, crap-java invokes
-`org.jacoco:jacoco-maven-plugin:0.8.13` explicitly. It does not inspect or
+`org.jacoco:jacoco-maven-plugin:0.8.15` explicitly. It does not inspect or
 reuse a `jacoco-maven-plugin` version pinned in the analyzed project's POM. If
 your build requires a different JaCoCo version, generate the XML report in your
 own Maven build and run the Maven plugin path below, which consumes that report
@@ -111,18 +115,21 @@ mvn -B -pl maven-plugin -am verify
 
 ## Shared Cognitive Gate
 
-Repository CI also runs the shared published `cognitive-java` Maven plugin as a
-separate `cognitive-java Gate` job. The plugin resolves from Maven Central, and
+Repository CI also runs the shared published `cognitive-java` Maven plugin in
+the module-specific `quality-cognitive-*` jobs. The plugin resolves from Maven Central, and
 the current version is controlled by the `cognitive-java.version` property in
 `pom.xml`.
 
-From the repository root, run the same gate locally with:
+After building the reactor, run a focused core gate locally with:
 
 ```bash
-mvn -B cognitive-java:check
+cd core
+mvn -B -ntp -P'!quality-gates-all,quality-gate-cognitive' verify
 ```
 
-`mvn -B verify` now also includes the cognitive gate at the reactor root.
+On supported JDKs, `mvn -B verify` runs compilation, tests, and NullAway.
+Run self-hosting metric gates separately, as CI does, to avoid a reactor
+dependency cycle through this repository's own Maven plugin.
 
 ## Self-Hosting Gate Scope
 
@@ -132,11 +139,11 @@ ownership across the embedded `gradle-plugin/` source tree.
 
 In CI:
 
-- `crap-java Gate` owns `core`, `cli`, `maven-plugin`, and `gradle-plugin/src/main/java`
-- `cognitive-java Gate` owns the same full-repo source scope
-- `Gradle Plugin` validates Gradle plugin build and test behavior only
+- `quality-crap-*` owns each module's production sources, including `gradle-plugin/src/main/java`
+- `quality-cognitive-*` owns the same source scope
+- The Gradle compatibility matrix runs `check`, plugin validation, and functional tests
 
-The standalone `Gradle Plugin` job is not the owner of metric failures for
+The Gradle compatibility matrix does not own metric failures for
 `gradle-plugin/src/main/java`; those failures still belong to the metric gate
 jobs.
 
@@ -202,7 +209,7 @@ java -jar "$CRAP_JAVA_JAR" --agent --format junit --output target/crap-java/TEST
 java -jar "$CRAP_JAVA_JAR" --junit-report target/crap-java/TEST-crap-java.xml
 java -jar "$CRAP_JAVA_JAR" --exclude 'module-a/**' --exclude-class '.*MapperImpl$'
 java -jar "$CRAP_JAVA_JAR" --exclude='module-a/**' --exclude-class='.*MapperImpl$'
-java -jar "$CRAP_JAVA_JAR" --source-root src/java --source-root src/main/java17
+java -jar "$CRAP_JAVA_JAR" --source-root src/java --source-root src/main/custom-java
 java -jar "$CRAP_JAVA_JAR" --build-tool maven module-a/src/main/java/demo/Sample.java
 java -jar "$CRAP_JAVA_JAR" src/main/java/demo/Sample.java
 java -jar "$CRAP_JAVA_JAR" module-a module-b
@@ -272,7 +279,12 @@ failure/skipped element text include CRAP score, threshold, coverage kind,
 source path, and line range. Custom properties remain for tools that read them,
 but GitLab-visible details do not rely on properties.
 
-## v1 compatibility contract
+## Public compatibility contracts
+
+The unreleased next-major changes above raise runtime requirements and adopt
+JToon 3 semantics. JSON/JUnit field meanings, CLI options, plugin configuration,
+text formatting, and exit codes remain stable. The following statements describe
+the published 1.x contract and its migration history.
 
 Semantic Versioning applies to the user-facing CLI options and their behavior,
 Maven and Gradle plugin configuration, process exit codes, and the JSON, TOON,
@@ -282,7 +294,7 @@ possible when existing correct configurations and parsers continue to work.
 The human-readable text report is intended for people and is not a stable
 machine schema.
 
-TOON output follows TOON Specification 4.1 for the entire 1.x line. An
+Published 1.x TOON output follows TOON Specification 4.1 for the entire 1.x line. An
 incompatible upstream TOON format change requires a new crap-java major
 version. The `core` Java artifact remains internal and is excluded from the
 binary/source compatibility promise; supported integrations are the CLI and
@@ -450,7 +462,7 @@ Add the plugin:
     <plugin>
       <groupId>org.jacoco</groupId>
       <artifactId>jacoco-maven-plugin</artifactId>
-      <version>0.8.13</version>
+      <version>0.8.15</version>
       <executions>
         <execution>
           <goals>

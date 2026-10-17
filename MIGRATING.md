@@ -1,3 +1,28 @@
+# Migrating to the next major release (unreleased)
+
+The development branch requires a full JDK 21 or 25 and emits Java 21 bytecode.
+Java 17 runtime support is removed as a project policy decision; this does not
+mean that every vendor's Java 17 distribution is EOL. The parser still requires
+`jdk.compiler` and accepts the running JDK's supported non-preview source syntax.
+
+Use Maven 3.9.16 or newer in 3.9.x, or Maven 3.10.x. Use Gradle 8.14.6 on JDK 21,
+or Gradle 9.8.1 on JDK 21/25. Keep the existing plugin names and configuration.
+
+Reporting now uses Jackson 3.2.3 and JToon 3.0.0. JSON/JUnit field meanings, text
+formatting, exit codes, filtering, and full JUnit sidecars retain their contracts.
+JToon 3 advances the TOON specification beyond the published 1.x TOON 4.1 contract;
+review machine-consumer fixtures, numeric encodings, escaping, and empty arrays
+before upgrading. There is no legacy runtime or legacy TOON mode.
+
+Cognitive Java 1.0.0 correctly counts mixed Boolean operator transitions in
+infix order. Its scores may increase; fix affected methods rather than raising
+quality thresholds. NullAway and SpotBugs upgrades may identify additional
+nullability or constructor/finalizer problems.
+
+These changes are staged for a new major release. They do not alter artifacts
+already published as 1.0.1. The following migration notes describe historical
+releases and retain their original support and format statements.
+
 # Migrating from 0.6.4 to 1.0.0
 
 Version 1.0.0 establishes the supported public contract for crap-java. The CLI,

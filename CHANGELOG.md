@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+### Breaking changes for the next major release
+
+- Require full JDK 21, retain JDK 21/25 support, and emit Java 21 bytecode.
+- Require Maven 3.9.16, add Maven 3.10.0, and test Gradle 8.14.6/9.8.1.
+- Consolidate Jackson implementations on 3.2.3 and adopt JToon 3.0.0 TOON semantics.
+- Upgrade Cognitive Java to 1.0.0, NullAway to 0.14.2, and SpotBugs to 4.10.5;
+  preserve quality thresholds and public JSON/JUnit/CLI contracts.
+- Refresh build/publishing plugins, use setup-java 6, and verify emitted archive
+  bytecode, Maven runtime metadata, dependency inventory, and license contents.
+
+Project versions remain unchanged; this branch does not publish these changes.
+
 ## 1.0.1 - 2026-09-19
 
 ### Fixed

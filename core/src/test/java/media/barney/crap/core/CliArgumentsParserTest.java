@@ -102,11 +102,11 @@ class CliArgumentsParserTest {
         CliArguments args = CliArgumentsParser.parse(new String[]{
                 "--source-root=src/java",
                 "--source-root",
-                "module-a/src/main/java17",
+                "module-a/src/main/custom-java",
                 "--changed"
         });
 
-        assertEquals(List.of("src/java", "module-a/src/main/java17"), args.sourceRoots());
+        assertEquals(List.of("src/java", "module-a/src/main/custom-java"), args.sourceRoots());
     }
 
     @Test

@@ -98,6 +98,12 @@ public abstract class CrapJavaCheckTask extends DefaultTask {
         getUseDefaultExclusions().convention(true);
     }
 
+    @Override
+    @SuppressWarnings("removal")
+    protected final void finalize() {
+        // Gradle must subclass this task; prevent subclasses from finalizing a failed construction.
+    }
+
     @Internal
     public abstract DirectoryProperty getAnalysisRoot();
 
@@ -723,7 +729,7 @@ public abstract class CrapJavaCheckTask extends DefaultTask {
             return false;
         }
         try (Stream<Path> paths = Files.walk(stateRoot)) {
-            for (Path path : paths.filter(this::isOwnerLink).toList()) {
+            for (Path path : paths.filter(CrapJavaCheckTask::isOwnerLink).toList()) {
                 if (isOtherOwnerLink(path, rememberedReport)) {
                     return true;
                 }
@@ -736,8 +742,9 @@ public abstract class CrapJavaCheckTask extends DefaultTask {
         return !path.equals(rememberedReport.ownerLink()) && sameExistingFile(path, rememberedReport.path());
     }
 
-    private boolean isOwnerLink(Path path) {
-        return path.getFileName() != null && path.getFileName().toString().endsWith(".owner");
+    static boolean isOwnerLink(Path path) {
+        Path fileName = path.getFileName();
+        return fileName != null && fileName.toString().endsWith(".owner");
     }
 
     private String defaultJunitReportRelativePath() {

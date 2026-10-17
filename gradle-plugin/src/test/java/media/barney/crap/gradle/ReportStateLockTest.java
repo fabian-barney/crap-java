@@ -13,6 +13,7 @@ import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -62,7 +63,7 @@ class ReportStateLockTest {
             Future<Void> first = executor.submit(() -> ReportStateLock.withLock(lockPath, () -> {
                 firstEntered.countDown();
                 assertTrue(releaseFirst.await(5, TimeUnit.SECONDS));
-                Files.createDirectories(firstReport.getParent());
+                Files.createDirectories(Objects.requireNonNull(firstReport.getParent()));
                 Files.writeString(firstReport, "first");
                 Files.writeString(firstJunit, "first-junit");
                 return null;
@@ -74,7 +75,7 @@ class ReportStateLockTest {
                 secondStarted.countDown();
                 return ReportStateLock.withLock(lockPath, () -> {
                     secondEntered.countDown();
-                    Files.createDirectories(secondReport.getParent());
+                    Files.createDirectories(Objects.requireNonNull(secondReport.getParent()));
                     Files.writeString(secondReport, "second");
                     Files.writeString(secondJunit, "second-junit");
                     return null;

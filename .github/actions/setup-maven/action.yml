@@ -1,0 +1,30 @@
+name: Set up verified Maven
+description: Install a checksum-verified supported Maven distribution
+inputs:
+  version:
+    description: Maven version to install
+    required: false
+    default: "3.10.0"
+runs:
+  using: composite
+  steps:
+    - name: Install Maven
+      shell: bash
+      env:
+        MAVEN_VERSION: ${{ inputs.version }}
+      run: |
+        set -euo pipefail
+        case "$MAVEN_VERSION" in
+          3.9.16) expected_sha512="831a8591fe20c8243b1dbe7d71e3244f31d1665b0804b2e825e38cbbe5ce0cafb8338851f90780735568773e0a6cd07bbec107cda0b896b008b861075358b6f6" ;;
+          3.10.0) expected_sha512="908b1501bfb420bf7c8affb855534a9c407fd6099367bfb9f2f2dcb8e9799102bffb84518cde74c679bd76870247c6528683abdd620581bffa90f95d92d175aa" ;;
+          *) echo "Unsupported Maven version: $MAVEN_VERSION" >&2; exit 1 ;;
+        esac
+        archive="apache-maven-${MAVEN_VERSION}-bin.tar.gz"
+        installation_root="$(mktemp -d "${RUNNER_TEMP}/crap-java-maven.XXXXXX")"
+        curl --fail --location --silent --show-error --retry 3 --retry-all-errors \
+          --output "${installation_root}/${archive}" \
+          "https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/${MAVEN_VERSION}/${archive}"
+        echo "${expected_sha512}  ${installation_root}/${archive}" | sha512sum --check --status
+        tar -xzf "${installation_root}/${archive}" -C "$installation_root"
+        echo "${installation_root}/apache-maven-${MAVEN_VERSION}/bin" >> "$GITHUB_PATH"
+        "${installation_root}/apache-maven-${MAVEN_VERSION}/bin/mvn" --version

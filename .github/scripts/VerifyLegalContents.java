@@ -66,7 +66,6 @@ final class VerifyLegalContents {
                     "DBC36F9422A40D58D1A214080583667CFD37D61C2FAE1657D981EDDA2A60727F", failures);
             requireSha256(jar, "META-INF/Schubfach-LICENSE",
                     "12D39A6615219D73202300715E365BEC2B958F858D1E837C8F2DACE57F905969", failures);
-            requireText(jar, "META-INF/NOTICE", "Jackson 2.x", failures);
             requireText(jar, "META-INF/NOTICE", "Jackson 3.x", failures);
             requireText(jar, "META-INF/NOTICE", "FastDoubleParser", failures);
             requireText(jar, "META-INF/NOTICE", "Schubfach", failures);
