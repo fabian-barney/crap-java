@@ -357,7 +357,7 @@ class CrapJavaGradlePluginFunctionalTest {
         BuildResult second = runBuild("--configuration-cache", "crap-java-check");
 
         assertEquals(firstConfigurationCacheState, configurationCacheState());
-        TaskOutcome outcome = second.task(":crap-java-check").getOutcome();
+        TaskOutcome outcome = Objects.requireNonNull(second.task(":crap-java-check")).getOutcome();
         assertTrue(outcome == TaskOutcome.SUCCESS || outcome == TaskOutcome.UP_TO_DATE);
     }
 
@@ -382,7 +382,7 @@ class CrapJavaGradlePluginFunctionalTest {
         BuildResult second = runBuild("--configuration-cache", "crap-java-check");
 
         assertEquals(firstConfigurationCacheState, configurationCacheState());
-        TaskOutcome outcome = second.task(":crap-java-check").getOutcome();
+        TaskOutcome outcome = Objects.requireNonNull(second.task(":crap-java-check")).getOutcome();
         assertTrue(outcome == TaskOutcome.SUCCESS || outcome == TaskOutcome.UP_TO_DATE);
         assertTrue(Files.exists(tempDir.resolve("build/reports/crap-java/report.json")));
         assertFalse(Files.exists(tempDir.resolve("build/reports/crap-java/custom-junit.xml")));

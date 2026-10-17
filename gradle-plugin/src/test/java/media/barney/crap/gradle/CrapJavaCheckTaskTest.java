@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import java.lang.reflect.Modifier;
 import java.nio.file.Path;
+import java.util.Objects;
 
 class CrapJavaCheckTaskTest {
 
@@ -13,7 +14,7 @@ class CrapJavaCheckTaskTest {
     void recognizesOwnerLinksAndRejectsFilesystemRoots() {
         assertTrue(CrapJavaCheckTask.isOwnerLink(Path.of("junit-report.owner")));
         assertFalse(CrapJavaCheckTask.isOwnerLink(Path.of("junit-report.path")));
-        assertFalse(CrapJavaCheckTask.isOwnerLink(Path.of("/")));
+        assertFalse(CrapJavaCheckTask.isOwnerLink(Objects.requireNonNull(Path.of("").toAbsolutePath().getRoot())));
     }
 
     @Test
