@@ -21,7 +21,7 @@ runs:
         esac
         archive="apache-maven-${MAVEN_VERSION}-bin.tar.gz"
         installation_root="$(mktemp -d "${RUNNER_TEMP}/crap-java-maven.XXXXXX")"
-        curl --fail --location --silent --show-error --retry 3 \
+        curl --fail --location --silent --show-error --retry 3 --retry-all-errors \
           --output "${installation_root}/${archive}" \
           "https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/${MAVEN_VERSION}/${archive}"
         echo "${expected_sha512}  ${installation_root}/${archive}" | sha512sum --check --status

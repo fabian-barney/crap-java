@@ -115,18 +115,21 @@ mvn -B -pl maven-plugin -am verify
 
 ## Shared Cognitive Gate
 
-Repository CI also runs the shared published `cognitive-java` Maven plugin as a
-separate `cognitive-java Gate` job. The plugin resolves from Maven Central, and
+Repository CI also runs the shared published `cognitive-java` Maven plugin in
+the module-specific `quality-cognitive-*` jobs. The plugin resolves from Maven Central, and
 the current version is controlled by the `cognitive-java.version` property in
 `pom.xml`.
 
-From the repository root, run the same gate locally with:
+After building the reactor, run a focused core gate locally with:
 
 ```bash
-mvn -B cognitive-java:check
+cd core
+mvn -B -ntp -P'!quality-gates-all,quality-gate-cognitive' verify
 ```
 
-`mvn -B verify` now also includes the cognitive gate at the reactor root.
+On supported JDKs, `mvn -B verify` runs compilation, tests, and NullAway.
+Run self-hosting metric gates separately, as CI does, to avoid a reactor
+dependency cycle through this repository's own Maven plugin.
 
 ## Self-Hosting Gate Scope
 
@@ -136,11 +139,11 @@ ownership across the embedded `gradle-plugin/` source tree.
 
 In CI:
 
-- `crap-java Gate` owns `core`, `cli`, `maven-plugin`, and `gradle-plugin/src/main/java`
-- `cognitive-java Gate` owns the same full-repo source scope
-- `Gradle Plugin` validates Gradle plugin build and test behavior only
+- `quality-crap-*` owns each module's production sources, including `gradle-plugin/src/main/java`
+- `quality-cognitive-*` owns the same source scope
+- The Gradle compatibility matrix runs `check`, plugin validation, and functional tests
 
-The standalone `Gradle Plugin` job is not the owner of metric failures for
+The Gradle compatibility matrix does not own metric failures for
 `gradle-plugin/src/main/java`; those failures still belong to the metric gate
 jobs.
 
