@@ -1,5 +1,15 @@
 # Build tooling audit
 
+## Maintenance refresh — 2026-10-24
+
+Jackson implementations are aligned by BOM 3.2.4 (Java 17 minimum); JToon remains
+3.0.0 (Java 21 minimum). The product runtime intersection remains Java >=21.
+Error Prone 2.51.0 and NullAway 0.14.3 are build-only analyzers; the former now
+uses SafeRE. Gradle 9.8.2 replaces the upper tested patch and wrapper while the
+8.14.6 lower boundary and Maven 3.9.16 API floor remain unchanged.
+The dated baseline observations below are historical evidence. Fresh validation
+and advisory observations are recorded in the linked maintenance issue.
+
 ## 2.0.0 baseline for issue #248 - 2026-10-16
 
 This section supersedes the support and dependency conclusions of the historical

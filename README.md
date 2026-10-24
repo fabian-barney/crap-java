@@ -25,10 +25,10 @@ Version 2.0.0 artifacts contain Java 21 bytecode and require a full JDK, includi
 | --- | --- | --- |
 | CLI | JDK 21 and 25 | JDK 21 and 25 |
 | Maven plugin | Maven 3.9.16+ in 3.9.x, or 3.10.x, on JDK 21/25 | Maven 3.9.16 and 3.10.0 on both JDKs |
-| Gradle plugin | Gradle 8.14.6+ in 8.14.x on JDK 21; Gradle 9.8.x on JDK 21/25 | Gradle 8.14.6 on JDK 21; 9.8.1 on both JDKs |
+| Gradle plugin | Gradle 8.14.6+ in 8.14.x on JDK 21; Gradle 9.8.x on JDK 21/25 | Gradle 8.14.6 on JDK 21; 9.8.2 on both JDKs |
 
 The Maven build and plugin metadata enforce JDK 21 and Maven 3.9.16 minimums.
-The repository wrapper uses Gradle 9.8.1. Gradle 8.14 is not supported on JDK 25.
+The repository wrapper uses Gradle 9.8.2. Gradle 8.14 is not supported on JDK 25.
 Primary CI and release builds use Maven 3.10.0. Other runtime/build-tool versions,
 including non-LTS Java releases and Maven 4 previews, are unverified.
 
