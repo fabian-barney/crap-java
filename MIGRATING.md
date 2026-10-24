@@ -12,7 +12,7 @@ Update CLI filenames, Maven coordinates, the Gradle plugin version, and cached
 artifacts from `1.0.1` to `2.0.0` together. Then run the existing CLI commands
 or plugin checks and review reports consumed by automation before deployment.
 
-Reporting now uses Jackson 3.2.3 and JToon 3.0.0. JSON/JUnit field meanings, text
+Reporting now uses Jackson 3.2.4 and JToon 3.0.0. JSON/JUnit field meanings, text
 formatting, exit codes, filtering, and full JUnit sidecars retain their contracts.
 JToon 3 advances the TOON specification beyond the published 1.x TOON 4.1 contract;
 review machine-consumer fixtures, numeric encodings, escaping, and empty arrays
