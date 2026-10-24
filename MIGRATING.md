@@ -6,13 +6,13 @@ mean that every vendor's Java 17 distribution is EOL. The parser still requires
 `jdk.compiler` and accepts the running JDK's supported non-preview source syntax.
 
 Use Maven 3.9.16 or newer in 3.9.x, or Maven 3.10.x. Use Gradle 8.14.6 on JDK 21,
-or Gradle 9.8.1 on JDK 21/25. Keep the existing plugin names and configuration.
+or Gradle 9.8.2 on JDK 21/25. Keep the existing plugin names and configuration.
 
 Update CLI filenames, Maven coordinates, the Gradle plugin version, and cached
 artifacts from `1.0.1` to `2.0.0` together. Then run the existing CLI commands
 or plugin checks and review reports consumed by automation before deployment.
 
-Reporting now uses Jackson 3.2.3 and JToon 3.0.0. JSON/JUnit field meanings, text
+Reporting now uses Jackson 3.2.4 and JToon 3.0.0. JSON/JUnit field meanings, text
 formatting, exit codes, filtering, and full JUnit sidecars retain their contracts.
 JToon 3 advances the TOON specification beyond the published 1.x TOON 4.1 contract;
 review machine-consumer fixtures, numeric encodings, escaping, and empty arrays

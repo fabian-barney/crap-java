@@ -968,9 +968,9 @@ jobs:
         include:
           - gradle: "8.14.6"
             java: "21"
-          - gradle: "9.8.1"
+          - gradle: "9.8.2"
             java: "21"
-          - gradle: "9.8.1"
+          - gradle: "9.8.2"
             java: "25"
 
     steps:
