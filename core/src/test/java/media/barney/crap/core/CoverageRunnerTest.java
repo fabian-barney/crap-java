@@ -43,9 +43,9 @@ class CoverageRunnerTest {
         assertEquals(List.of(
                 mavenCommand(), "-q",
                 "-pl", "module-a", "-am",
-                "org.jacoco:jacoco-maven-plugin:0.8.15:prepare-agent",
+                "org.jacoco:jacoco-maven-plugin:0.8.16:prepare-agent",
                 "test",
-                "org.jacoco:jacoco-maven-plugin:0.8.15:report"
+                "org.jacoco:jacoco-maven-plugin:0.8.16:report"
         ), executor.commands.get(0));
         assertEquals(tempDir, executor.directories.get(0));
     }

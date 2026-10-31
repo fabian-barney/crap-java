@@ -47,12 +47,12 @@
     <java.minimum.version>21</java.minimum.version>
     <maven.minimum.version>3.9.16</maven.minimum.version>
     <maven.api.version>3.9.16</maven.api.version>
-    <maven.enforcer.plugin.version>3.6.3</maven.enforcer.plugin.version>
+    <maven.enforcer.plugin.version>3.7.0</maven.enforcer.plugin.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <cognitive-java.version>1.0.0</cognitive-java.version>
-    <jacoco.version>0.8.15</jacoco.version>
+    <jacoco.version>0.8.16</jacoco.version>
     <junit.version>6.1.3</junit.version>
-    <maven.surefire.plugin.version>3.6.0</maven.surefire.plugin.version>
+    <maven.surefire.plugin.version>3.6.1</maven.surefire.plugin.version>
     <jspecify.version>1.0.1</jspecify.version>
     <jtoon.version>3.0.0</jtoon.version>
     <jackson.version>3.2.4</jackson.version>
