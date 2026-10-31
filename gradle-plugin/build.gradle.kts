@@ -23,7 +23,7 @@ plugins {
     id("com.gradle.plugin-publish") version "2.2.1"
     id("org.cyclonedx.bom") version "3.5.1"
     id("com.github.spotbugs") version "6.5.13"
-    id("net.ltgt.errorprone") version "5.1.1" apply false
+    id("net.ltgt.errorprone") version "5.2.0" apply false
     jacoco
     signing
 }
