@@ -55,7 +55,7 @@
     <maven.surefire.plugin.version>3.6.1</maven.surefire.plugin.version>
     <jspecify.version>1.0.1</jspecify.version>
     <jtoon.version>3.0.0</jtoon.version>
-    <jackson.version>3.3.0</jackson.version>
+    <jackson.version>3.2.4</jackson.version>
     <woodstox.version>7.3.0</woodstox.version>
     <stax2.version>4.3.2</stax2.version>
     <maven.compiler.plugin.version>3.16.0</maven.compiler.plugin.version>
