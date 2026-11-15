@@ -1,5 +1,16 @@
 # Changelog
 
+## 2.0.2 - 2026-11-15
+
+### Changed
+
+- Update the build-only Error Prone analyzer to 2.52.0.
+- Update the Gradle wrapper distribution and wrapper JAR to 9.9.1, and add
+  Gradle 9.9.1 compatibility checks on JDK 21 and 25 while retaining test
+  coverage for Gradle 8.14.6 and 9.8.2.
+- Refresh setup-java to 6.2.0 in build and release workflows and document the
+  compatible dependency selections without changing minimum runtime requirements.
+
 ## 2.0.1 - 2026-11-15
 
 ### Changed
