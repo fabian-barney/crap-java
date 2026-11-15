@@ -1,5 +1,22 @@
 # Changelog
 
+## 2.0.1 - 2026-11-15
+
+### Changed
+
+- Update Jackson to 3.2.4 and JaCoCo to 0.8.16 while retaining the existing
+  runtime requirements and report contracts.
+- Refresh build analyzers and plugins, including Error Prone 2.51.0, NullAway
+  0.14.3, Maven Enforcer 3.7.0, Surefire 3.6.1, and the Gradle Error Prone
+  plugin 5.2.0.
+- Update the Gradle wrapper and upper tested compatibility boundary to 9.8.2,
+  retain Gradle 8.14.6 coverage, and refresh Gradle Actions to 6.4.1.
+
+### Fixed
+
+- Retain the selected Maven installation after Gradle setup in compatibility
+  and reproducible-build CI jobs.
+
 ## 2.0.0 - 2026-10-17
 
 ### Breaking changes
