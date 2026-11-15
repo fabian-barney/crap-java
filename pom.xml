@@ -60,7 +60,7 @@
     <stax2.version>4.3.2</stax2.version>
     <maven.compiler.plugin.version>3.16.0</maven.compiler.plugin.version>
     <maven.plugin.tools.version>3.16.0</maven.plugin.tools.version>
-    <errorprone.version>2.51.0</errorprone.version>
+    <errorprone.version>2.52.0</errorprone.version>
     <nullaway.version>0.14.3</nullaway.version>
     <nullaway.annotated.packages>media.barney.crap</nullaway.annotated.packages>
     <spotbugs.version>4.10.5</spotbugs.version>

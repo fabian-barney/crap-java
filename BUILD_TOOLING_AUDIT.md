@@ -1,5 +1,18 @@
 # Build tooling audit
 
+## Maintenance refresh — 2026-11-14
+
+Error Prone 2.52.0 remains a build-only analyzer. Gradle 9.9.1 replaces the
+wrapper JAR and distribution and becomes the upper tested patch; Gradle 9.8.2 on
+JDK 21/25 and the 8.14.6 lower boundary remain tested. setup-java 6.2.0 replaces
+6.1.0.
+Jackson BOM 3.2.4 is retained: 3.3.0 upgrades the Blackbird module that JToon 3
+registers to a Java 25-only implementation and breaks the JDK 21 TOON/CLI tests.
+Cognitive Java 1.0.0 is retained because 2.x changes integration and report
+contracts. The Maven API stays at 3.9.16 because 3.10.0 would narrow consumer
+support. CycloneDX Gradle 3.5.1 is retained because 3.6.0 changes SBOM
+license-expression evidence. Validation evidence is recorded in issue #256.
+
 ## Maintenance refresh — 2026-10-24
 
 Jackson implementations are aligned by BOM 3.2.4 (Java 17 minimum); JToon remains
