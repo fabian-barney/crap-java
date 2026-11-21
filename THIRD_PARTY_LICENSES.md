@@ -13,7 +13,8 @@ artifacts for issue #248 (unreleased development baseline). Build-only dependenc
 | Woodstox Core | CLI; runtime dependency of Gradle plugin | Apache-2.0 | full terms in `META-INF/LICENSE-crap-java` |
 | FastDoubleParser | CLI through Jackson Core | MIT | `META-INF/FastDoubleParser-LICENSE` in the shaded CLI |
 | FastDoubleParser third-party code | CLI through Jackson Core | Boost Software License 1.0 | `META-INF/FastDoubleParser-ThirdParty-LICENSE` in the shaded CLI |
-| Schubfach | CLI through Jackson Core | MIT | `META-INF/Schubfach-LICENSE` in the shaded CLI |
+| jsoniter-scala number writer | CLI through Jackson Core | MIT | `META-INF/jsoniter-scala-LICENSE` in the shaded CLI |
+| xjb float-to-string algorithm | CLI through Jackson Core | Apache-2.0 | `META-INF/xjb-LICENSE` in the shaded CLI |
 
 The stax2-api license is the canonical BSD-2-Clause text from tag
 `stax2-api-4.3.2`, replacing the unresolved template shipped in its binary JAR.
@@ -23,7 +24,7 @@ The root project license is copied without modification to
 `META-INF/LICENSE-crap-java` in every binary JAR.
 The Jackson notices from all packaged Jackson artifacts are merged into
 `META-INF/NOTICE`; the verifier requires the Jackson 3.x notice and
-the bundled FastDoubleParser and Schubfach attributions.
+the bundled FastDoubleParser, jsoniter-scala, and xjb attributions.
 
 All listed licenses are permissive and compatible with distribution of the
 combined work under Apache-2.0. No unresolved source-offer, reciprocal-license,

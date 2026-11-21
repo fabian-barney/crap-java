@@ -1,5 +1,25 @@
 # Build tooling audit
 
+## Maintenance refresh — 2026-11-21
+
+Issue #262 selects JToon 3.0.1 and Jackson BOM 3.3.0 while retaining
+Java 21 consumers. JToon no longer resolves Blackbird, whose Java 25 floor
+blocked the previous BOM update. Maven and Gradle runtime trees must retain
+this Java 21-compatible intersection. Error Prone 2.53.0 and NullAway 0.14.4
+remain build-only; Maven 3.10.1 and Gradle 9.9.2 leave existing minimums intact.
+
+Jackson Core 3.3 replaces its bundled Schubfach implementation with the
+MIT-licensed jsoniter-scala number writer and the Apache-2.0 xjb algorithm.
+Its published JAR removes Schubfach classes and resources, and supplies
+`jsoniter-scala-LICENSE`, `xjb-LICENSE` and both NOTICE attributions. The legal
+verifier requires exact SHA-256 hashes for both replacement license files,
+retains all FastDoubleParser and project-license checks, and requires both
+new attribution markers. The MIT and Apache-2.0 source licenses were checked
+against their upstream repositories. No release or license-gate bypass occurs.
+
+The dated maintenance observations below remain historical evidence.
+
+
 ## Maintenance refresh — 2026-11-14
 
 Error Prone 2.52.0 remains a build-only analyzer. Gradle 9.9.1 replaces the
