@@ -4,7 +4,7 @@ inputs:
   version:
     description: Maven version to install
     required: false
-    default: "3.10.0"
+    default: "3.10.1"
 runs:
   using: composite
   steps:
@@ -16,7 +16,7 @@ runs:
         set -euo pipefail
         case "$MAVEN_VERSION" in
           3.9.16) expected_sha512="831a8591fe20c8243b1dbe7d71e3244f31d1665b0804b2e825e38cbbe5ce0cafb8338851f90780735568773e0a6cd07bbec107cda0b896b008b861075358b6f6" ;;
-          3.10.0) expected_sha512="908b1501bfb420bf7c8affb855534a9c407fd6099367bfb9f2f2dcb8e9799102bffb84518cde74c679bd76870247c6528683abdd620581bffa90f95d92d175aa" ;;
+          3.10.1) expected_sha512="8af2fcc48ee6b8f8fc0b21054226e14404b88500df6483cdeb3ae603408f6de27b1397ac591a9fb0d98fee64f4f624fee1383efd25b8998786cda1598fb9ea39" ;;
           *) echo "Unsupported Maven version: $MAVEN_VERSION" >&2; exit 1 ;;
         esac
         archive="apache-maven-${MAVEN_VERSION}-bin.tar.gz"

@@ -64,11 +64,14 @@ final class VerifyLegalContents {
                     "59067508E44346BF93DC9C5E4D673A67ECD77988C2020BB5E0F8667EB199F396", failures);
             requireSha256(jar, "META-INF/FastDoubleParser-ThirdParty-LICENSE",
                     "DBC36F9422A40D58D1A214080583667CFD37D61C2FAE1657D981EDDA2A60727F", failures);
-            requireSha256(jar, "META-INF/Schubfach-LICENSE",
-                    "12D39A6615219D73202300715E365BEC2B958F858D1E837C8F2DACE57F905969", failures);
+            requireSha256(jar, "META-INF/jsoniter-scala-LICENSE",
+                    "1D827E11E21A5F51F0B13BA37268515CBB312F2E39476744327A76726CA16084", failures);
+            requireSha256(jar, "META-INF/xjb-LICENSE",
+                    "5655DE88C9D5A29E358F67884AF12A1FFBD46449E53A331C449C55BEAEE29784", failures);
             requireText(jar, "META-INF/NOTICE", "Jackson 3.x", failures);
             requireText(jar, "META-INF/NOTICE", "FastDoubleParser", failures);
-            requireText(jar, "META-INF/NOTICE", "Schubfach", failures);
+            requireText(jar, "META-INF/NOTICE", "jsoniter-scala", failures);
+            requireText(jar, "META-INF/NOTICE", "xjb", failures);
         });
     }
 
